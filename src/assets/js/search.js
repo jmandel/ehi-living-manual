@@ -33,7 +33,11 @@
     if (isSearchLoaded) return;
     
     try {
-      const response = await fetch('../assets/data/search-index.json');
+      // Determine the correct path based on current location
+      const isInChapter = window.location.pathname.includes('/chapters/');
+      const searchIndexPath = isInChapter ? '../assets/data/search-index.json' : 'assets/data/search-index.json';
+      
+      const response = await fetch(searchIndexPath);
       searchIndex = await response.json();
       
       // Initialize Fuse.js with options
