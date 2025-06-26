@@ -396,7 +396,7 @@ pre code {
 
 /* SQL Widgets */
 .sql-widget-placeholder {
-  max-width: calc(100vw - 2.5em);
+  max-width: calc(100vw - 3em);
 }
 
 .sql-widget {
