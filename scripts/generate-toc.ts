@@ -59,10 +59,17 @@ export async function generateTableOfContents(chapters: Chapter[]) {
   
   tocHtml += '</div>';
   
+  // Generate JavaScript array of all chapter files
+  const chapterFilesList = chapters
+    .sort((a, b) => a.order.localeCompare(b.order))
+    .map(chapter => `'${chapter.slug}.md'`)
+    .join(',\n          ');
+  
   // Replace placeholders in template
   const indexHtml = template
     .replace('{{title}}', 'Epic EHI Export - The Missing Manual')
-    .replace('{{content}}', tocHtml);
+    .replace('{{content}}', tocHtml)
+    .replace('{{chapter-files-list}}', chapterFilesList);
   
   await Bun.write("dist/index.html", indexHtml);
 }

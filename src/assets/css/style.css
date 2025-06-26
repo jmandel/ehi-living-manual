@@ -754,13 +754,14 @@ pre code {
 }
 
 /* Tooltip styling */
-.copy-button[title]:hover::after {
+.copy-button[title]:hover::after,
+.edit-github-button[title]:hover::after {
   content: attr(title);
   position: absolute;
-  bottom: 100%;
+  top: 100%;
   left: 50%;
   transform: translateX(-50%);
-  margin-bottom: 8px;
+  margin-top: 8px;
   padding: 6px 12px;
   background: rgba(0, 0, 0, 0.9);
   color: white;
@@ -772,18 +773,19 @@ pre code {
   z-index: 1000;
 }
 
-.copy-button[title]:hover::before {
+.copy-button[title]:hover::before,
+.edit-github-button[title]:hover::before {
   content: '';
   position: absolute;
-  bottom: 100%;
+  top: 100%;
   left: 50%;
   transform: translateX(-50%);
-  margin-bottom: 4px;
+  margin-top: 4px;
   width: 0;
   height: 0;
   border-left: 4px solid transparent;
   border-right: 4px solid transparent;
-  border-top: 4px solid rgba(0, 0, 0, 0.9);
+  border-bottom: 4px solid rgba(0, 0, 0, 0.9);
   pointer-events: none;
   z-index: 1000;
 }

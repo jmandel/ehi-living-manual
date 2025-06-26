@@ -45,6 +45,18 @@
           <span>Copy Book</span>
         </button>
         
+        <a href="https://github.com/jmandel/ehi-missing-manual" 
+           class="edit-github-button" 
+           target="_blank"
+           rel="noopener noreferrer"
+           title="View repository on GitHub">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          <span>Edit</span>
+        </a>
+        
         <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
           <svg class="theme-icon-light" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="5"/>
@@ -165,35 +177,9 @@
     if (copyAllButton) {
       copyAllButton.addEventListener('click', async () => {
       try {
-        // List of all chapter files in order
+        // List of all chapter files in order - dynamically generated at build time
         const chapterFiles = [
-          '00.1-read-me-first.md',
-          '00.2-five-minute-test-drive.md',
-          '01.1-chronicles-clarity-ehi.md',
-          '01.2-anatomy-of-ehi-export.md',
-          '01.3-setting-up-your-sandbox.md',
-          '02.1-epic-speak-crash-course.md',
-          '02.2-the-identifier-trinity.md',
-          '02.3-the-id-line-paradigm.md',
-          '02.4-dates-and-times.md',
-          '02.5-naming-and-reference-data.md',
-          '02.6-history-and-audit-trails.md',
-          '03.1-patients-and-encounters.md',
-          '03.2-providers.md',
-          '03.3-orders-and-results.md',
-          '03.4-locations-and-adt.md',
-          '04.1-hospital-vs-professional-billing.md',
-          '04.2-buckets-and-transactions.md',
-          '04.3-arpb-transactions.md',
-          '04.4-coverage-and-filing-order.md',
-          '05.1-parsing-epic-tsvs.md',
-          '05.2-data-quality-validation-recipes.md',
-          '05.3-reusable-join-library.md',
-          '05.4-cross-domain-examples.md',
-          '05.5-transforming-for-warehouses.md',
-          '06.1-glossary-a-z.md',
-          '06.2-quick-cards.md',
-          '06.3-sql-recipe-library.md'
+          {{chapter-files-list}}
         ];
         
         // Update button to show loading state
