@@ -27,8 +27,14 @@ export async function generateTableOfContents(chapters: Chapter[]) {
   };
   
   for (const [part, partChapters] of grouped) {
+    // Sort chapters within each part
+    partChapters.sort((a, b) => a.order.localeCompare(b.order));
+    
+    // Get the first chapter in this part for the header link
+    const firstChapter = partChapters[0];
+    
     tocHtml += `<section class="toc-part">`;
-    tocHtml += `<h2>Part ${part}: ${partNames[part] || 'Additional Topics'}</h2>`;
+    tocHtml += `<h2><a href="chapters/${firstChapter.slug}.html" class="part-header-link">Part ${part}: ${partNames[part] || 'Additional Topics'}</a></h2>`;
     tocHtml += '<div class="toc-chapters">';
     
     for (const chapter of partChapters) {
@@ -36,13 +42,15 @@ export async function generateTableOfContents(chapters: Chapter[]) {
       const cleanTitle = chapter.title.replace(/^Chapter \d+\.\d+:\s*/, '');
       
       tocHtml += `
-        <article class="chapter-card">
-          <h3>
-            <span class="chapter-number">${chapter.order}</span>
-            <a href="chapters/${chapter.slug}.html">${cleanTitle}</a>
-          </h3>
-          ${generateChapterSummary(chapter)}
-        </article>
+        <a href="chapters/${chapter.slug}.html" class="chapter-card-link">
+          <article class="chapter-card">
+            <h3>
+              <span class="chapter-number">${chapter.order}</span>
+              ${cleanTitle}
+            </h3>
+            ${generateChapterSummary(chapter)}
+          </article>
+        </a>
       `;
     }
     

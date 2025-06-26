@@ -9,27 +9,139 @@
 </head>
 <body>
   <div class="layout">
-    <aside class="sidebar">
-      {{navigation}}
-    </aside>
+    <!-- Header with search and controls -->
+    <header class="header">
+      <div class="header-content">
+        <button class="menu-toggle" id="menu-toggle" aria-label="Toggle sidebar">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12h18M3 6h18M3 18h18"/>
+          </svg>
+        </button>
+        
+        <div class="header-title">
+          <a href="../index.html">Epic EHI Missing Manual</a>
+        </div>
+        
+        <div class="search-container">
+          <input type="search" 
+                 class="search-input" 
+                 placeholder="Search documentation... (Press '/' to focus)"
+                 id="search-input"
+                 aria-label="Search documentation">
+          <div class="search-results" id="search-results"></div>
+        </div>
+        
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
+          <svg class="theme-icon-light" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"/>
+            <path d="M12 1v6m0 6v6m-9-9h6m6 0h6m-4.24-4.24l-1.41 1.41m-5.66 5.66l-1.41 1.41m12.72-12.72l-1.41 1.41m-5.66 5.66l-1.41 1.41"/>
+          </svg>
+          <svg class="theme-icon-dark" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+      </div>
+    </header>
     
-    <main class="main-content">
-      <article class="chapter">
-        {{content}}
-      </article>
+    <!-- Content wrapper for sidebar + main -->
+    <div class="content-wrapper">
+      <!-- Sidebar navigation -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Collapse sidebar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="11 17 6 12 11 7"/>
+              <polyline points="18 17 13 12 18 7"/>
+            </svg>
+          </button>
+        </div>
+        <div class="sidebar-content">
+          {{navigation}}
+        </div>
+      </aside>
       
-      <footer class="chapter-footer">
-        {{prev-next-links}}
-      </footer>
-    </main>
+      <!-- Main content -->
+      <main class="main-content">
+        <article class="chapter">
+          {{content}}
+        </article>
+        
+        <footer class="chapter-footer">
+          {{prev-next-links}}
+        </footer>
+      </main>
+    </div>
   </div>
   
   <!-- SQL.js for interactive queries -->
   <script src="../lib/sql.js/sql-wasm.js"></script>
   <script src="../assets/js/sql-widget.js"></script>
   
-  <!-- Keyboard navigation -->
+  <!-- Search functionality -->
+  <script src="../lib/fuse.min.js"></script>
+  <script src="../assets/js/search.js"></script>
+  
+  <!-- Navigation and UI interactions -->
   <script>
+    // Mobile menu toggle
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebar = document.getElementById('sidebar');
+    const layout = document.querySelector('.layout');
+    
+    menuToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('sidebar-open');
+      layout.classList.toggle('sidebar-open');
+    });
+    
+    // Sidebar collapse toggle
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    
+    // Check for saved sidebar state
+    const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    const mainContent = document.querySelector('.main-content');
+    if (sidebarCollapsed) {
+      sidebar.classList.add('collapsed');
+      mainContent.style.marginLeft = '0';
+    }
+    
+    sidebarToggle.addEventListener('click', () => {
+      const isCollapsed = sidebar.classList.toggle('collapsed');
+      const mainContent = document.querySelector('.main-content');
+      if (isCollapsed) {
+        mainContent.style.marginLeft = '0';
+      } else {
+        mainContent.style.marginLeft = '';
+      }
+      localStorage.setItem('sidebarCollapsed', isCollapsed);
+    });
+    
+    // Theme toggle
+    const themeToggle = document.getElementById('theme-toggle');
+    const html = document.documentElement;
+    
+    // Check for saved theme preference or default to light
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    html.setAttribute('data-theme', currentTheme);
+    
+    themeToggle.addEventListener('click', () => {
+      const newTheme = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      html.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    });
+    
+    // Search functionality (placeholder - will be implemented with Fuse.js)
+    const searchInput = document.getElementById('search-input');
+    const searchResults = document.getElementById('search-results');
+    
+    // Focus search on '/' key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === '/' && document.activeElement !== searchInput) {
+        e.preventDefault();
+        searchInput.focus();
+      }
+    });
+    
+    // Keyboard navigation
     document.addEventListener('keydown', (e) => {
       if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
       

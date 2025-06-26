@@ -4,15 +4,15 @@ let isDbLoading = false;
 let dbLoadPromise = null;
 
 // Initialize SQL.js and load the database
-async function initSqlJs() {
+async function initDatabase() {
   if (sqliteDb) return sqliteDb;
   if (isDbLoading) return dbLoadPromise;
   
   isDbLoading = true;
   dbLoadPromise = (async () => {
     try {
-      // Initialize SQL.js
-      const sqlPromise = initSqlJs({
+      // Initialize SQL.js with proper config
+      const sqlPromise = window.initSqlJs({
         locateFile: file => `../lib/sql.js/${file}`
       });
       
@@ -49,7 +49,7 @@ async function runQuery(widgetId) {
   
   try {
     // Ensure database is loaded
-    const db = await initSqlJs();
+    const db = await initDatabase();
     
     // Get query from textarea
     const query = textarea.value.trim();
@@ -100,6 +100,10 @@ function resetQuery(widgetId) {
   const originalQuery = widget.dataset.originalQuery;
   textarea.value = originalQuery;
   
+  // Trigger resize
+  textarea.style.height = 'auto';
+  textarea.style.height = textarea.scrollHeight + 'px';
+  
   // Restore build-time results
   const buildResults = JSON.parse(widget.dataset.buildResults);
   if (buildResults.error) {
@@ -111,7 +115,7 @@ function resetQuery(widgetId) {
 
 // Display query results in a table
 function displayResults(container, results, columns) {
-  if (results.length === 0) {
+  if (!results || results.length === 0) {
     container.innerHTML = '<div class="sql-no-results">No results returned</div>';
     return;
   }
@@ -129,9 +133,18 @@ function displayResults(container, results, columns) {
   html += '<tbody>';
   for (const row of results) {
     html += '<tr>';
-    for (let i = 0; i < columns.length; i++) {
-      const value = row[i];
-      html += `<td>${escapeHtml(value)}</td>`;
+    if (Array.isArray(row)) {
+      // Handle array format from SQL.js
+      for (let i = 0; i < columns.length; i++) {
+        const value = row[i];
+        html += `<td>${escapeHtml(value)}</td>`;
+      }
+    } else {
+      // Handle object format from build results
+      for (const col of columns) {
+        const value = row[col];
+        html += `<td>${escapeHtml(value)}</td>`;
+      }
     }
     html += '</tr>';
   }
@@ -173,14 +186,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     // Auto-resize textarea
-    textarea.addEventListener('input', () => {
+    const autoResize = () => {
       textarea.style.height = 'auto';
       textarea.style.height = textarea.scrollHeight + 'px';
-    });
+    };
+    
+    textarea.addEventListener('input', autoResize);
+    
+    // Initial resize on page load
+    autoResize();
   });
   
   // Pre-load database in background
-  initSqlJs().catch(error => {
+  initDatabase().catch(error => {
     console.error('Failed to pre-load database:', error);
   });
 });

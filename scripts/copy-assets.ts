@@ -31,6 +31,11 @@ export async function copyStaticAssets() {
     await $`curl -L ${url} -o dist/lib/sql.js/${file}`;
   }
   
+  // Download Fuse.js for search functionality
+  console.log("📥 Downloading Fuse.js...");
+  const fuseVersion = "6.6.2";
+  await $`curl -L https://cdn.jsdelivr.net/npm/fuse.js@${fuseVersion}/dist/fuse.min.js -o dist/lib/fuse.min.js`;
+  
   // Copy any additional static files (favicon, etc.)
   if (await exists("src/assets/favicon.ico")) {
     await $`cp src/assets/favicon.ico dist/`;

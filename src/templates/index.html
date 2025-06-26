@@ -14,45 +14,100 @@
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-  <header class="site-header">
-    <div class="header-content">
-      <h1>Epic EHI Export</h1>
-      <p class="subtitle">The Missing Manual</p>
-      <p class="tagline">An interactive guide to understanding Epic's Electronic Health Information exports</p>
-    </div>
-  </header>
-  
-  <main class="index-main">
-    <section class="intro">
-      <p>
-        This manual provides practical guidance for working with Epic EHI exports. 
-        Each chapter includes interactive SQL queries you can run directly in your browser
-        against a real Epic schema database.
-      </p>
-      <div class="features">
-        <div class="feature">
-          <h3>📊 Interactive SQL</h3>
-          <p>Run and modify queries in your browser</p>
+  <div class="layout">
+    <!-- Header with search -->
+    <header class="header">
+      <div class="header-content">
+        <button class="menu-toggle" id="menu-toggle" aria-label="Toggle navigation">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12h18M3 6h18M3 18h18"/>
+          </svg>
+        </button>
+        
+        <div class="header-title">
+          <a href="index.html">Epic EHI Missing Manual</a>
         </div>
-        <div class="feature">
-          <h3>🏗️ Real Schema</h3>
-          <p>Explore actual Epic table structures</p>
+        
+        <div class="search-container">
+          <input type="search" 
+                 class="search-input" 
+                 placeholder="Search documentation... (Press '/' to focus)"
+                 id="search-input"
+                 aria-label="Search documentation">
+          <div class="search-results" id="search-results"></div>
         </div>
-        <div class="feature">
-          <h3>🚀 No Setup</h3>
-          <p>Everything runs locally in your browser</p>
-        </div>
+        
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
+          <svg class="theme-icon-light" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"/>
+            <path d="M12 1v6m0 6v6m-9-9h6m6 0h6m-4.24-4.24l-1.41 1.41m-5.66 5.66l-1.41 1.41m12.72-12.72l-1.41 1.41m-5.66 5.66l-1.41 1.41"/>
+          </svg>
+          <svg class="theme-icon-dark" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
       </div>
-    </section>
+    </header>
     
-    {{content}}
-  </main>
+    <!-- Main content area for index -->
+    <main class="index-page">
+      <div class="hero">
+        <h1>Epic EHI Export: The Missing Manual</h1>
+        <p class="tagline">A practical guide to understanding Epic's Electronic Health Information exports, with interactive SQL examples you can run in your browser.</p>
+      </div>
+      
+      <div class="content-wrapper">
+        {{content}}
+      </div>
+      
+      <footer class="site-footer">
+        <p>
+          An open resource for the Epic community • 
+          <a href="https://github.com/yourusername/epic-ehi-manual">Contribute on GitHub</a>
+        </p>
+      </footer>
+    </main>
+  </div>
   
-  <footer class="site-footer">
-    <p>
-      Built with ❤️ for the Epic community • 
-      <a href="https://github.com/yourusername/epic-ehi-manual">GitHub</a>
-    </p>
-  </footer>
+  <!-- Search functionality -->
+  <script src="lib/fuse.min.js"></script>
+  <script src="assets/js/search.js"></script>
+  
+  <!-- Navigation and UI interactions -->
+  <script>
+    // Mobile menu toggle
+    const menuToggle = document.getElementById('menu-toggle');
+    const layout = document.querySelector('.layout');
+    
+    menuToggle.addEventListener('click', () => {
+      layout.classList.toggle('mobile-nav-open');
+    });
+    
+    // Theme toggle
+    const themeToggle = document.getElementById('theme-toggle');
+    const html = document.documentElement;
+    
+    // Check for saved theme preference or default to light
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    html.setAttribute('data-theme', currentTheme);
+    
+    themeToggle.addEventListener('click', () => {
+      const newTheme = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      html.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    });
+    
+    // Search functionality (placeholder - will be implemented with Fuse.js)
+    const searchInput = document.getElementById('search-input');
+    const searchResults = document.getElementById('search-results');
+    
+    // Focus search on '/' key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === '/' && document.activeElement !== searchInput) {
+        e.preventDefault();
+        searchInput.focus();
+      }
+    });
+  </script>
 </body>
 </html>

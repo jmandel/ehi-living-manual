@@ -139,7 +139,11 @@ renderer.code = function(code: string, language: string | undefined) {
 };
 
 // Allow raw HTML to pass through (for our widgets)
-renderer.html = function(html: string) {
+renderer.html = function(html: any) {
+  // Check if it's a token object or string
+  if (typeof html === 'object' && html.raw) {
+    return html.raw;
+  }
   return html;
 };
 
@@ -153,6 +157,7 @@ export async function processChapters(): Promise<Chapter[]> {
   // Reset query counter for each build
   queryCounter = 0;
   
+  // First pass: parse all chapters and collect metadata
   for (const file of markdownFiles) {
     const content = await Bun.file(path.join(chaptersDir, file)).text();
     
@@ -164,8 +169,8 @@ export async function processChapters(): Promise<Chapter[]> {
     const orderMatch = file.match(/^(\d+\.\d+)/);
     const order = orderMatch ? orderMatch[1] : '99';
     
-    // Create slug from filename
-    const slug = file.replace('.md', '').replace(/^\d+\.\d+-/, '');
+    // Create slug from filename (keep the numbers for better URL organization)
+    const slug = file.replace('.md', '');
     
     // Pre-process markdown to handle example-query tags
     const preprocessedContent = preprocessMarkdown(content);
@@ -174,17 +179,6 @@ export async function processChapters(): Promise<Chapter[]> {
     marked.use({ renderer, breaks: false, gfm: true });
     const html = marked.parse(preprocessedContent);
     
-    // Apply template
-    const chapterHtml = await applyChapterTemplate({
-      title,
-      content: html,
-      slug,
-      order
-    }, chapters, file);
-    
-    // Write chapter file
-    await Bun.write(`dist/chapters/${slug}.html`, chapterHtml);
-    
     chapters.push({
       filename: file,
       title,
@@ -192,6 +186,19 @@ export async function processChapters(): Promise<Chapter[]> {
       slug,
       content: html
     });
+  }
+  
+  // Second pass: generate HTML with complete navigation
+  for (const chapter of chapters) {
+    const chapterHtml = await applyChapterTemplate({
+      title: chapter.title,
+      content: chapter.content,
+      slug: chapter.slug,
+      order: chapter.order
+    }, chapters, chapter.filename);
+    
+    // Write chapter file
+    await Bun.write(`dist/chapters/${chapter.slug}.html`, chapterHtml);
   }
   
   return chapters;
@@ -232,8 +239,7 @@ function generateNavigation(chapters: Chapter[], currentSlug: string): string {
     grouped.get(mainNum)!.push(chapter);
   }
   
-  let nav = '<div class="sidebar-content">';
-  nav += '<h2><a href="../index.html">Epic EHI Missing Manual</a></h2>';
+  let nav = '<h2><a href="../index.html">Epic EHI Missing Manual</a></h2>';
   nav += '<nav class="chapter-nav">';
   
   const partNames: Record<string, string> = {
@@ -250,15 +256,17 @@ function generateNavigation(chapters: Chapter[], currentSlug: string): string {
     
     for (const chapter of chapters) {
       const isActive = chapter.slug === currentSlug;
+      // Remove "Chapter X.X:" prefix from title if present
+      const cleanTitle = chapter.title.replace(/^Chapter\s+\d+\.\d+:\s*/, '');
       nav += `<li class="${isActive ? 'active' : ''}">`;
-      nav += `<a href="${chapter.slug}.html">${chapter.order} ${chapter.title}</a>`;
+      nav += `<a href="${chapter.slug}.html">${cleanTitle}</a>`;
       nav += '</li>';
     }
     
     nav += '</ul></div>';
   }
   
-  nav += '</nav></div>';
+  nav += '</nav>';
   return nav;
 }
 
@@ -266,13 +274,15 @@ function generatePrevNextLinks(prev: Chapter | null, next: Chapter | null): stri
   let links = '<div class="prev-next-nav">';
   
   if (prev) {
-    links += `<a href="${prev.slug}.html" class="prev-link">← ${prev.title}</a>`;
+    const cleanTitle = prev.title.replace(/^Chapter\s+\d+\.\d+:\s*/, '');
+    links += `<a href="${prev.slug}.html" class="prev-link">← ${cleanTitle}</a>`;
   } else {
     links += '<span class="prev-link disabled">← Previous</span>';
   }
   
   if (next) {
-    links += `<a href="${next.slug}.html" class="next-link">${next.title} →</a>`;
+    const cleanTitle = next.title.replace(/^Chapter\s+\d+\.\d+:\s*/, '');
+    links += `<a href="${next.slug}.html" class="next-link">${cleanTitle} →</a>`;
   } else {
     links += '<span class="next-link disabled">Next →</span>';
   }
