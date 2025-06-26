@@ -40,8 +40,16 @@ export async function copyStaticAssets() {
   const fuseVersion = "6.6.2";
   await $`curl -L https://cdn.jsdelivr.net/npm/fuse.js@${fuseVersion}/dist/fuse.min.js -o dist/lib/fuse.min.js`;
   
-  // Copy any additional static files (favicon, etc.)
+  // Download Mermaid.js for diagrams
+  console.log("📥 Downloading Mermaid.js...");
+  const mermaidVersion = "10.6.1";
+  await $`curl -L https://cdn.jsdelivr.net/npm/mermaid@${mermaidVersion}/dist/mermaid.min.js -o dist/lib/mermaid.min.js`;
+  
+  // Copy favicon files
+  if (await exists("src/assets/favicon.svg")) {
+    await $`cp src/assets/favicon.svg dist/assets/`;
+  }
   if (await exists("src/assets/favicon.ico")) {
-    await $`cp src/assets/favicon.ico dist/`;
+    await $`cp src/assets/favicon.ico dist/assets/`;
   }
 }

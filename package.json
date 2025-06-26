@@ -11,10 +11,11 @@
     "deploy": "bun run build && gh-pages -d dist"
   },
   "dependencies": {
-    "marked": "latest",
-    "highlight.js": "latest",
+    "@mermaid-js/mermaid-cli": "^11.6.0",
     "@sqlite.org/sqlite-wasm": "latest",
-    "gh-pages": "latest"
+    "gh-pages": "latest",
+    "highlight.js": "latest",
+    "marked": "latest"
   },
   "devDependencies": {
     "@types/bun": "latest",

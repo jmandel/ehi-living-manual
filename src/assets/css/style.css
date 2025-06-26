@@ -22,6 +22,13 @@
   --color-error: #d1242f;
   --color-warning: #fb8500;
   
+  --color-danger-bg: #fee7e7;
+  --color-danger-text: #d1242f;
+  --color-danger-border: #ffc1c1;
+  
+  --color-active-bg: #e1e4e8;
+  --color-active-text: #24292e;
+  
   /* Layout */
   --header-height: 56px;
   --sidebar-width: 340px;
@@ -72,6 +79,13 @@
     --color-border-light: #21262d;
     
     --color-primary-light: #2f3b8c;
+    
+    --color-danger-bg: rgba(248, 81, 73, 0.1);
+    --color-danger-text: #ff9492;
+    --color-danger-border: rgba(248, 81, 73, 0.4);
+    
+    --color-active-bg: rgba(88, 101, 242, 0.15);
+    --color-active-text: #e6edf3;
   }
   
   /* Ensure SQL widget text is visible in dark mode */
@@ -178,10 +192,15 @@ body {
   width: 100%;
   padding: var(--space-sm) var(--space-md);
   background: var(--color-bg-secondary);
+  color: var(--color-text);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   font-size: 0.875rem;
   transition: all var(--transition-fast);
+}
+
+.search-input::placeholder {
+  color: var(--color-text-secondary);
 }
 
 .search-input:focus {
@@ -229,8 +248,27 @@ body {
   width: var(--sidebar-width);
   background: var(--color-bg-secondary);
   overflow-y: auto;
+  overflow-x: hidden;
   z-index: 10;
   border-right: 1px solid var(--color-border);
+}
+
+/* Custom scrollbar styling for sidebar */
+.sidebar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-secondary);
 }
 
 @media (min-width: 1400px) {
@@ -258,11 +296,17 @@ body {
 }
 
 .sidebar-content {
-  padding: var(--space-lg) var(--space-lg) var(--space-xl);
+  padding: var(--space-md) 0 var(--space-xl) var(--space-lg);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .sidebar-content h2 {
-  display: none; /* Hide redundant title in GitBook style */
+  font-size: 1.25rem;
+  margin: 0 0 var(--space-lg) 0;
+  padding-bottom: var(--space-lg);
+  border-bottom: 1px solid var(--color-border);
+  font-weight: 600;
 }
 
 .sidebar-content h2 a {
@@ -270,7 +314,22 @@ body {
   text-decoration: none;
 }
 
+.sidebar-content h2 a:hover {
+  color: var(--color-primary);
+}
+
+/* Hide the home link only on desktop where it's redundant */
+@media (min-width: 1025px) {
+  .sidebar-content h2 {
+    display: none;
+  }
+}
+
 /* Chapter navigation */
+.chapter-nav {
+  padding-right: var(--space-lg);
+}
+
 .chapter-nav h3 {
   font-size: 0.875rem;
   font-weight: 600;
@@ -305,9 +364,11 @@ body {
 }
 
 .chapter-nav li.active a {
-  background: var(--color-primary-light);
-  color: var(--color-primary-dark);
-  font-weight: 500;
+  background: var(--color-active-bg);
+  color: var(--color-active-text);
+  font-weight: 600;
+  border-left: 3px solid var(--color-primary);
+  padding-left: calc(var(--space-md) - 3px);
 }
 
 /* Main content */
@@ -315,6 +376,7 @@ body {
   margin-left: var(--sidebar-width);
   flex: 1;
   background: var(--color-bg);
+  overflow-x: hidden;
   min-height: calc(100vh - var(--header-height));
   padding-bottom: var(--space-2xl);
   overflow-x: hidden;
@@ -326,6 +388,22 @@ body {
   max-width: var(--content-max-width);
   margin: 0 auto;
   padding: var(--space-2xl) var(--space-xl) var(--space-2xl) var(--space-2xl);
+  overflow-x: visible;
+}
+
+/* Ensure tables and code blocks handle overflow properly */
+.chapter .table-container,
+.chapter .sql-widget,
+.chapter pre {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.chapter table {
+  max-width: 100%;
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Typography */
@@ -732,7 +810,8 @@ pre code {
 
 /* Copy and Edit Buttons */
 .copy-button,
-.edit-github-button {
+.edit-github-button,
+.playground-button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -751,7 +830,8 @@ pre code {
 }
 
 .copy-button:hover,
-.edit-github-button:hover {
+.edit-github-button:hover,
+.playground-button:hover {
   background: var(--color-bg-tertiary);
   border-color: var(--color-primary);
   color: var(--color-primary);
@@ -764,7 +844,8 @@ pre code {
 }
 
 .copy-button svg,
-.edit-github-button svg {
+.edit-github-button svg,
+.playground-button svg {
   width: 14px;
   height: 14px;
   flex-shrink: 0;
@@ -772,7 +853,8 @@ pre code {
 
 /* Header button specific styles */
 .header .copy-button,
-.header .edit-github-button {
+.header .edit-github-button,
+.header .playground-button {
   margin-right: var(--space-sm);
 }
 
@@ -830,6 +912,111 @@ pre code {
   border-color: var(--primary-dark);
   color: white;
   box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+}
+
+/* Playground specific styles */
+.playground-button {
+  background: var(--color-primary);
+  color: white !important;
+  border-color: var(--color-primary);
+}
+
+.playground-button:hover {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+  color: white !important;
+  transform: translateY(-1px);
+}
+
+/* SQL Widget error messages */
+.sql-error {
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger-text);
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-danger-border);
+  margin: 1rem 0;
+  font-family: monospace;
+}
+
+/* SQL results row count */
+.row-count {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+/* Mermaid diagrams */
+.mermaid-widget {
+  margin: 1.5rem 0;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.mermaid-tabs {
+  display: flex;
+  background: var(--color-bg-tertiary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.mermaid-tab {
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all var(--transition-base);
+}
+
+.mermaid-tab:hover {
+  background: var(--color-bg-secondary);
+  color: var(--color-text);
+}
+
+.mermaid-tab.active {
+  background: var(--color-bg-secondary);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.mermaid-content {
+  padding: 1rem;
+}
+
+.mermaid-diagram {
+  overflow-x: auto;
+  text-align: center;
+}
+
+.mermaid {
+  display: block;
+  width: 100%;
+  min-height: 400px;
+  text-align: center;
+}
+
+.mermaid svg {
+  max-width: 100%;
+  height: auto;
+  min-height: 300px;
+}
+
+.mermaid-code pre {
+  margin: 0;
+  background: var(--color-bg);
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+}
+
+.mermaid-code code {
+  color: var(--color-text);
+  font-size: 0.875rem;
 }
 
 /* Collaboration section */

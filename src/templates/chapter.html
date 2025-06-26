@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{title}} - Epic EHI Missing Manual</title>
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
   <link rel="stylesheet" href="../assets/css/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
 </head>
@@ -30,6 +32,13 @@
                  aria-label="Search documentation">
           <div class="search-results" id="search-results"></div>
         </div>
+        
+        <a href="../playground.html" class="playground-button" title="SQL Playground">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          <span>Playground</span>
+        </a>
         
         <button class="copy-button" id="copy-markdown" title="Copy chapter content for AI/LLM context">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -99,8 +108,73 @@
   <script src="../lib/fuse.min.js"></script>
   <script src="../assets/js/search.js"></script>
   
+  <!-- Mermaid for diagrams -->
+  <script src="../lib/mermaid.min.js"></script>
+  
   <!-- Navigation and UI interactions -->
   <script>
+    // Initialize Mermaid
+    mermaid.initialize({ 
+      startOnLoad: true,
+      theme: 'dark',
+      flowchart: {
+        useMaxWidth: true,
+        htmlLabels: true,
+        rankSpacing: 80,
+        nodeSpacing: 30,
+        curve: 'basis'
+      },
+      themeVariables: {
+        primaryColor: '#5865f2',
+        primaryTextColor: '#e6edf3',
+        primaryBorderColor: '#30363d',
+        lineColor: '#8b949e',
+        secondaryColor: '#161b22',
+        tertiaryColor: '#1f242b',
+        background: '#0d1117',
+        mainBkg: '#161b22',
+        secondBkg: '#1f242b',
+        tertiaryBkg: '#0d1117',
+        primaryBorderColor: '#30363d',
+        secondaryBorderColor: '#21262d',
+        tertiaryBorderColor: '#30363d',
+        noteBorderColor: '#30363d',
+        noteBkgColor: '#161b22',
+        noteTextColor: '#e6edf3',
+        actorBorder: '#30363d',
+        actorBkg: '#161b22',
+        actorTextColor: '#e6edf3',
+        actorLineColor: '#8b949e',
+        labelBoxBkgColor: '#161b22',
+        labelBoxBorderColor: '#30363d',
+        labelTextColor: '#e6edf3',
+        loopTextColor: '#e6edf3',
+        activationBorderColor: '#5865f2',
+        activationBkgColor: '#1f242b',
+        sequenceNumberColor: '#0d1117'
+      }
+    });
+    
+    // Function to switch mermaid tabs
+    window.showMermaidTab = function(mermaidId, tab) {
+      const widget = document.getElementById(`widget-${mermaidId}`);
+      const diagramDiv = document.getElementById(`diagram-${mermaidId}`);
+      const codeDiv = document.getElementById(`code-${mermaidId}`);
+      const tabs = widget.querySelectorAll('.mermaid-tab');
+      
+      tabs.forEach(t => t.classList.remove('active'));
+      
+      if (tab === 'diagram') {
+        diagramDiv.style.display = 'block';
+        codeDiv.style.display = 'none';
+        tabs[0].classList.add('active');
+      } else {
+        diagramDiv.style.display = 'none';
+        codeDiv.style.display = 'block';
+        tabs[1].classList.add('active');
+      }
+    };
+    
     // Mobile menu toggle
     const menuToggle = document.getElementById('menu-toggle');
     const sidebar = document.getElementById('sidebar');

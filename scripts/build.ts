@@ -3,6 +3,7 @@
 import { $ } from "bun";
 import { processChapters } from "./process-markdown";
 import { generateTableOfContents } from "./generate-toc";
+import { generatePlayground } from "./generate-playground";
 import { copyStaticAssets } from "./copy-assets";
 import { buildSearchIndex } from "./build-search-index";
 
@@ -21,6 +22,10 @@ async function build() {
   // Generate index page with table of contents
   console.log("📚 Generating table of contents...");
   await generateTableOfContents(chapters);
+
+  // Generate playground page
+  console.log("🎮 Generating playground page...");
+  await generatePlayground(chapters);
 
   // Build search index
   console.log("🔍 Building search index...");
