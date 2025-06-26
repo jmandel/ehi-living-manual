@@ -12,7 +12,7 @@ async function build() {
   // Clean and create dist directory
   console.log("📁 Cleaning dist directory...");
   await $`rm -rf dist`;
-  await $`mkdir -p dist/{chapters,assets/{css,js,data},lib}`;
+  await $`mkdir -p dist/{chapters,assets/{css,js,data,markdown},lib}`;
 
   // Process markdown chapters
   console.log("📝 Processing markdown chapters...");

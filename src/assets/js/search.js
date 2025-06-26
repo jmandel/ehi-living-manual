@@ -89,8 +89,12 @@
       const item = result.item;
       const snippet = getSnippet(item.content, query);
       
+      // Adjust URL based on current location
+      const isInChapter = window.location.pathname.includes('/chapters/');
+      const url = isInChapter ? `../${item.url}` : item.url;
+      
       return `
-        <a href="${item.url}" class="search-result" data-index="${index}">
+        <a href="${url}" class="search-result" data-index="${index}">
           <div class="search-result-title">${highlightText(item.title, query)}</div>
           <div class="search-result-snippet">${snippet}</div>
         </a>

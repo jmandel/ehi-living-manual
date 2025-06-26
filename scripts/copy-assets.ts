@@ -15,6 +15,10 @@ export async function copyStaticAssets() {
   // Copy SQLite database
   await $`cp src/data/ehi.sqlite dist/assets/data/`;
   
+  // Copy markdown files for copying functionality
+  console.log("📄 Copying markdown files...");
+  await $`cp -r src/chapters/*.md dist/assets/markdown/`;
+  
   // Download and copy SQL.js WASM files
   console.log("📥 Downloading SQL.js WASM files...");
   

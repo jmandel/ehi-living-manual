@@ -28,11 +28,17 @@ const db = new Database("src/data/ehi.sqlite", { readonly: true });
 
 // Pre-process markdown to handle example-query tags
 function preprocessMarkdown(content: string): string {
+  // Step 1: Extract and protect example-query tags from markdown processing
   const queryRegex = /<example-query\s+description="([^"]+)">([\s\S]*?)<\/example-query>/g;
+  const placeholders: { [key: string]: string } = {};
+  let placeholderIndex = 0;
   
-  return content.replace(queryRegex, (match, description, query) => {
+  // Replace example-query tags with placeholders
+  const contentWithPlaceholders = content.replace(queryRegex, (match, description, query) => {
     queryCounter++;
     const queryId = `query-${queryCounter}`;
+    const placeholderKey = `SQL_WIDGET_PLACEHOLDER_${placeholderIndex}`;
+    placeholderIndex++;
     
     // Execute the query at build time
     let results = [];
@@ -61,7 +67,10 @@ function preprocessMarkdown(content: string): string {
         .replace(/'/g, '&#39;');
     };
     
-    const escapedQuery = escapeHtml(query.trim());
+    // Clean up the query - remove extra whitespace but preserve formatting
+    const cleanQuery = query.trim();
+    
+    const escapedQuery = escapeHtml(cleanQuery);
     const escapedResults = escapeHtml(JSON.stringify({ results, columns: columnNames, error }));
     
     // Generate the widget HTML
@@ -77,16 +86,45 @@ function preprocessMarkdown(content: string): string {
     </div>
   </div>
   <div class="sql-widget-editor">
-    <textarea class="sql-query-editor" rows="6">${query.trim()}</textarea>
+    <textarea class="sql-query-editor" rows="6">${cleanQuery}</textarea>
   </div>
   <div class="sql-widget-results">
     ${error ? `<div class="sql-error">${escapeHtml(error)}</div>` : renderResultsTable(results, columnNames)}
   </div>
 </div>`;
     
-    // Return as a marked passthrough token so it's not processed
-    return `<div class="sql-widget-placeholder">${widgetHtml}</div>`;
+    // Store the widget HTML and return a placeholder
+    placeholders[placeholderKey] = `\n\n<div class="sql-widget-placeholder">${widgetHtml}</div>\n\n`;
+    return placeholderKey;
   });
+  
+  // Step 2: Let marked process the content (with placeholders instead of widgets)
+  // This is done in the calling function
+  
+  // Step 3: Create a function to restore widgets after markdown processing
+  (globalThis as any).__restoreSqlWidgets = (html: string) => {
+    let restoredHtml = html;
+    for (const [placeholder, widget] of Object.entries(placeholders)) {
+      // Escape special regex characters in the placeholder
+      const escapedPlaceholder = placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      
+      // Replace the placeholder with various possible wrapper patterns
+      // It might be wrapped in <p>, <strong>, or both
+      const patterns = [
+        `<p><strong>${escapedPlaceholder}</strong></p>`,
+        `<p>${escapedPlaceholder}</p>`,
+        `<strong>${escapedPlaceholder}</strong>`,
+        escapedPlaceholder
+      ];
+      
+      for (const pattern of patterns) {
+        restoredHtml = restoredHtml.replace(new RegExp(pattern, 'g'), widget);
+      }
+    }
+    return restoredHtml;
+  };
+  
+  return contentWithPlaceholders;
 }
 
 function renderResultsTable(results: any[], columns: string[]): string {
@@ -177,7 +215,13 @@ export async function processChapters(): Promise<Chapter[]> {
     
     // Parse markdown with custom renderer
     marked.use({ renderer, breaks: false, gfm: true });
-    const html = marked.parse(preprocessedContent);
+    let html = marked.parse(preprocessedContent);
+    
+    // Restore SQL widgets after markdown processing
+    if ((globalThis as any).__restoreSqlWidgets) {
+      html = (globalThis as any).__restoreSqlWidgets(html);
+      delete (globalThis as any).__restoreSqlWidgets;
+    }
     
     chapters.push({
       filename: file,

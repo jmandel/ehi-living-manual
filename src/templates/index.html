@@ -37,6 +37,14 @@
           <div class="search-results" id="search-results"></div>
         </div>
         
+        <button class="copy-button" id="copy-all-markdown" title="Copy entire book for AI/LLM context">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          <span>Copy Book</span>
+        </button>
+        
         <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
           <svg class="theme-icon-light" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="5"/>
@@ -58,12 +66,52 @@
       
       <div class="content-wrapper">
         {{content}}
+        
+        <section class="collaborate-section">
+          <div class="collaborate-content">
+            <h2>Join the Community</h2>
+            <p>This manual is a living document, and we need your help to make it better!</p>
+            <div class="collaborate-actions">
+              <a href="https://github.com/jmandel/ehi-missing-manual" class="collaborate-button primary">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                </svg>
+                <span>View on GitHub</span>
+              </a>
+              <a href="https://github.com/jmandel/ehi-missing-manual/issues/new" class="collaborate-button">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span>Report an Issue</span>
+              </a>
+              <a href="https://github.com/jmandel/ehi-missing-manual/blob/main/CONTRIBUTING.md" class="collaborate-button">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+                <span>Contributing Guide</span>
+              </a>
+            </div>
+            <div class="collaborate-info">
+              <h3>Ways to Contribute:</h3>
+              <ul>
+                <li>Fix typos or clarify confusing sections</li>
+                <li>Add new SQL examples and use cases</li>
+                <li>Share your EHI export experiences and gotchas</li>
+                <li>Improve the interactive SQL playground</li>
+                <li>Translate content for international users</li>
+              </ul>
+            </div>
+          </div>
+        </section>
       </div>
       
       <footer class="site-footer">
         <p>
-          An open resource for the Epic community • 
-          <a href="https://github.com/yourusername/epic-ehi-manual">Contribute on GitHub</a>
+          © <span id="current-year"></span> Epic EHI Missing Manual • 
+          <a href="https://github.com/jmandel/ehi-missing-manual">Contribute on GitHub</a>
         </p>
       </footer>
     </main>
@@ -108,6 +156,91 @@
         searchInput.focus();
       }
     });
+    
+    // Set current year in footer
+    document.getElementById('current-year').textContent = new Date().getFullYear();
+    
+    // Copy all chapters functionality
+    const copyAllButton = document.getElementById('copy-all-markdown');
+    if (copyAllButton) {
+      copyAllButton.addEventListener('click', async () => {
+      try {
+        // List of all chapter files in order
+        const chapterFiles = [
+          '00.1-read-me-first.md',
+          '00.2-five-minute-test-drive.md',
+          '01.1-chronicles-clarity-ehi.md',
+          '01.2-anatomy-of-ehi-export.md',
+          '01.3-setting-up-your-sandbox.md',
+          '02.1-epic-speak-crash-course.md',
+          '02.2-the-identifier-trinity.md',
+          '02.3-the-id-line-paradigm.md',
+          '02.4-dates-and-times.md',
+          '02.5-naming-and-reference-data.md',
+          '02.6-history-and-audit-trails.md',
+          '03.1-patients-and-encounters.md',
+          '03.2-providers.md',
+          '03.3-orders-and-results.md',
+          '03.4-locations-and-adt.md',
+          '04.1-hospital-vs-professional-billing.md',
+          '04.2-buckets-and-transactions.md',
+          '04.3-arpb-transactions.md',
+          '04.4-coverage-and-filing-order.md',
+          '05.1-parsing-epic-tsvs.md',
+          '05.2-data-quality-validation-recipes.md',
+          '05.3-reusable-join-library.md',
+          '05.4-cross-domain-examples.md',
+          '05.5-transforming-for-warehouses.md',
+          '06.1-glossary-a-z.md',
+          '06.2-quick-cards.md',
+          '06.3-sql-recipe-library.md'
+        ];
+        
+        // Update button to show loading state
+        const originalHTML = copyAllButton.innerHTML;
+        copyAllButton.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg><span>Loading...</span>';
+        copyAllButton.disabled = true;
+        
+        // Fetch all markdown files
+        const markdownContents = await Promise.all(
+          chapterFiles.map(async (file) => {
+            const response = await fetch(`assets/markdown/${file}`);
+            if (!response.ok) throw new Error(`Failed to fetch ${file}`);
+            return await response.text();
+          })
+        );
+        
+        // Combine all markdown with separators
+        const combinedMarkdown = markdownContents.join('\n\n---\n\n');
+        
+        // Copy to clipboard
+        await navigator.clipboard.writeText(combinedMarkdown);
+        
+        // Update button temporarily
+        copyAllButton.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg><span>Copied!</span>';
+        copyAllButton.style.backgroundColor = 'var(--success)';
+        copyAllButton.style.borderColor = 'var(--success)';
+        
+        setTimeout(() => {
+          copyAllButton.innerHTML = originalHTML;
+          copyAllButton.style.backgroundColor = '';
+          copyAllButton.style.borderColor = '';
+          copyAllButton.disabled = false;
+        }, 2000);
+      } catch (error) {
+        console.error('Failed to copy all chapters:', error);
+        copyAllButton.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg><span>Failed</span>';
+        copyAllButton.style.backgroundColor = 'var(--danger)';
+        copyAllButton.style.borderColor = 'var(--danger)';
+        setTimeout(() => {
+          copyAllButton.innerHTML = originalHTML;
+          copyAllButton.disabled = false;
+          copyAllButton.style.backgroundColor = '';
+          copyAllButton.style.borderColor = '';
+        }, 2000);
+      }
+    });
+    }
   </script>
 </body>
 </html>

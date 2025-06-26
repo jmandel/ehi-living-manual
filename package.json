@@ -19,7 +19,8 @@
   "devDependencies": {
     "@types/bun": "latest",
     "@types/marked": "latest",
-    "bun-types": "latest"
+    "bun-types": "latest",
+    "node-html-parser": "^7.0.1"
   },
   "peerDependencies": {
     "typescript": "^5"
