@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{title}} - Epic EHI Missing Manual</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      {{navigation}}
+    </aside>
+    
+    <main class="main-content">
+      <article class="chapter">
+        {{content}}
+      </article>
+      
+      <footer class="chapter-footer">
+        {{prev-next-links}}
+      </footer>
+    </main>
+  </div>
+  
+  <!-- SQL.js for interactive queries -->
+  <script src="../lib/sql.js/sql-wasm.js"></script>
+  <script src="../assets/js/sql-widget.js"></script>
+  
+  <!-- Keyboard navigation -->
+  <script>
+    document.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+      
+      if (e.key === 'j' || e.key === 'ArrowLeft') {
+        const prevLink = document.querySelector('.prev-link:not(.disabled)');
+        if (prevLink) prevLink.click();
+      } else if (e.key === 'k' || e.key === 'ArrowRight') {
+        const nextLink = document.querySelector('.next-link:not(.disabled)');
+        if (nextLink) nextLink.click();
+      }
+    });
+  </script>
+</body>
+</html>
