@@ -11,12 +11,16 @@ async function initDatabase() {
   isDbLoading = true;
   dbLoadPromise = (async () => {
     try {
+      // Determine the base path based on current location
+      const isInChapter = window.location.pathname.includes('/chapters/');
+      const basePath = isInChapter ? '../' : '';
+      
       // Initialize SQL.js with proper config
       const sqlPromise = window.initSqlJs({
-        locateFile: file => `../lib/sql.js/${file}`
+        locateFile: file => `${basePath}lib/sql.js/${file}`
       });
       
-      const dataPromise = fetch('../assets/data/ehi.sqlite').then(res => res.arrayBuffer());
+      const dataPromise = fetch(`${basePath}assets/data/ehi.sqlite`).then(res => res.arrayBuffer());
       const [SQL, buf] = await Promise.all([sqlPromise, dataPromise]);
       
       // Create database from buffer
