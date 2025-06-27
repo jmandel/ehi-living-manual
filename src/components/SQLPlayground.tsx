@@ -55,7 +55,7 @@ export default function SQLPlayground() {
     return a.id.localeCompare(b.id);
   });
 
-  // Load query from URL on mount
+  // Load query from URL on mount and run initial query
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const urlQuery = params.get('q');
@@ -72,6 +72,9 @@ export default function SQLPlayground() {
         console.error('Failed to decode query from URL', e);
       }
     }
+    
+    // Run the initial query on page load
+    handleRunQuery();
   }, []);
 
   // Update URL when query changes
