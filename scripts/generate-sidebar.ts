@@ -1,4 +1,4 @@
-import { readdir } from 'fs/promises';
+import { readdir, readFile } from 'fs/promises';
 import { join } from 'path';
 
 interface SidebarItem {
@@ -21,6 +21,9 @@ const chapterGroups = {
   '06': 'Additional Topics'
 };
 
+// Words that should remain uppercase
+const UPPERCASE_WORDS = ['ehi', 'adt', 'id', 'arpb', 'sql', 'api', 'csn', 'pat', 'enc'];
+
 function formatChapterTitle(filename: string): string {
   // Remove number prefix and extension, convert to title case
   const name = filename
@@ -30,7 +33,19 @@ function formatChapterTitle(filename: string): string {
   
   return name
     .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .map(word => {
+      const lowerWord = word.toLowerCase();
+      // Check if this word should be uppercase
+      if (UPPERCASE_WORDS.includes(lowerWord)) {
+        return word.toUpperCase();
+      }
+      // Words that are already all uppercase in filename should stay uppercase
+      if (word === word.toUpperCase() && word.length > 1) {
+        return word;
+      }
+      // Otherwise, apply title case
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
     .join(' ');
 }
 
