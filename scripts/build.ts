@@ -10,6 +10,15 @@ import { buildSearchIndex } from "./build-search-index";
 async function build() {
   console.log("🔨 Building Epic EHI Missing Manual...");
 
+  // Validate SQL queries first
+  console.log("🔍 Validating SQL queries...");
+  try {
+    await $`bun run scripts/validate-sql.ts`;
+  } catch (error) {
+    console.error("❌ SQL validation failed! Fix the errors above before building.");
+    process.exit(1);
+  }
+
   // Clean and create dist directory
   console.log("📁 Cleaning dist directory...");
   await $`rm -rf dist`;
