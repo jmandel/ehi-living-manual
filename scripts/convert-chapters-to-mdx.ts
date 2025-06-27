@@ -25,6 +25,25 @@ function parseChapterInfo(filename: string): ChapterInfo {
   return { filename, number, slug, title: `${number} ${title}` };
 }
 
+async function extractTitle(content: string): Promise<string> {
+  // Extract the actual title from the markdown content
+  const lines = content.split('\n');
+  
+  // Find the first heading line
+  for (const line of lines) {
+    if (line.startsWith('#')) {
+      // Remove the # prefix and "Chapter X.X: " prefix if present
+      return line
+        .replace(/^#+\s*/, '')
+        .replace(/^Chapter\s+\d+\.\d+:\s*/i, '')
+        .trim();
+    }
+  }
+  
+  // Fallback to filename-based title
+  return '';
+}
+
 async function extractDescription(content: string): Promise<string> {
   // Try to find the first paragraph after the title
   const lines = content.split('\n');
@@ -62,7 +81,11 @@ async function convertChapterToMdx(sourcePath: string, destPath: string) {
   const content = await readFile(sourcePath, 'utf-8');
   const filename = sourcePath.split('/').pop()!;
   const info = parseChapterInfo(filename);
+  const extractedTitle = await extractTitle(content);
   const description = await extractDescription(content);
+  
+  // Use the extracted title if available, otherwise fall back to the parsed title
+  const finalTitle = extractedTitle || info.title;
   
   let queryCounter = 0;
   let mermaidCounter = 0;
@@ -106,7 +129,7 @@ async function convertChapterToMdx(sourcePath: string, destPath: string) {
   
   // Build the MDX file
   const mdx = `---
-title: "${escapeYaml(info.title)}"
+title: "${escapeYaml(finalTitle)}"
 description: "${escapeYaml(description)}"
 ---
 
