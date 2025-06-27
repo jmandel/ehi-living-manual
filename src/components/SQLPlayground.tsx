@@ -1,7 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { executeQuery } from '../lib/sql-executor';
-import type { QueryResult } from '../lib/sql-executor';
 import allQueries from '../data/all-queries.json';
+
+// Match the actual return type from sql-executor
+interface QueryResult {
+  results: any[] | null;
+  columns: string[] | null;
+  error: string | null;
+  executionTime: number;
+}
 
 interface SavedQuery {
   name: string;
@@ -24,6 +31,8 @@ export default function SQLPlayground() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedExample, setSelectedExample] = useState<string>('');
+  const [copyButtonText, setCopyButtonText] = useState('📋 Copy Query');
+  const [shareButtonText, setShareButtonText] = useState('🔗 Share');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   // Map the queries array to our format
@@ -129,13 +138,15 @@ export default function SQLPlayground() {
     } else {
       // Fallback to clipboard
       navigator.clipboard.writeText(shareUrl);
-      alert('Link copied to clipboard!');
+      setShareButtonText('✓ Copied!');
+      setTimeout(() => setShareButtonText('🔗 Share'), 2000);
     }
   };
 
   const handleCopyQuery = () => {
     navigator.clipboard.writeText(query);
-    alert('Query copied to clipboard!');
+    setCopyButtonText('✓ Copied!');
+    setTimeout(() => setCopyButtonText('📋 Copy Query'), 2000);
   };
 
   return (
@@ -174,10 +185,10 @@ export default function SQLPlayground() {
         
         <div className="playground-actions">
           <button onClick={handleCopyQuery} className="sql-copy-button" title="Copy Query">
-            📋 Copy Query
+            {copyButtonText}
           </button>
           <button onClick={handleShare} className="sql-share-button" title="Share Query">
-            🔗 Share
+            {shareButtonText}
           </button>
         </div>
       </div>
@@ -213,10 +224,10 @@ export default function SQLPlayground() {
         </div>
       )}
 
-      {results && (
+      {results && results.results && (
         <div className="sql-results">
           <div className="sql-results-header">
-            <span>Results ({results.values.length} rows)</span>
+            <span>Results ({results.results.length} rows)</span>
           </div>
           <div className="sql-results-container">
             <table className="sql-results-table">
@@ -228,10 +239,10 @@ export default function SQLPlayground() {
                 </tr>
               </thead>
               <tbody>
-                {results.values.map((row, i) => (
+                {results.results.map((row, i) => (
                   <tr key={i}>
-                    {row.map((val, j) => (
-                      <td key={j}>{val === null ? 'NULL' : String(val)}</td>
+                    {results.columns.map((col, j) => (
+                      <td key={j}>{row[col] === null ? 'NULL' : String(row[col])}</td>
                     ))}
                   </tr>
                 ))}
