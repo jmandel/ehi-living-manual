@@ -39,6 +39,9 @@ export default defineConfig({
         './src/styles/mermaid.css',
         './src/styles/sql-playground.css',
       ],
+      components: {
+        SocialIcons: './src/components/overrides/SocialIcons.astro',
+      },
     }),
     react(),
   ],

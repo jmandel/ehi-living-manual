@@ -26,17 +26,26 @@ export default function SQLPlayground() {
   const [selectedExample, setSelectedExample] = useState<string>('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
-  // Convert the queries object to a flat array
-  const exampleQueries: ExampleQuery[] = Object.entries(allQueries).flatMap(([chapterId, chapter]: [string, any]) => {
-    return Object.entries(chapter.queries).map(([queryId, queryData]: [string, any]) => ({
-      id: `${chapterId}-${queryId}`,
-      name: queryData.description || queryId,
-      description: queryData.description || '',
-      query: queryData.query,
-      chapterNumber: chapter.chapterNumber,
-      chapterTitle: chapter.chapterTitle
-    }));
-  }).sort((a, b) => a.chapterNumber.localeCompare(b.chapterNumber));
+  // Map the queries array to our format
+  const exampleQueries: ExampleQuery[] = (allQueries as any[]).map((query: any) => {
+    // Extract chapter info from the query ID
+    const [chapterNumber, ...rest] = query.chapterId.split('-');
+    const chapterTitle = rest.join(' ').replace(/-/g, ' ');
+    
+    return {
+      id: query.id,
+      name: query.description || 'Query ' + query.index,
+      description: query.description || '',
+      query: query.originalQuery,
+      chapterNumber: chapterNumber,
+      chapterTitle: chapterTitle
+    };
+  }).sort((a, b) => {
+    // Sort by chapter number, then by the query ID
+    const chapterCompare = a.chapterNumber.localeCompare(b.chapterNumber);
+    if (chapterCompare !== 0) return chapterCompare;
+    return a.id.localeCompare(b.id);
+  });
 
   // Load query from URL on mount
   useEffect(() => {
