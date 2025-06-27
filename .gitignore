@@ -6,10 +6,8 @@ dist-final/
 # generated types
 .astro/
 
-# generated MDX files from markdown chapters
-src/content/docs/*.mdx
-!src/content/docs/index.mdx
-!src/content/docs/playground.mdx
+# generated MDX files from markdown chapters (only chapter files)
+src/content/docs/[0-9][0-9].[0-9]-*.mdx
 
 # dependencies
 node_modules/

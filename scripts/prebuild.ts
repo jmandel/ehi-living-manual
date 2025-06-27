@@ -15,18 +15,15 @@ if (!existsSync(dbPath)) {
   console.log('✅ Database ehi.sqlite already exists');
 }
 
-// Clean the docs folder (but keep the content config and playground)
+// Clean generated chapter files from docs folder
 const docsDir = join(process.cwd(), 'src/content/docs');
 if (existsSync(docsDir)) {
-  console.log('📁 Cleaning docs folder...');
-  const files = execSync(`find ${docsDir} -name "*.mdx" -o -name "*.md"`).toString().trim().split('\n');
+  console.log('📁 Cleaning generated chapter files...');
+  // Only delete files matching the chapter pattern: ##.#-*.mdx
+  const files = execSync(`find ${docsDir} -regex ".*/[0-9][0-9]\\.[0-9]-.*\\.mdx$"`).toString().trim().split('\n');
   files.forEach(file => {
     if (file && existsSync(file)) {
-      // Don't delete playground.mdx, index.mdx, or other non-chapter files
-      const filename = file.split('/').pop();
-      if (filename !== 'playground.mdx' && filename !== 'index.mdx') {
-        rmSync(file);
-      }
+      rmSync(file);
     }
   });
 }
