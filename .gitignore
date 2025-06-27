@@ -9,6 +9,7 @@ dist-final/
 # generated MDX files from markdown chapters
 src/content/docs/*.mdx
 !src/content/docs/index.mdx
+!src/content/docs/playground.mdx
 
 # dependencies
 node_modules/
@@ -32,3 +33,6 @@ pnpm-debug.log*
 
 # temporary database generation files
 scripts/my-health-data-ehi-wip/
+
+# temporary preview directory
+temp-preview/

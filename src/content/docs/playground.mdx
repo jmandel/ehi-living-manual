@@ -1,0 +1,77 @@
+---
+title: "SQL Playground"
+description: "Interactive SQL editor for exploring Epic EHI data"
+---
+
+import SQLPlayground from '../../components/SQLPlayground.tsx';
+
+# SQL Playground
+
+Welcome to the interactive SQL playground! Here you can write and execute SQL queries against the Epic EHI sample database directly in your browser.
+
+<SQLPlayground client:load />
+
+## Available Tables
+
+The database contains the following key tables:
+
+### Core Patient Data
+- **PATIENT** - Patient demographics and identifiers
+- **PATIENT_ID** - Additional patient identifiers
+- **PAT_ENC** - Patient encounters
+- **PAT_ENC_DX** - Encounter diagnoses
+
+### Clinical Data
+- **ORDER_PROC** - Procedure orders
+- **ORDER_MED** - Medication orders
+- **PROC_RES** - Procedure results
+- **RESULT** - Lab results
+
+### Administrative Data
+- **CLARITY_DEP** - Departments
+- **CLARITY_LOC** - Locations
+- **CLARITY_EMP** - Providers/Employees
+- **CLARITY_EPP** - Provider profiles
+
+### Billing Data
+- **ARPB_TX_VOID** - Professional billing transactions
+- **HSB_TRANSACTIONS** - Hospital billing transactions
+- **COVERAGE** - Insurance coverage
+
+## Quick Start Examples
+
+Try these queries to get started:
+
+1. **List all patients:**
+   ```sql
+   SELECT PAT_ID, PAT_NAME, BIRTH_DATE 
+   FROM PATIENT 
+   LIMIT 10;
+   ```
+
+2. **Find recent encounters:**
+   ```sql
+   SELECT p.PAT_NAME, e.CONTACT_DATE, e.ENC_TYPE_TITLE
+   FROM PAT_ENC e
+   JOIN PATIENT p ON e.PAT_ID = p.PAT_ID
+   ORDER BY e.CONTACT_DATE DESC
+   LIMIT 20;
+   ```
+
+3. **View available tables:**
+   ```sql
+   SELECT name 
+   FROM sqlite_master 
+   WHERE type='table' 
+   ORDER BY name;
+   ```
+
+## Features
+
+- **Live Execution** - Queries run instantly in your browser using SQL.js
+- **URL Sharing** - Your queries are saved to the URL for easy sharing
+- **Example Library** - Load pre-built queries from the manual chapters
+- **Keyboard Shortcuts** - Press Ctrl+Enter to run queries quickly
+- **Export Results** - Copy query results to use elsewhere
+
+Happy querying! 🚀

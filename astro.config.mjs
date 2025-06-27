@@ -37,6 +37,7 @@ export default defineConfig({
         './src/styles/custom.css',
         './src/styles/sql-widget.css',
         './src/styles/mermaid.css',
+        './src/styles/sql-playground.css',
       ],
     }),
     react(),

@@ -15,14 +15,18 @@ if (!existsSync(dbPath)) {
   console.log('✅ Database ehi.sqlite already exists');
 }
 
-// Clean the docs folder (but keep the content config)
+// Clean the docs folder (but keep the content config and playground)
 const docsDir = join(process.cwd(), 'src/content/docs');
 if (existsSync(docsDir)) {
   console.log('📁 Cleaning docs folder...');
   const files = execSync(`find ${docsDir} -name "*.mdx" -o -name "*.md"`).toString().trim().split('\n');
   files.forEach(file => {
     if (file && existsSync(file)) {
-      rmSync(file);
+      // Don't delete playground.mdx or other non-chapter files
+      const filename = file.split('/').pop();
+      if (filename !== 'playground.mdx') {
+        rmSync(file);
+      }
     }
   });
 }
