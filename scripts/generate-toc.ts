@@ -34,7 +34,7 @@ export async function generateTableOfContents(chapters: Chapter[]) {
     const firstChapter = partChapters[0];
     
     tocHtml += `<section class="toc-part">`;
-    tocHtml += `<h2><a href="chapters/${firstChapter.slug}.html" class="part-header-link">Part ${part}: ${partNames[part] || 'Additional Topics'}</a></h2>`;
+    tocHtml += `<h2><a href="chapters/${firstChapter.slug}" class="part-header-link">Part ${part}: ${partNames[part] || 'Additional Topics'}</a></h2>`;
     tocHtml += '<div class="toc-chapters">';
     
     for (const chapter of partChapters) {
@@ -42,7 +42,7 @@ export async function generateTableOfContents(chapters: Chapter[]) {
       const cleanTitle = chapter.title.replace(/^Chapter \d+\.\d+:\s*/, '');
       
       tocHtml += `
-        <a href="chapters/${chapter.slug}.html" class="chapter-card-link">
+        <a href="chapters/${chapter.slug}" class="chapter-card-link">
           <article class="chapter-card">
             <h3>
               <span class="chapter-number">${chapter.order}</span>
@@ -62,7 +62,7 @@ export async function generateTableOfContents(chapters: Chapter[]) {
   // Generate JavaScript array of all chapter files
   const chapterFilesList = chapters
     .sort((a, b) => a.order.localeCompare(b.order))
-    .map(chapter => `'${chapter.slug}.md'`)
+    .map(chapter => `'${chapter.slug.replace('.html', '.md')}'`)
     .join(',\n          ');
   
   // Replace placeholders in template
