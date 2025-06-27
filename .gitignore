@@ -36,3 +36,10 @@ scripts/my-health-data-ehi-wip/
 
 # temporary preview directory
 temp-preview/
+
+# generated query results (these are processed at build time)
+src/data/processed-queries.json
+src/data/all-processed-queries.json
+
+# processed content files
+src/content/processed/
