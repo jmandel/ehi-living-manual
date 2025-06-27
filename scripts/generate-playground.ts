@@ -1,6 +1,24 @@
 import type { Chapter } from "./process-markdown";
 
 export async function generatePlayground(chapters: Chapter[]) {
+  // Extract all example queries from chapters
+  const exampleQueries: Array<{description: string, query: string, chapter: string}> = [];
+  
+  for (const chapter of chapters) {
+    const exampleQueryRegex = /<example-query description="([^"]+)">\n([\s\S]*?)\n<\/example-query>/g;
+    let match;
+    while ((match = exampleQueryRegex.exec(chapter.markdown)) !== null) {
+      exampleQueries.push({
+        description: match[1],
+        query: match[2].trim(),
+        chapter: chapter.title
+      });
+    }
+  }
+  
+  // Write queries to a separate JSON file
+  await Bun.write("dist/assets/data/example-queries.json", JSON.stringify(exampleQueries, null, 2));
+  
   const template = await Bun.file("src/templates/chapter.html").text();
   
   // Generate navigation for playground (same as chapters)
@@ -14,6 +32,13 @@ export async function generatePlayground(chapters: Chapter[]) {
     <div class="playground-container">
       <div class="playground-form">
         <div class="form-group">
+          <label for="example-select">Example Queries</label>
+          <select id="example-select" class="example-select">
+            <option value="">Select an example query...</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
           <label for="query-name">Query Name</label>
           <input type="text" id="query-name" placeholder="Give your query a descriptive name">
         </div>
@@ -25,7 +50,7 @@ export async function generatePlayground(chapters: Chapter[]) {
             <div class="sql-widget-controls">
               <button class="sql-widget-run" onclick="runPlaygroundQuery()">Run Query (Ctrl+Enter)</button>
               <button class="sql-widget-reset" onclick="clearPlayground()">Clear</button>
-              <button class="sql-widget-share" onclick="shareQuery()" id="share-button">Copy Link</button>
+              <button class="sql-widget-reset" onclick="shareQuery()" id="share-button">Copy Link</button>
             </div>
             <div class="sql-widget-results" id="playground-results">
               <p class="loading-message">Loading database...</p>
@@ -78,30 +103,55 @@ export async function generatePlayground(chapters: Chapter[]) {
         padding: 2rem;
       }
       
-      #share-button {
-        background: #10b981;
-        color: white;
-        border-color: #10b981;
-      }
-      
-      #share-button:hover {
-        background: #059669;
-        border-color: #059669;
-        color: white;
-      }
+      /* Remove the green styling - let it inherit from .sql-widget-reset */
       
       .sql-widget-controls button {
         margin-right: 0.5rem;
+      }
+      
+      .example-select {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-sm);
+        font-size: 1rem;
+        background: var(--color-bg);
+        color: var(--color-text);
+        cursor: pointer;
+      }
+      
+      .example-select:hover {
+        border-color: var(--color-primary);
+      }
+      
+      .example-select:focus {
+        outline: none;
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px var(--color-primary-light);
       }
     </style>
 
     <script>
       // Playground specific functions
       let playgroundDb = null;
+      let exampleQueries = [];
       
       // Initialize playground when database is ready
       document.addEventListener('DOMContentLoaded', async () => {
         try {
+          // Fetch example queries
+          const queriesResponse = await fetch('assets/data/example-queries.json');
+          exampleQueries = await queriesResponse.json();
+          
+          // Populate the dropdown
+          const selectElement = document.getElementById('example-select');
+          exampleQueries.forEach((query, idx) => {
+            const option = document.createElement('option');
+            option.value = idx;
+            option.textContent = query.description + ' (' + query.chapter + ')';
+            selectElement.appendChild(option);
+          });
+          
           // Wait for main database to initialize
           playgroundDb = await initDatabase();
           document.getElementById('playground-results').innerHTML = '<p>Database loaded. Ready to run queries!</p>';
@@ -113,6 +163,18 @@ export async function generatePlayground(chapters: Chapter[]) {
           document.getElementById('sql-query').addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.key === 'Enter') {
               e.preventDefault();
+              runPlaygroundQuery();
+            }
+          });
+          
+          // Add example query dropdown handler
+          document.getElementById('example-select').addEventListener('change', (e) => {
+            const idx = e.target.value;
+            if (idx !== '') {
+              const example = exampleQueries[parseInt(idx)];
+              document.getElementById('query-name').value = example.description;
+              document.getElementById('sql-query').value = example.query;
+              // Auto-run the query
               runPlaygroundQuery();
             }
           });
