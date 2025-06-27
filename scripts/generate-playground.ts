@@ -19,7 +19,15 @@ export async function generatePlayground(chapters: Chapter[]) {
   // Write queries to a separate JSON file
   await Bun.write("dist/assets/data/example-queries.json", JSON.stringify(exampleQueries, null, 2));
   
-  const template = await Bun.file("src/templates/chapter.html").text();
+  let template = await Bun.file("src/templates/chapter.html").text();
+  
+  // Fix paths for playground at root level (remove ../ prefix)
+  template = template
+    .replace(/href="\.\.\/assets\//g, 'href="assets/')
+    .replace(/src="\.\.\/assets\//g, 'src="assets/')
+    .replace(/href="\.\.\/lib\//g, 'href="lib/')
+    .replace(/src="\.\.\/lib\//g, 'src="lib/')
+    .replace(/href="\.\.\/index\.html"/g, 'href="index.html"');
   
   // Generate navigation for playground (same as chapters)
   const navigation = generateNavigation(chapters, 'playground');
