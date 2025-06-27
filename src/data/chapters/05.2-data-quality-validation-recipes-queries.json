@@ -1,0 +1,360 @@
+[
+  {
+    "id": "05.2-data-quality-validation-recipes-0",
+    "originalQuery": "-- Get a rapid overview of potential data issues\nSELECT 'Future-dated encounters' as issue_type, COUNT(*) as count\nFROM PAT_ENC\nWHERE CONTACT_DATE > date('now')\n\nUNION ALL\n\nSELECT 'Encounters missing department', COUNT(*)\nFROM PAT_ENC\nWHERE DEPARTMENT_ID IS NULL OR DEPARTMENT_ID = ''\n\nUNION ALL\n\nSELECT 'Discharge before admission', COUNT(*)\nFROM PAT_ENC\nWHERE HOSP_DISCHRG_TIME < HOSP_ADMSN_TIME\n  AND HOSP_DISCHRG_TIME IS NOT NULL\n  AND HOSP_ADMSN_TIME IS NOT NULL;",
+    "description": "Quick data quality health check",
+    "chapterId": "05.2-data-quality-validation-recipes",
+    "index": 0,
+    "results": [
+      {
+        "issue_type": "Future-dated encounters",
+        "count": 74
+      },
+      {
+        "issue_type": "Encounters missing department",
+        "count": 66
+      },
+      {
+        "issue_type": "Discharge before admission",
+        "count": 2
+      }
+    ],
+    "columns": [
+      "issue_type",
+      "count"
+    ],
+    "error": null
+  },
+  {
+    "id": "05.2-data-quality-validation-recipes-1",
+    "originalQuery": "-- Check how Epic handles empty values across different fields\nWITH null_analysis AS (\n  SELECT \n    'EMAIL_ADDRESS' as field_name,\n    SUM(CASE WHEN EMAIL_ADDRESS IS NULL THEN 1 ELSE 0 END) as null_count,\n    SUM(CASE WHEN EMAIL_ADDRESS = '' THEN 1 ELSE 0 END) as empty_string_count,\n    SUM(CASE WHEN EMAIL_ADDRESS IS NOT NULL AND EMAIL_ADDRESS <> '' THEN 1 ELSE 0 END) as populated_count\n  FROM PATIENT\n  \n  UNION ALL\n  \n  SELECT \n    'WORK_PHONE',\n    SUM(CASE WHEN WORK_PHONE IS NULL THEN 1 ELSE 0 END),\n    SUM(CASE WHEN WORK_PHONE = '' THEN 1 ELSE 0 END),\n    SUM(CASE WHEN WORK_PHONE IS NOT NULL AND WORK_PHONE <> '' THEN 1 ELSE 0 END)\n  FROM PATIENT\n  \n  UNION ALL\n  \n  SELECT \n    'HOME_PHONE',\n    SUM(CASE WHEN HOME_PHONE IS NULL THEN 1 ELSE 0 END),\n    SUM(CASE WHEN HOME_PHONE = '' THEN 1 ELSE 0 END),\n    SUM(CASE WHEN HOME_PHONE IS NOT NULL AND HOME_PHONE <> '' THEN 1 ELSE 0 END)\n  FROM PATIENT\n)\nSELECT \n  field_name,\n  null_count,\n  empty_string_count,\n  populated_count,\n  ROUND(populated_count * 100.0 / (null_count + empty_string_count + populated_count), 2) as pct_populated\nFROM null_analysis\nORDER BY pct_populated DESC;",
+    "description": "Analyze NULL vs empty string patterns",
+    "chapterId": "05.2-data-quality-validation-recipes",
+    "index": 1,
+    "results": [
+      {
+        "field_name": "EMAIL_ADDRESS",
+        "null_count": 0,
+        "empty_string_count": 0,
+        "populated_count": 1,
+        "pct_populated": 100
+      },
+      {
+        "field_name": "HOME_PHONE",
+        "null_count": 0,
+        "empty_string_count": 0,
+        "populated_count": 1,
+        "pct_populated": 100
+      },
+      {
+        "field_name": "WORK_PHONE",
+        "null_count": 0,
+        "empty_string_count": 1,
+        "populated_count": 0,
+        "pct_populated": 0
+      }
+    ],
+    "columns": [
+      "field_name",
+      "null_count",
+      "empty_string_count",
+      "populated_count",
+      "pct_populated"
+    ],
+    "error": null
+  },
+  {
+    "id": "05.2-data-quality-validation-recipes-2",
+    "originalQuery": "-- Example of a cleaned patient view that treats empty strings as NULL\n-- Note: This is a read-only database, so we can't actually create views\n-- CREATE VIEW IF NOT EXISTS v_patient_cleaned AS\nSELECT \n  PAT_ID,\n  -- Convert empty strings to NULL for consistency\n  NULLIF(PAT_NAME, '') as PAT_NAME,\n  NULLIF(EMAIL_ADDRESS, '') as EMAIL_ADDRESS,\n  NULLIF(WORK_PHONE, '') as WORK_PHONE,\n  -- Keep actual values where empty string might have meaning\n  HOME_PHONE,  -- Empty might mean \"no home phone\"\n  -- Dates should already be NULL if missing\n  BIRTH_DATE,\n  -- Address components - empty string might mean \"verified as blank\"\n  NULLIF(CITY, '') as CITY,\n  NULLIF(ZIP, '') as ZIP\nFROM PATIENT;\n\n-- Verify the standardization\nSELECT \n  'Original WORK_PHONE' as version,\n  COUNT(*) as empty_count\nFROM PATIENT \nWHERE WORK_PHONE = ''\nUNION ALL\nSELECT \n  'Cleaned WORK_PHONE',\n  COUNT(*)\nFROM v_patient_cleaned\nWHERE WORK_PHONE IS NULL;",
+    "description": "Create standardized view with consistent NULL handling",
+    "chapterId": "05.2-data-quality-validation-recipes",
+    "index": 2,
+    "results": [
+      {
+        "PAT_ID": "Z7004242",
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "EMAIL_ADDRESS": "jmandel@alum.mit.edu",
+        "WORK_PHONE": null,
+        "HOME_PHONE": "617-894-1015",
+        "BIRTH_DATE": "10/26/1982 12:00:00 AM",
+        "CITY": "MADISON",
+        "ZIP": "REDACTED"
+      }
+    ],
+    "columns": [
+      "PAT_ID",
+      "PAT_NAME",
+      "EMAIL_ADDRESS",
+      "WORK_PHONE",
+      "HOME_PHONE",
+      "BIRTH_DATE",
+      "CITY",
+      "ZIP"
+    ],
+    "error": null
+  },
+  {
+    "id": "05.2-data-quality-validation-recipes-3",
+    "originalQuery": "-- Find all types of orphaned records in one query\nWITH orphan_summary AS (\n  -- Orders without encounters\n  SELECT \n    'ORDER_PROC' as child_table,\n    'PAT_ENC' as parent_table,\n    COUNT(*) as orphan_count,\n    'Clinical' as category\n  FROM ORDER_PROC op\n  LEFT JOIN PAT_ENC pe ON op.PAT_ENC_CSN_ID = pe.PAT_ENC_CSN_ID\n  WHERE pe.PAT_ENC_CSN_ID IS NULL\n  \n  UNION ALL\n  \n  -- Hospital transactions without accounts\n  SELECT \n    'HSP_TRANSACTIONS',\n    'HSP_ACCOUNT',\n    COUNT(*),\n    'Financial'\n  FROM HSP_TRANSACTIONS ht\n  LEFT JOIN HSP_ACCOUNT ha ON ht.HSP_ACCOUNT_ID = ha.HSP_ACCOUNT_ID\n  WHERE ha.HSP_ACCOUNT_ID IS NULL\n  \n  UNION ALL\n  \n  -- Encounters without patients\n  SELECT \n    'PAT_ENC',\n    'PATIENT',\n    COUNT(*),\n    'Clinical'\n  FROM PAT_ENC pe\n  LEFT JOIN PATIENT p ON pe.PAT_ID = p.PAT_ID\n  WHERE p.PAT_ID IS NULL\n  \n  UNION ALL\n  \n  -- Diagnoses without encounters\n  SELECT \n    'PAT_ENC_DX',\n    'PAT_ENC',\n    COUNT(*),\n    'Clinical'\n  FROM PAT_ENC_DX dx\n  LEFT JOIN PAT_ENC pe ON dx.PAT_ENC_CSN_ID = pe.PAT_ENC_CSN_ID\n  WHERE pe.PAT_ENC_CSN_ID IS NULL\n)\nSELECT \n  category,\n  child_table,\n  parent_table,\n  orphan_count,\n  CASE \n    WHEN orphan_count = 0 THEN '✓ Clean'\n    WHEN orphan_count < 10 THEN '⚠ Minor Issues'\n    ELSE '✗ Needs Attention'\n  END as status\nFROM orphan_summary\nORDER BY orphan_count DESC;",
+    "description": "Comprehensive orphan detection across key relationships",
+    "chapterId": "05.2-data-quality-validation-recipes",
+    "index": 3,
+    "results": [
+      {
+        "category": "Clinical",
+        "child_table": "ORDER_PROC",
+        "parent_table": "PAT_ENC",
+        "orphan_count": 0,
+        "status": "✓ Clean"
+      },
+      {
+        "category": "Financial",
+        "child_table": "HSP_TRANSACTIONS",
+        "parent_table": "HSP_ACCOUNT",
+        "orphan_count": 0,
+        "status": "✓ Clean"
+      },
+      {
+        "category": "Clinical",
+        "child_table": "PAT_ENC",
+        "parent_table": "PATIENT",
+        "orphan_count": 0,
+        "status": "✓ Clean"
+      },
+      {
+        "category": "Clinical",
+        "child_table": "PAT_ENC_DX",
+        "parent_table": "PAT_ENC",
+        "orphan_count": 0,
+        "status": "✓ Clean"
+      }
+    ],
+    "columns": [
+      "category",
+      "child_table",
+      "parent_table",
+      "orphan_count",
+      "status"
+    ],
+    "error": null
+  },
+  {
+    "id": "05.2-data-quality-validation-recipes-4",
+    "originalQuery": "-- Deep dive into orphaned orders (if any exist)\nWITH orphaned_orders AS (\n  SELECT \n    op.*,\n    -- Check if patient exists even if encounter doesn't\n    CASE WHEN p.PAT_ID IS NOT NULL THEN 'Patient exists' ELSE 'Patient missing too' END as patient_status\n  FROM ORDER_PROC op\n  LEFT JOIN PAT_ENC pe ON op.PAT_ENC_CSN_ID = pe.PAT_ENC_CSN_ID\n  LEFT JOIN PATIENT p ON op.PAT_ID = p.PAT_ID\n  WHERE pe.PAT_ENC_CSN_ID IS NULL\n)\nSELECT \n  patient_status,\n  COUNT(*) as count,\n  MIN(ORDERING_DATE) as earliest_order,\n  MAX(ORDERING_DATE) as latest_order\nFROM orphaned_orders\nGROUP BY patient_status;",
+    "description": "Analyze patterns in orphaned records",
+    "chapterId": "05.2-data-quality-validation-recipes",
+    "index": 4,
+    "results": [],
+    "columns": [],
+    "error": null
+  },
+  {
+    "id": "05.2-data-quality-validation-recipes-5",
+    "originalQuery": "-- Check completeness of critical fields across key tables\nWITH completeness_checks AS (\n  -- Patient demographics\n  SELECT \n    'PATIENT' as table_name,\n    'BIRTH_DATE' as field_name,\n    COUNT(*) as total_records,\n    SUM(CASE WHEN BIRTH_DATE IS NULL OR BIRTH_DATE = '' THEN 1 ELSE 0 END) as missing,\n    'Demographics' as category\n  FROM PATIENT\n  \n  UNION ALL\n  \n  SELECT \n    'PATIENT',\n    'CITY',\n    COUNT(*),\n    SUM(CASE WHEN CITY IS NULL OR CITY = '' THEN 1 ELSE 0 END),\n    'Demographics'\n  FROM PATIENT\n  \n  UNION ALL\n  \n  -- Encounter essentials\n  SELECT \n    'PAT_ENC',\n    'DEPARTMENT_ID',\n    COUNT(*),\n    SUM(CASE WHEN DEPARTMENT_ID IS NULL OR DEPARTMENT_ID = '' THEN 1 ELSE 0 END),\n    'Clinical'\n  FROM PAT_ENC\n  \n  UNION ALL\n  \n  SELECT \n    'PAT_ENC',\n    'VISIT_PROV_ID',\n    COUNT(*),\n    SUM(CASE WHEN VISIT_PROV_ID IS NULL OR VISIT_PROV_ID = '' THEN 1 ELSE 0 END),\n    'Clinical'\n  FROM PAT_ENC\n  \n  UNION ALL\n  \n  -- Financial class (critical for billing)\n  SELECT \n    'PAT_ENC',\n    'FIN_CLASS_C_NAME',\n    COUNT(*),\n    SUM(CASE WHEN FIN_CLASS_C_NAME IS NULL OR FIN_CLASS_C_NAME = '' THEN 1 ELSE 0 END),\n    'Financial'\n  FROM PAT_ENC\n)\nSELECT \n  category,\n  table_name,\n  field_name,\n  total_records,\n  missing,\n  ROUND(missing * 100.0 / total_records, 2) as pct_missing,\n  CASE \n    WHEN missing = 0 THEN '✓ Complete'\n    WHEN missing * 100.0 / total_records < 5 THEN '✓ Acceptable'\n    WHEN missing * 100.0 / total_records < 20 THEN '⚠ Review Needed'\n    ELSE '✗ Critical Gap'\n  END as assessment\nFROM completeness_checks\nORDER BY pct_missing DESC;",
+    "description": "Comprehensive data completeness assessment",
+    "chapterId": "05.2-data-quality-validation-recipes",
+    "index": 5,
+    "results": [
+      {
+        "category": "Financial",
+        "table_name": "PAT_ENC",
+        "field_name": "FIN_CLASS_C_NAME",
+        "total_records": 111,
+        "missing": 111,
+        "pct_missing": 100,
+        "assessment": "✗ Critical Gap"
+      },
+      {
+        "category": "Clinical",
+        "table_name": "PAT_ENC",
+        "field_name": "DEPARTMENT_ID",
+        "total_records": 111,
+        "missing": 66,
+        "pct_missing": 59.46,
+        "assessment": "✗ Critical Gap"
+      },
+      {
+        "category": "Clinical",
+        "table_name": "PAT_ENC",
+        "field_name": "VISIT_PROV_ID",
+        "total_records": 111,
+        "missing": 66,
+        "pct_missing": 59.46,
+        "assessment": "✗ Critical Gap"
+      },
+      {
+        "category": "Demographics",
+        "table_name": "PATIENT",
+        "field_name": "BIRTH_DATE",
+        "total_records": 1,
+        "missing": 0,
+        "pct_missing": 0,
+        "assessment": "✓ Complete"
+      },
+      {
+        "category": "Demographics",
+        "table_name": "PATIENT",
+        "field_name": "CITY",
+        "total_records": 1,
+        "missing": 0,
+        "pct_missing": 0,
+        "assessment": "✓ Complete"
+      }
+    ],
+    "columns": [
+      "category",
+      "table_name",
+      "field_name",
+      "total_records",
+      "missing",
+      "pct_missing",
+      "assessment"
+    ],
+    "error": null
+  },
+  {
+    "id": "05.2-data-quality-validation-recipes-6",
+    "originalQuery": "-- Check for violations of healthcare business logic\nWITH business_violations AS (\n  -- Check 1: Discharge before admission\n  SELECT \n    'Discharge before admission' as violation_type,\n    PAT_ENC_CSN_ID,\n    HOSP_ADMSN_TIME,\n    HOSP_DISCHRG_TIME,\n    julianday(HOSP_DISCHRG_TIME) - julianday(HOSP_ADMSN_TIME) as days_difference\n  FROM PAT_ENC\n  WHERE HOSP_DISCHRG_TIME < HOSP_ADMSN_TIME\n    AND HOSP_DISCHRG_TIME IS NOT NULL\n    AND HOSP_ADMSN_TIME IS NOT NULL\n  \n  UNION ALL\n  \n  -- Check 2: Future appointments (might be valid but worth checking)\n  SELECT \n    'Future-dated encounter',\n    PAT_ENC_CSN_ID,\n    CONTACT_DATE,\n    NULL,\n    julianday(CONTACT_DATE) - julianday('now')\n  FROM PAT_ENC\n  WHERE CONTACT_DATE > date('now')\n  \n  UNION ALL\n  \n  -- Check 3: Extremely long hospital stays (>365 days)\n  SELECT \n    'Excessive length of stay',\n    PAT_ENC_CSN_ID,\n    HOSP_ADMSN_TIME,\n    HOSP_DISCHRG_TIME,\n    julianday(HOSP_DISCHRG_TIME) - julianday(HOSP_ADMSN_TIME)\n  FROM PAT_ENC\n  WHERE julianday(HOSP_DISCHRG_TIME) - julianday(HOSP_ADMSN_TIME) > 365\n    AND HOSP_DISCHRG_TIME IS NOT NULL\n    AND HOSP_ADMSN_TIME IS NOT NULL\n)\nSELECT \n  violation_type,\n  COUNT(*) as violation_count,\n  MIN(days_difference) as min_days,\n  MAX(days_difference) as max_days,\n  ROUND(AVG(days_difference), 2) as avg_days\nFROM business_violations\nGROUP BY violation_type\nORDER BY violation_count DESC;",
+    "description": "Validate critical business rules",
+    "chapterId": "05.2-data-quality-validation-recipes",
+    "index": 6,
+    "results": [
+      {
+        "violation_type": "Future-dated encounter",
+        "violation_count": 74,
+        "min_days": null,
+        "max_days": null,
+        "avg_days": null
+      },
+      {
+        "violation_type": "Discharge before admission",
+        "violation_count": 2,
+        "min_days": null,
+        "max_days": null,
+        "avg_days": null
+      }
+    ],
+    "columns": [
+      "violation_type",
+      "violation_count",
+      "min_days",
+      "max_days",
+      "avg_days"
+    ],
+    "error": null
+  },
+  {
+    "id": "05.2-data-quality-validation-recipes-7",
+    "originalQuery": "-- Identify encounters that might be duplicates\nWITH encounter_patterns AS (\n  SELECT \n    pe1.PAT_ENC_CSN_ID as csn1,\n    pe2.PAT_ENC_CSN_ID as csn2,\n    pe1.PAT_ID,\n    pe1.CONTACT_DATE,\n    pe1.DEPARTMENT_ID,\n    -- Calculate time difference in hours\n    ROUND((julianday(pe2.CONTACT_DATE) - julianday(pe1.CONTACT_DATE)) * 24, 2) as hours_apart\n  FROM PAT_ENC pe1\n  JOIN PAT_ENC pe2 \n    ON pe1.PAT_ID = pe2.PAT_ID\n    AND pe1.CONTACT_DATE = pe2.CONTACT_DATE\n    AND pe1.PAT_ENC_CSN_ID < pe2.PAT_ENC_CSN_ID\n  WHERE pe1.DEPARTMENT_ID = pe2.DEPARTMENT_ID\n    OR (pe1.DEPARTMENT_ID IS NULL AND pe2.DEPARTMENT_ID IS NULL)\n)\nSELECT \n  PAT_ID,\n  COUNT(*) as potential_duplicate_pairs,\n  MIN(hours_apart) as min_hours_apart,\n  GROUP_CONCAT(csn1 || '-' || csn2, ', ') as csn_pairs\nFROM encounter_patterns\nGROUP BY PAT_ID\nHAVING COUNT(*) > 0\nORDER BY potential_duplicate_pairs DESC;",
+    "description": "Find potential duplicate encounters",
+    "chapterId": "05.2-data-quality-validation-recipes",
+    "index": 7,
+    "results": [
+      {
+        "PAT_ID": "Z7004242",
+        "potential_duplicate_pairs": 14,
+        "min_hours_apart": null,
+        "csn_pairs": "720803470-724623985, 799951565-802802103, 829212157-829385742, 829212157-829393933, 829273579-829282937, 829385742-829393933, 829995922-830043848, 829995922-830047706, 830043848-830047706, 948004323-958134730, 958148810-991221485, 991225117-1028739468, 991225117-1028766353, 1028739468-1028766353"
+      }
+    ],
+    "columns": [
+      "PAT_ID",
+      "potential_duplicate_pairs",
+      "min_hours_apart",
+      "csn_pairs"
+    ],
+    "error": null
+  },
+  {
+    "id": "05.2-data-quality-validation-recipes-8",
+    "originalQuery": "-- Master validation query - run this for a complete health check\nWITH validation_results AS (\n  -- Category 1: Referential Integrity\n  SELECT \n    1 as check_order,\n    'Referential Integrity' as category,\n    'Encounters without Patients' as check_name,\n    COUNT(*) as issue_count,\n    CASE WHEN COUNT(*) = 0 THEN 'PASS' ELSE 'FAIL' END as status\n  FROM PAT_ENC pe\n  LEFT JOIN PATIENT p ON pe.PAT_ID = p.PAT_ID\n  WHERE p.PAT_ID IS NULL\n  \n  UNION ALL\n  \n  -- Category 2: Data Completeness\n  SELECT \n    2,\n    'Data Completeness',\n    'Encounters missing Department',\n    COUNT(*),\n    CASE WHEN COUNT(*) < 10 THEN 'WARNING' ELSE 'FAIL' END\n  FROM PAT_ENC\n  WHERE DEPARTMENT_ID IS NULL OR DEPARTMENT_ID = ''\n  \n  UNION ALL\n  \n  -- Category 3: Business Logic\n  SELECT \n    3,\n    'Business Logic',\n    'Discharge before Admission',\n    COUNT(*),\n    CASE WHEN COUNT(*) = 0 THEN 'PASS' WHEN COUNT(*) < 5 THEN 'WARNING' ELSE 'FAIL' END\n  FROM PAT_ENC\n  WHERE HOSP_DISCHRG_TIME < HOSP_ADMSN_TIME\n    AND HOSP_DISCHRG_TIME IS NOT NULL\n    AND HOSP_ADMSN_TIME IS NOT NULL\n  \n  UNION ALL\n  \n  -- Category 4: Data Anomalies\n  SELECT \n    4,\n    'Data Anomalies',\n    'Future-dated Encounters',\n    COUNT(*),\n    CASE WHEN COUNT(*) = 0 THEN 'PASS' ELSE 'WARNING' END\n  FROM PAT_ENC\n  WHERE CONTACT_DATE > date('now')\n  \n  UNION ALL\n  \n  -- Category 5: NULL Consistency\n  SELECT \n    5,\n    'NULL Consistency',\n    'Mixed NULL/Empty Strings in WORK_PHONE',\n    SUM(CASE WHEN WORK_PHONE = '' THEN 1 ELSE 0 END),\n    CASE \n      WHEN SUM(CASE WHEN WORK_PHONE = '' THEN 1 ELSE 0 END) = 0 THEN 'PASS'\n      ELSE 'INFO'\n    END\n  FROM PATIENT\n)\nSELECT \n  category,\n  check_name,\n  issue_count,\n  status,\n  CASE status\n    WHEN 'PASS' THEN '✓'\n    WHEN 'WARNING' THEN '⚠'\n    WHEN 'FAIL' THEN '✗'\n    ELSE 'ℹ'\n  END as icon\nFROM validation_results\nORDER BY \n  check_order,\n  CASE status \n    WHEN 'FAIL' THEN 1\n    WHEN 'WARNING' THEN 2\n    WHEN 'INFO' THEN 3\n    WHEN 'PASS' THEN 4\n  END;",
+    "description": "Create comprehensive validation dashboard",
+    "chapterId": "05.2-data-quality-validation-recipes",
+    "index": 8,
+    "results": [
+      {
+        "category": "Referential Integrity",
+        "check_name": "Encounters without Patients",
+        "issue_count": 0,
+        "status": "PASS",
+        "icon": "✓"
+      },
+      {
+        "category": "Data Completeness",
+        "check_name": "Encounters missing Department",
+        "issue_count": 66,
+        "status": "FAIL",
+        "icon": "✗"
+      },
+      {
+        "category": "Business Logic",
+        "check_name": "Discharge before Admission",
+        "issue_count": 2,
+        "status": "WARNING",
+        "icon": "⚠"
+      },
+      {
+        "category": "Data Anomalies",
+        "check_name": "Future-dated Encounters",
+        "issue_count": 74,
+        "status": "WARNING",
+        "icon": "⚠"
+      },
+      {
+        "category": "NULL Consistency",
+        "check_name": "Mixed NULL/Empty Strings in WORK_PHONE",
+        "issue_count": 1,
+        "status": "INFO",
+        "icon": "ℹ"
+      }
+    ],
+    "columns": [
+      "category",
+      "check_name",
+      "issue_count",
+      "status",
+      "icon"
+    ],
+    "error": null
+  },
+  {
+    "id": "05.2-data-quality-validation-recipes-9",
+    "originalQuery": "-- Quick daily validation - should run in seconds\nSELECT \n  -- Overall record counts\n  'Total Patients' as metric,\n  COUNT(*) as count,\n  NULL as details\nFROM PATIENT\n\nUNION ALL\n\nSELECT \n  'Total Encounters',\n  COUNT(*),\n  'Latest: ' || MAX(CONTACT_DATE)\nFROM PAT_ENC\n\nUNION ALL\n\n-- Key quality metrics\nSELECT \n  'Orphaned Orders',\n  COUNT(*),\n  CASE WHEN COUNT(*) > 0 THEN 'Action Required' ELSE 'Clean' END\nFROM ORDER_PROC op\nLEFT JOIN PAT_ENC pe ON op.PAT_ENC_CSN_ID = pe.PAT_ENC_CSN_ID\nWHERE pe.PAT_ENC_CSN_ID IS NULL\n\nUNION ALL\n\nSELECT \n  'Invalid Dates',\n  COUNT(*),\n  'Future: ' || COUNT(CASE WHEN CONTACT_DATE > date('now') THEN 1 END)\nFROM PAT_ENC\nWHERE CONTACT_DATE > date('now')\n  OR CONTACT_DATE < '1900-01-01'\n\nUNION ALL\n\nSELECT \n  'Data Freshness',\n  julianday('now') - julianday(MAX(CONTACT_DATE)),\n  'Days since latest encounter'\nFROM PAT_ENC;",
+    "description": "Daily data quality quick check",
+    "chapterId": "05.2-data-quality-validation-recipes",
+    "index": 9,
+    "results": [
+      {
+        "metric": "Total Patients",
+        "count": 1,
+        "details": null
+      },
+      {
+        "metric": "Total Encounters",
+        "count": 111,
+        "details": "Latest: 9/8/2020 12:00:00 AM"
+      },
+      {
+        "metric": "Orphaned Orders",
+        "count": 0,
+        "details": "Clean"
+      },
+      {
+        "metric": "Invalid Dates",
+        "count": 102,
+        "details": "Future: 74"
+      },
+      {
+        "metric": "Data Freshness",
+        "count": null,
+        "details": "Days since latest encounter"
+      }
+    ],
+    "columns": [
+      "metric",
+      "count",
+      "details"
+    ],
+    "error": null
+  }
+]

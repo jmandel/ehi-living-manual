@@ -1,0 +1,63 @@
+---
+import ChapterLayout from '../layouts/ChapterLayout.astro';
+---
+
+<ChapterLayout title="Home">
+  <div class="hero">
+    <h1>Epic EHI Manual - Astro POC</h1>
+    <p>This is a proof of concept for migrating the Epic EHI Manual to Astro.</p>
+    
+    <h2>Features Demonstrated:</h2>
+    <ul>
+      <li>Static HTML generation with Astro</li>
+      <li>Client-side SQL execution with SQL.js</li>
+      <li>Progressive enhancement (works without JavaScript)</li>
+      <li>React components for interactivity</li>
+      <li>Clean, modern design</li>
+    </ul>
+
+    <h2>Sample Chapter:</h2>
+    <p><a href="/ehi-manual/chapters/02.2-the-identifier-trinity.html">Chapter 2.2: The Identifier Trinity</a></p>
+
+    <h2>Architecture:</h2>
+    <ul>
+      <li>Build-time query extraction from markdown</li>
+      <li>Static file output for GitHub Pages</li>
+      <li>No server-side code required</li>
+      <li>SQL runs entirely in the browser via WebAssembly</li>
+    </ul>
+  </div>
+</ChapterLayout>
+
+<style>
+  .hero {
+    max-width: 800px;
+  }
+
+  .hero h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+
+  .hero h2 {
+    margin-top: 2rem;
+  }
+
+  .hero ul {
+    margin: 1rem 0;
+    padding-left: 2rem;
+  }
+
+  .hero li {
+    margin: 0.5rem 0;
+  }
+
+  .hero a {
+    color: #2563eb;
+    text-decoration: none;
+  }
+
+  .hero a:hover {
+    text-decoration: underline;
+  }
+</style>

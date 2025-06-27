@@ -1,0 +1,78 @@
+[
+  {
+    "id": "05.1-parsing-epic-tsvs-0",
+    "originalQuery": "-- Check if we have any plain text with potential special characters\nSELECT \n  COUNT(*) as total_notes,\n  SUM(CASE WHEN LENGTH(NOTE_TEXT_) > 100 THEN 1 ELSE 0 END) as long_notes\nFROM HNO_PLAIN_TEXT\nWHERE NOTE_TEXT_ IS NOT NULL;",
+    "description": "View escape sequences in clinical text",
+    "chapterId": "05.1-parsing-epic-tsvs",
+    "index": 0,
+    "results": [
+      {
+        "total_notes": 120,
+        "long_notes": 20
+      }
+    ],
+    "columns": [
+      "total_notes",
+      "long_notes"
+    ],
+    "error": null
+  },
+  {
+    "id": "05.1-parsing-epic-tsvs-1",
+    "originalQuery": "-- Look for common Epic data quality issues\nSELECT \n  COUNT(*) as total_encounters,\n  COUNT(DISTINCT PAT_ID) as unique_patients,\n  COUNT(CASE WHEN HSP_ACCOUNT_ID IS NULL THEN 1 END) as missing_har,\n  COUNT(CASE WHEN CONTACT_DATE IS NULL THEN 1 END) as missing_date,\n  COUNT(CASE WHEN HOSP_ADMSN_TYPE_C_NAME IS NULL THEN 1 END) as missing_admission_type\nFROM PAT_ENC;",
+    "description": "Check for data quality issues in encounters",
+    "chapterId": "05.1-parsing-epic-tsvs",
+    "index": 1,
+    "results": [
+      {
+        "total_encounters": 111,
+        "unique_patients": 1,
+        "missing_har": 109,
+        "missing_date": 0,
+        "missing_admission_type": 0
+      }
+    ],
+    "columns": [
+      "total_encounters",
+      "unique_patients",
+      "missing_har",
+      "missing_date",
+      "missing_admission_type"
+    ],
+    "error": null
+  },
+  {
+    "id": "05.1-parsing-epic-tsvs-2",
+    "originalQuery": "-- Check for various data patterns in our sample\nSELECT \n  'Encounters' as table_name,\n  COUNT(*) as total_rows,\n  COUNT(DISTINCT PAT_ID) as unique_patients,\n  COUNT(CASE WHEN HOSP_ADMSN_TYPE_C_NAME LIKE '%,%' THEN 1 END) as fields_with_commas,\n  MIN(CONTACT_DATE) as earliest_date,\n  MAX(CONTACT_DATE) as latest_date\nFROM PAT_ENC\nUNION ALL\nSELECT \n  'Providers' as table_name,\n  COUNT(*) as total_rows,\n  COUNT(DISTINCT PROV_ID) as unique_providers,\n  COUNT(CASE WHEN PROV_NAME LIKE '%,%' THEN 1 END) as names_with_commas,\n  NULL as earliest_date,\n  NULL as latest_date\nFROM CLARITY_SER;",
+    "description": "Verify TSV parsing concepts with real data",
+    "chapterId": "05.1-parsing-epic-tsvs",
+    "index": 2,
+    "results": [
+      {
+        "table_name": "Encounters",
+        "total_rows": 111,
+        "unique_patients": 1,
+        "fields_with_commas": 0,
+        "earliest_date": "1/25/2019 12:00:00 AM",
+        "latest_date": "9/8/2020 12:00:00 AM"
+      },
+      {
+        "table_name": "Providers",
+        "total_rows": 24,
+        "unique_patients": 24,
+        "fields_with_commas": 22,
+        "earliest_date": null,
+        "latest_date": null
+      }
+    ],
+    "columns": [
+      "table_name",
+      "total_rows",
+      "unique_patients",
+      "fields_with_commas",
+      "earliest_date",
+      "latest_date"
+    ],
+    "error": null
+  }
+]

@@ -1,0 +1,637 @@
+[
+  {
+    "id": "03.2-providers-0",
+    "originalQuery": "-- See the variety of \"providers\" in our sample data\nSELECT \n  PROV_ID,\n  PROV_NAME,\n  CASE \n    WHEN PROV_NAME LIKE '%LAB%' THEN 'Laboratory/Resource'\n    WHEN PROV_NAME LIKE '%GENERIC%' THEN 'System Provider'\n    WHEN PROV_NAME LIKE '%MYCHART%' THEN 'Patient Portal'\n    WHEN PROV_NAME LIKE '%NOT IN SYSTEM%' THEN 'Placeholder'\n    ELSE 'Human Provider'\n  END as provider_category\nFROM CLARITY_SER\nORDER BY provider_category, PROV_NAME;",
+    "description": "Explore the diversity of providers in CLARITY_SER",
+    "chapterId": "03.2-providers",
+    "index": 0,
+    "results": [
+      {
+        "PROV_ID": "536363",
+        "PROV_NAME": "BOWER, MEGAN M",
+        "provider_category": "Human Provider"
+      },
+      {
+        "PROV_ID": "529098",
+        "PROV_NAME": "BUDZBAN, NICOLE L",
+        "provider_category": "Human Provider"
+      },
+      {
+        "PROV_ID": "132946",
+        "PROV_NAME": "CAHILL, KATHRYN A",
+        "provider_category": "Human Provider"
+      },
+      {
+        "PROV_ID": "554513",
+        "PROV_NAME": "CARUFEL-WERT, TERRI",
+        "provider_category": "Human Provider"
+      },
+      {
+        "PROV_ID": "802011",
+        "PROV_NAME": "DHILLON, PUNEET S",
+        "provider_category": "Human Provider"
+      },
+      {
+        "PROV_ID": "564211",
+        "PROV_NAME": "GEORGE, JENNIFER M",
+        "provider_category": "Human Provider"
+      },
+      {
+        "PROV_ID": "805364",
+        "PROV_NAME": "GILLESPIE, BENJAMIN T",
+        "provider_category": "Human Provider"
+      },
+      {
+        "PROV_ID": "599471",
+        "PROV_NAME": "GILMOUR, AARON K",
+        "provider_category": "Human Provider"
+      },
+      {
+        "PROV_ID": "518228",
+        "PROV_NAME": "IRELAND, TRACY C",
+        "provider_category": "Human Provider"
+      },
+      {
+        "PROV_ID": "508903",
+        "PROV_NAME": "LOUGH, KAREN L",
+        "provider_category": "Human Provider"
+      },
+      {
+        "PROV_ID": "554362",
+        "PROV_NAME": "MANIX, PATRICIA A",
+        "provider_category": "Human Provider"
+      },
+      {
+        "PROV_ID": "656903",
+        "PROV_NAME": "NACK, SAMANTHA R",
+        "provider_category": "Human Provider"
+      },
+      {
+        "PROV_ID": "522795",
+        "PROV_NAME": "PEPIN, PAMELA A",
+        "provider_category": "Human Provider"
+      },
+      {
+        "PROV_ID": "219711",
+        "PROV_NAME": "PICONE, MARY A",
+        "provider_category": "Human Provider"
+      },
+      {
+        "PROV_ID": "144590",
+        "PROV_NAME": "RAMMELKAMP, ZOE L",
+        "provider_category": "Human Provider"
+      },
+      {
+        "PROV_ID": "621755",
+        "PROV_NAME": "SMITH, MARY B",
+        "provider_category": "Human Provider"
+      },
+      {
+        "PROV_ID": "597973",
+        "PROV_NAME": "THOMAS, ANGELA M",
+        "provider_category": "Human Provider"
+      },
+      {
+        "PROV_ID": "525016",
+        "PROV_NAME": "VANDYCK, KAYLA LOU A",
+        "provider_category": "Human Provider"
+      },
+      {
+        "PROV_ID": "519715",
+        "PROV_NAME": "WHITTINGTON, THERESA C",
+        "provider_category": "Human Provider"
+      },
+      {
+        "PROV_ID": "554383",
+        "PROV_NAME": "WILD, DAWN M",
+        "provider_category": "Human Provider"
+      },
+      {
+        "PROV_ID": "3724611",
+        "PROV_NAME": "MAC LAB APL",
+        "provider_category": "Laboratory/Resource"
+      },
+      {
+        "PROV_ID": "199995",
+        "PROV_NAME": "PROVIDER, NOT IN SYSTEM",
+        "provider_category": "Placeholder"
+      },
+      {
+        "PROV_ID": "8800099",
+        "PROV_NAME": "GENERIC EXTERNAL DATA PROVIDER",
+        "provider_category": "System Provider"
+      },
+      {
+        "PROV_ID": "E1011",
+        "PROV_NAME": "MYCHART, GENERIC PROVIDER",
+        "provider_category": "System Provider"
+      }
+    ],
+    "columns": [
+      "PROV_ID",
+      "PROV_NAME",
+      "provider_category"
+    ],
+    "error": null
+  },
+  {
+    "id": "03.2-providers-1",
+    "originalQuery": "-- Human providers with their patient interaction counts\nSELECT \n  s.PROV_ID,\n  s.PROV_NAME,\n  COUNT(DISTINCT pe.PAT_ENC_CSN_ID) as total_encounters,\n  COUNT(DISTINCT pe.PAT_ID) as unique_patients\nFROM CLARITY_SER s\nLEFT JOIN PAT_ENC pe ON s.PROV_ID = pe.VISIT_PROV_ID\nWHERE s.PROV_NAME NOT LIKE '%GENERIC%'\n  AND s.PROV_NAME NOT LIKE '%LAB%'\n  AND s.PROV_NAME NOT LIKE '%MYCHART%'\n  AND s.PROV_NAME NOT LIKE '%NOT IN SYSTEM%'\nGROUP BY s.PROV_ID, s.PROV_NAME\nHAVING COUNT(pe.PAT_ENC_CSN_ID) > 0\nORDER BY total_encounters DESC;",
+    "description": "Identify human providers and their encounter volumes",
+    "chapterId": "03.2-providers",
+    "index": 1,
+    "results": [
+      {
+        "PROV_ID": "144590",
+        "PROV_NAME": "RAMMELKAMP, ZOE L",
+        "total_encounters": 14,
+        "unique_patients": 1
+      },
+      {
+        "PROV_ID": "219711",
+        "PROV_NAME": "PICONE, MARY A",
+        "total_encounters": 6,
+        "unique_patients": 1
+      },
+      {
+        "PROV_ID": "802011",
+        "PROV_NAME": "DHILLON, PUNEET S",
+        "total_encounters": 6,
+        "unique_patients": 1
+      },
+      {
+        "PROV_ID": "508903",
+        "PROV_NAME": "LOUGH, KAREN L",
+        "total_encounters": 3,
+        "unique_patients": 1
+      },
+      {
+        "PROV_ID": "599471",
+        "PROV_NAME": "GILMOUR, AARON K",
+        "total_encounters": 2,
+        "unique_patients": 1
+      },
+      {
+        "PROV_ID": "132946",
+        "PROV_NAME": "CAHILL, KATHRYN A",
+        "total_encounters": 1,
+        "unique_patients": 1
+      },
+      {
+        "PROV_ID": "519715",
+        "PROV_NAME": "WHITTINGTON, THERESA C",
+        "total_encounters": 1,
+        "unique_patients": 1
+      },
+      {
+        "PROV_ID": "522795",
+        "PROV_NAME": "PEPIN, PAMELA A",
+        "total_encounters": 1,
+        "unique_patients": 1
+      },
+      {
+        "PROV_ID": "529098",
+        "PROV_NAME": "BUDZBAN, NICOLE L",
+        "total_encounters": 1,
+        "unique_patients": 1
+      },
+      {
+        "PROV_ID": "554383",
+        "PROV_NAME": "WILD, DAWN M",
+        "total_encounters": 1,
+        "unique_patients": 1
+      },
+      {
+        "PROV_ID": "656903",
+        "PROV_NAME": "NACK, SAMANTHA R",
+        "total_encounters": 1,
+        "unique_patients": 1
+      },
+      {
+        "PROV_ID": "805364",
+        "PROV_NAME": "GILLESPIE, BENJAMIN T",
+        "total_encounters": 1,
+        "unique_patients": 1
+      }
+    ],
+    "columns": [
+      "PROV_ID",
+      "PROV_NAME",
+      "total_encounters",
+      "unique_patients"
+    ],
+    "error": null
+  },
+  {
+    "id": "03.2-providers-2",
+    "originalQuery": "-- System, resource, and placeholder providers\nSELECT \n  PROV_ID,\n  PROV_NAME,\n  CASE\n    WHEN PROV_ID = '3724611' THEN 'Laboratory Resource - handles lab orders'\n    WHEN PROV_ID = '8800099' THEN 'External data interface - imports results'\n    WHEN PROV_ID = 'E1011' THEN 'Patient portal - patient-entered data'\n    WHEN PROV_ID = '199995' THEN 'Placeholder - unknown/missing provider'\n  END as provider_purpose\nFROM CLARITY_SER\nWHERE PROV_NAME LIKE '%GENERIC%'\n   OR PROV_NAME LIKE '%LAB%'\n   OR PROV_NAME LIKE '%MYCHART%'\n   OR PROV_NAME LIKE '%NOT IN SYSTEM%'\nORDER BY PROV_ID;",
+    "description": "Examine system and resource providers",
+    "chapterId": "03.2-providers",
+    "index": 2,
+    "results": [
+      {
+        "PROV_ID": "199995",
+        "PROV_NAME": "PROVIDER, NOT IN SYSTEM",
+        "provider_purpose": "Placeholder - unknown/missing provider"
+      },
+      {
+        "PROV_ID": "3724611",
+        "PROV_NAME": "MAC LAB APL",
+        "provider_purpose": "Laboratory Resource - handles lab orders"
+      },
+      {
+        "PROV_ID": "8800099",
+        "PROV_NAME": "GENERIC EXTERNAL DATA PROVIDER",
+        "provider_purpose": "External data interface - imports results"
+      },
+      {
+        "PROV_ID": "E1011",
+        "PROV_NAME": "MYCHART, GENERIC PROVIDER",
+        "provider_purpose": "Patient portal - patient-entered data"
+      }
+    ],
+    "columns": [
+      "PROV_ID",
+      "PROV_NAME",
+      "provider_purpose"
+    ],
+    "error": null
+  },
+  {
+    "id": "03.2-providers-3",
+    "originalQuery": "-- See how providers serve different roles\nWITH provider_summary AS (\n  SELECT \n    'Visit Provider' as role_type,\n    VISIT_PROV_ID as prov_id,\n    COUNT(*) as encounter_count\n  FROM PAT_ENC\n  WHERE VISIT_PROV_ID IS NOT NULL\n  GROUP BY VISIT_PROV_ID\n  \n  UNION ALL\n  \n  SELECT \n    'Primary Care Provider' as role_type,\n    PCP_PROV_ID as prov_id,\n    COUNT(*) as encounter_count\n  FROM PAT_ENC\n  WHERE PCP_PROV_ID IS NOT NULL\n  GROUP BY PCP_PROV_ID\n)\nSELECT \n  ps.role_type,\n  s.PROV_NAME,\n  ps.encounter_count\nFROM provider_summary ps\nJOIN CLARITY_SER s ON ps.prov_id = s.PROV_ID\nORDER BY ps.role_type, ps.encounter_count DESC;",
+    "description": "Analyze provider roles across encounters",
+    "chapterId": "03.2-providers",
+    "index": 3,
+    "results": [
+      {
+        "role_type": "Primary Care Provider",
+        "PROV_NAME": "DHILLON, PUNEET S",
+        "encounter_count": 68
+      },
+      {
+        "role_type": "Primary Care Provider",
+        "PROV_NAME": "RAMMELKAMP, ZOE L",
+        "encounter_count": 43
+      },
+      {
+        "role_type": "Visit Provider",
+        "PROV_NAME": "RAMMELKAMP, ZOE L",
+        "encounter_count": 14
+      },
+      {
+        "role_type": "Visit Provider",
+        "PROV_NAME": "PICONE, MARY A",
+        "encounter_count": 6
+      },
+      {
+        "role_type": "Visit Provider",
+        "PROV_NAME": "DHILLON, PUNEET S",
+        "encounter_count": 6
+      },
+      {
+        "role_type": "Visit Provider",
+        "PROV_NAME": "MAC LAB APL",
+        "encounter_count": 5
+      },
+      {
+        "role_type": "Visit Provider",
+        "PROV_NAME": "LOUGH, KAREN L",
+        "encounter_count": 3
+      },
+      {
+        "role_type": "Visit Provider",
+        "PROV_NAME": "GILMOUR, AARON K",
+        "encounter_count": 2
+      },
+      {
+        "role_type": "Visit Provider",
+        "PROV_NAME": "GENERIC EXTERNAL DATA PROVIDER",
+        "encounter_count": 2
+      },
+      {
+        "role_type": "Visit Provider",
+        "PROV_NAME": "CAHILL, KATHRYN A",
+        "encounter_count": 1
+      },
+      {
+        "role_type": "Visit Provider",
+        "PROV_NAME": "WHITTINGTON, THERESA C",
+        "encounter_count": 1
+      },
+      {
+        "role_type": "Visit Provider",
+        "PROV_NAME": "PEPIN, PAMELA A",
+        "encounter_count": 1
+      },
+      {
+        "role_type": "Visit Provider",
+        "PROV_NAME": "BUDZBAN, NICOLE L",
+        "encounter_count": 1
+      },
+      {
+        "role_type": "Visit Provider",
+        "PROV_NAME": "WILD, DAWN M",
+        "encounter_count": 1
+      },
+      {
+        "role_type": "Visit Provider",
+        "PROV_NAME": "NACK, SAMANTHA R",
+        "encounter_count": 1
+      },
+      {
+        "role_type": "Visit Provider",
+        "PROV_NAME": "GILLESPIE, BENJAMIN T",
+        "encounter_count": 1
+      }
+    ],
+    "columns": [
+      "role_type",
+      "PROV_NAME",
+      "encounter_count"
+    ],
+    "error": null
+  },
+  {
+    "id": "03.2-providers-4",
+    "originalQuery": "-- Provider-department affiliations\nSELECT \n  s.PROV_NAME,\n  d.DEPARTMENT_NAME,\n  COUNT(DISTINCT pe.PAT_ENC_CSN_ID) as encounters_together\nFROM PAT_ENC pe\nJOIN CLARITY_SER s ON pe.VISIT_PROV_ID = s.PROV_ID\nJOIN CLARITY_DEP d ON pe.DEPARTMENT_ID = d.DEPARTMENT_ID\nGROUP BY s.PROV_NAME, d.DEPARTMENT_NAME\nORDER BY encounters_together DESC\nLIMIT 10;",
+    "description": "Map providers to their primary departments",
+    "chapterId": "03.2-providers",
+    "index": 4,
+    "results": [
+      {
+        "PROV_NAME": "RAMMELKAMP, ZOE L",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "encounters_together": 14
+      },
+      {
+        "PROV_NAME": "PICONE, MARY A",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "encounters_together": 6
+      },
+      {
+        "PROV_NAME": "DHILLON, PUNEET S",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "encounters_together": 5
+      },
+      {
+        "PROV_NAME": "MAC LAB APL",
+        "DEPARTMENT_NAME": "MAC APL LABORATORY",
+        "encounters_together": 5
+      },
+      {
+        "PROV_NAME": "LOUGH, KAREN L",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "encounters_together": 3
+      },
+      {
+        "PROV_NAME": "GENERIC EXTERNAL DATA PROVIDER",
+        "DEPARTMENT_NAME": "GENERIC EXTERNAL DATA DEPARTMENT",
+        "encounters_together": 2
+      },
+      {
+        "PROV_NAME": "GILMOUR, AARON K",
+        "DEPARTMENT_NAME": "MHM OT NEURO CENTRAL",
+        "encounters_together": 2
+      },
+      {
+        "PROV_NAME": "BUDZBAN, NICOLE L",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "encounters_together": 1
+      },
+      {
+        "PROV_NAME": "CAHILL, KATHRYN A",
+        "DEPARTMENT_NAME": "MCM W WASH PEDS",
+        "encounters_together": 1
+      },
+      {
+        "PROV_NAME": "DHILLON, PUNEET S",
+        "DEPARTMENT_NAME": "MAC APL BUSINESS SERVICES",
+        "encounters_together": 1
+      }
+    ],
+    "columns": [
+      "PROV_NAME",
+      "DEPARTMENT_NAME",
+      "encounters_together"
+    ],
+    "error": null
+  },
+  {
+    "id": "03.2-providers-5",
+    "originalQuery": "-- Provider productivity dashboard\nSELECT \n  s.PROV_NAME,\n  COUNT(DISTINCT pe.PAT_ENC_CSN_ID) as total_encounters,\n  COUNT(DISTINCT pe.PAT_ID) as unique_patients,\n  COUNT(DISTINCT pe.DEPARTMENT_ID) as departments_worked,\n  COUNT(DISTINCT DATE(pe.CONTACT_DATE)) as days_worked,\n  ROUND(CAST(COUNT(DISTINCT pe.PAT_ENC_CSN_ID) AS FLOAT) / \n        COUNT(DISTINCT DATE(pe.CONTACT_DATE)), 2) as avg_encounters_per_day\nFROM CLARITY_SER s\nJOIN PAT_ENC pe ON s.PROV_ID = pe.VISIT_PROV_ID\nWHERE pe.CONTACT_DATE IS NOT NULL\n  AND s.PROV_NAME NOT LIKE '%GENERIC%'\n  AND s.PROV_NAME NOT LIKE '%LAB%'\nGROUP BY s.PROV_NAME\nHAVING COUNT(DISTINCT pe.PAT_ENC_CSN_ID) > 2\nORDER BY total_encounters DESC;",
+    "description": "Calculate provider productivity metrics",
+    "chapterId": "03.2-providers",
+    "index": 5,
+    "results": [
+      {
+        "PROV_NAME": "RAMMELKAMP, ZOE L",
+        "total_encounters": 14,
+        "unique_patients": 1,
+        "departments_worked": 1,
+        "days_worked": 0,
+        "avg_encounters_per_day": null
+      },
+      {
+        "PROV_NAME": "PICONE, MARY A",
+        "total_encounters": 6,
+        "unique_patients": 1,
+        "departments_worked": 1,
+        "days_worked": 0,
+        "avg_encounters_per_day": null
+      },
+      {
+        "PROV_NAME": "DHILLON, PUNEET S",
+        "total_encounters": 6,
+        "unique_patients": 1,
+        "departments_worked": 2,
+        "days_worked": 0,
+        "avg_encounters_per_day": null
+      },
+      {
+        "PROV_NAME": "LOUGH, KAREN L",
+        "total_encounters": 3,
+        "unique_patients": 1,
+        "departments_worked": 1,
+        "days_worked": 0,
+        "avg_encounters_per_day": null
+      }
+    ],
+    "columns": [
+      "PROV_NAME",
+      "total_encounters",
+      "unique_patients",
+      "departments_worked",
+      "days_worked",
+      "avg_encounters_per_day"
+    ],
+    "error": null
+  },
+  {
+    "id": "03.2-providers-6",
+    "originalQuery": "-- Find external provider patterns\nSELECT \n  pe.REFERRAL_SOURCE_ID_REFERRING_PROV_NAM as referring_provider,\n  s.PROV_NAME as visit_provider,\n  COUNT(*) as referral_count\nFROM PAT_ENC pe\nJOIN CLARITY_SER s ON pe.VISIT_PROV_ID = s.PROV_ID\nWHERE pe.REFERRAL_SOURCE_ID_REFERRING_PROV_NAM IS NOT NULL\n  AND pe.REFERRAL_SOURCE_ID_REFERRING_PROV_NAM != ''\nGROUP BY pe.REFERRAL_SOURCE_ID_REFERRING_PROV_NAM, s.PROV_NAME\nORDER BY referral_count DESC;",
+    "description": "Identify external and referral relationships",
+    "chapterId": "03.2-providers",
+    "index": 6,
+    "results": [
+      {
+        "referring_provider": "RAMMELKAMP, ZOE L",
+        "visit_provider": "RAMMELKAMP, ZOE L",
+        "referral_count": 4
+      },
+      {
+        "referring_provider": "DHILLON, PUNEET S",
+        "visit_provider": "DHILLON, PUNEET S",
+        "referral_count": 2
+      },
+      {
+        "referring_provider": "DHILLON, PUNEET S",
+        "visit_provider": "MAC LAB APL",
+        "referral_count": 2
+      },
+      {
+        "referring_provider": "GILLESPIE, BENJAMIN T",
+        "visit_provider": "GILMOUR, AARON K",
+        "referral_count": 2
+      },
+      {
+        "referring_provider": "RAMMELKAMP, ZOE L",
+        "visit_provider": "MAC LAB APL",
+        "referral_count": 2
+      }
+    ],
+    "columns": [
+      "referring_provider",
+      "visit_provider",
+      "referral_count"
+    ],
+    "error": null
+  },
+  {
+    "id": "03.2-providers-7",
+    "originalQuery": "-- System provider activity patterns\nSELECT \n  s.PROV_NAME,\n  d.DEPARTMENT_NAME,\n  COUNT(*) as system_encounters,\n  MIN(DATE(pe.CONTACT_DATE)) as first_activity,\n  MAX(DATE(pe.CONTACT_DATE)) as last_activity\nFROM PAT_ENC pe\nJOIN CLARITY_SER s ON pe.VISIT_PROV_ID = s.PROV_ID\nJOIN CLARITY_DEP d ON pe.DEPARTMENT_ID = d.DEPARTMENT_ID\nWHERE s.PROV_NAME LIKE '%GENERIC%' \n   OR s.PROV_NAME LIKE '%MYCHART%'\nGROUP BY s.PROV_NAME, d.DEPARTMENT_NAME\nORDER BY system_encounters DESC;",
+    "description": "Track system provider activity",
+    "chapterId": "03.2-providers",
+    "index": 7,
+    "results": [
+      {
+        "PROV_NAME": "GENERIC EXTERNAL DATA PROVIDER",
+        "DEPARTMENT_NAME": "GENERIC EXTERNAL DATA DEPARTMENT",
+        "system_encounters": 2,
+        "first_activity": null,
+        "last_activity": null
+      }
+    ],
+    "columns": [
+      "PROV_NAME",
+      "DEPARTMENT_NAME",
+      "system_encounters",
+      "first_activity",
+      "last_activity"
+    ],
+    "error": null
+  },
+  {
+    "id": "03.2-providers-8",
+    "originalQuery": "-- Efficient: Filter to human providers only\nSELECT COUNT(*) as human_provider_count\nFROM CLARITY_SER\nWHERE PROV_NAME NOT LIKE '%GENERIC%'\n  AND PROV_NAME NOT LIKE '%LAB%'\n  AND PROV_NAME NOT LIKE '%MYCHART%'\n  AND PROV_NAME NOT LIKE '%NOT IN SYSTEM%';",
+    "description": "Demonstrate efficient provider filtering",
+    "chapterId": "03.2-providers",
+    "index": 8,
+    "results": [
+      {
+        "human_provider_count": 20
+      }
+    ],
+    "columns": [
+      "human_provider_count"
+    ],
+    "error": null
+  },
+  {
+    "id": "03.2-providers-9",
+    "originalQuery": "-- Standard pattern for provider analysis\nSELECT \n  pe.PAT_ENC_CSN_ID,\n  pe.CONTACT_DATE,\n  visit.PROV_NAME as visit_provider,\n  pcp.PROV_NAME as primary_care_provider,\n  d.DEPARTMENT_NAME\nFROM PAT_ENC pe\nLEFT JOIN CLARITY_SER visit ON pe.VISIT_PROV_ID = visit.PROV_ID\nLEFT JOIN CLARITY_SER pcp ON pe.PCP_PROV_ID = pcp.PROV_ID\nLEFT JOIN CLARITY_DEP d ON pe.DEPARTMENT_ID = d.DEPARTMENT_ID\nWHERE pe.CONTACT_DATE >= '2023-01-01'\nORDER BY pe.CONTACT_DATE DESC\nLIMIT 10;",
+    "description": "Show standard provider join pattern",
+    "chapterId": "03.2-providers",
+    "index": 9,
+    "results": [
+      {
+        "PAT_ENC_CSN_ID": 837844366,
+        "CONTACT_DATE": "9/8/2020 12:00:00 AM",
+        "visit_provider": "LOUGH, KAREN L",
+        "primary_care_provider": "DHILLON, PUNEET S",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_ENC_CSN_ID": 991225117,
+        "CONTACT_DATE": "9/28/2023 12:00:00 AM",
+        "visit_provider": "RAMMELKAMP, ZOE L",
+        "primary_care_provider": "RAMMELKAMP, ZOE L",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_ENC_CSN_ID": 1028739468,
+        "CONTACT_DATE": "9/28/2023 12:00:00 AM",
+        "visit_provider": "RAMMELKAMP, ZOE L",
+        "primary_care_provider": "RAMMELKAMP, ZOE L",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_ENC_CSN_ID": 1028743701,
+        "CONTACT_DATE": "9/28/2023 12:00:00 AM",
+        "visit_provider": "MAC LAB APL",
+        "primary_care_provider": "RAMMELKAMP, ZOE L",
+        "DEPARTMENT_NAME": "MAC APL LABORATORY"
+      },
+      {
+        "PAT_ENC_CSN_ID": 1028766353,
+        "CONTACT_DATE": "9/28/2023 12:00:00 AM",
+        "visit_provider": "RAMMELKAMP, ZOE L",
+        "primary_care_provider": "RAMMELKAMP, ZOE L",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_ENC_CSN_ID": 787137346,
+        "CONTACT_DATE": "9/28/2019 12:00:00 AM",
+        "visit_provider": null,
+        "primary_care_provider": "DHILLON, PUNEET S",
+        "DEPARTMENT_NAME": null
+      },
+      {
+        "PAT_ENC_CSN_ID": 1028606559,
+        "CONTACT_DATE": "9/27/2023 12:00:00 AM",
+        "visit_provider": null,
+        "primary_care_provider": "RAMMELKAMP, ZOE L",
+        "DEPARTMENT_NAME": null
+      },
+      {
+        "PAT_ENC_CSN_ID": 1027863229,
+        "CONTACT_DATE": "9/25/2023 12:00:00 AM",
+        "visit_provider": null,
+        "primary_care_provider": "RAMMELKAMP, ZOE L",
+        "DEPARTMENT_NAME": null
+      },
+      {
+        "PAT_ENC_CSN_ID": 962603110,
+        "CONTACT_DATE": "9/25/2022 12:00:00 AM",
+        "visit_provider": null,
+        "primary_care_provider": "RAMMELKAMP, ZOE L",
+        "DEPARTMENT_NAME": null
+      },
+      {
+        "PAT_ENC_CSN_ID": 898794674,
+        "CONTACT_DATE": "9/25/2021 12:00:00 AM",
+        "visit_provider": null,
+        "primary_care_provider": "DHILLON, PUNEET S",
+        "DEPARTMENT_NAME": null
+      }
+    ],
+    "columns": [
+      "PAT_ENC_CSN_ID",
+      "CONTACT_DATE",
+      "visit_provider",
+      "primary_care_provider",
+      "DEPARTMENT_NAME"
+    ],
+    "error": null
+  }
+]

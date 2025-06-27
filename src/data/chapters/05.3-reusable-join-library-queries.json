@@ -1,0 +1,1209 @@
+[
+  {
+    "id": "05.3-reusable-join-library-0",
+    "originalQuery": "-- Basic patient information with their most recent encounter\nWITH patient_context AS (\n  SELECT \n    p.PAT_ID,\n    p.PAT_NAME,\n    p.BIRTH_DATE,\n    p.EMAIL_ADDRESS,\n    p.HOME_PHONE,\n    -- Calculate age at time of query\n    CAST((julianday('now') - julianday(p.BIRTH_DATE)) / 365.25 AS INTEGER) as age_years,\n    p.STATE_C_NAME as state,\n    p.CITY,\n    p.ZIP,\n    -- Get most recent encounter info\n    MAX(pe.CONTACT_DATE) as last_visit_date,\n    COUNT(DISTINCT pe.PAT_ENC_CSN_ID) as total_visits\n  FROM PATIENT p\n  LEFT JOIN PAT_ENC pe ON p.PAT_ID = pe.PAT_ID\n  GROUP BY p.PAT_ID, p.PAT_NAME, p.BIRTH_DATE, \n           p.EMAIL_ADDRESS, p.HOME_PHONE,\n           p.STATE_C_NAME, p.CITY, p.ZIP\n)\nSELECT * FROM patient_context;",
+    "description": "Complete patient context with demographics",
+    "chapterId": "05.3-reusable-join-library",
+    "index": 0,
+    "results": [
+      {
+        "PAT_ID": "Z7004242",
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "BIRTH_DATE": "10/26/1982 12:00:00 AM",
+        "EMAIL_ADDRESS": "jmandel@alum.mit.edu",
+        "HOME_PHONE": "617-894-1015",
+        "age_years": null,
+        "state": "Wisconsin",
+        "CITY": "MADISON",
+        "ZIP": "REDACTED",
+        "last_visit_date": "9/8/2020 12:00:00 AM",
+        "total_visits": 111
+      }
+    ],
+    "columns": [
+      "PAT_ID",
+      "PAT_NAME",
+      "BIRTH_DATE",
+      "EMAIL_ADDRESS",
+      "HOME_PHONE",
+      "age_years",
+      "state",
+      "CITY",
+      "ZIP",
+      "last_visit_date",
+      "total_visits"
+    ],
+    "error": null
+  },
+  {
+    "id": "05.3-reusable-join-library-1",
+    "originalQuery": "SELECT \n  pe.PAT_ENC_CSN_ID,\n  pe.CONTACT_DATE,\n  pe.APPT_STATUS_C_NAME as appointment_status,\n  pe.FIN_CLASS_C_NAME as financial_class,\n  -- Patient info\n  p.PAT_NAME,\n  p.PAT_ID,\n  -- Provider info\n  pe.VISIT_PROV_ID,\n  ser.PROV_NAME as visit_provider_name,\n  -- Department info\n  pe.DEPARTMENT_ID,\n  dep.DEPARTMENT_NAME,\n  -- Hospital account linkage\n  pe.HSP_ACCOUNT_ID,\n  -- Admission/discharge for hospital encounters\n  pe.HOSP_ADMSN_TIME as admission_time,\n  pe.HOSP_DISCHRG_TIME as discharge_time\nFROM PAT_ENC pe\nINNER JOIN PATIENT p ON pe.PAT_ID = p.PAT_ID\nLEFT JOIN CLARITY_SER ser ON pe.VISIT_PROV_ID = ser.PROV_ID\nLEFT JOIN CLARITY_DEP dep ON pe.DEPARTMENT_ID = dep.DEPARTMENT_ID\nWHERE pe.CONTACT_DATE >= '2018-01-01'\nORDER BY pe.CONTACT_DATE DESC\nLIMIT 10;",
+    "description": "Complete encounter details with provider and department",
+    "chapterId": "05.3-reusable-join-library",
+    "index": 1,
+    "results": [
+      {
+        "PAT_ENC_CSN_ID": 837844366,
+        "CONTACT_DATE": "9/8/2020 12:00:00 AM",
+        "appointment_status": "",
+        "financial_class": "",
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "PAT_ID": "Z7004242",
+        "VISIT_PROV_ID": 508903,
+        "visit_provider_name": "LOUGH, KAREN L",
+        "DEPARTMENT_ID": 1700801002,
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "HSP_ACCOUNT_ID": null,
+        "admission_time": "",
+        "discharge_time": ""
+      },
+      {
+        "PAT_ENC_CSN_ID": 991225117,
+        "CONTACT_DATE": "9/28/2023 12:00:00 AM",
+        "appointment_status": "Completed",
+        "financial_class": "",
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "PAT_ID": "Z7004242",
+        "VISIT_PROV_ID": 144590,
+        "visit_provider_name": "RAMMELKAMP, ZOE L",
+        "DEPARTMENT_ID": 1700801002,
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "HSP_ACCOUNT_ID": null,
+        "admission_time": "",
+        "discharge_time": ""
+      },
+      {
+        "PAT_ENC_CSN_ID": 1028739468,
+        "CONTACT_DATE": "9/28/2023 12:00:00 AM",
+        "appointment_status": "",
+        "financial_class": "",
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "PAT_ID": "Z7004242",
+        "VISIT_PROV_ID": 144590,
+        "visit_provider_name": "RAMMELKAMP, ZOE L",
+        "DEPARTMENT_ID": 1700801002,
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "HSP_ACCOUNT_ID": null,
+        "admission_time": "",
+        "discharge_time": ""
+      },
+      {
+        "PAT_ENC_CSN_ID": 1028743701,
+        "CONTACT_DATE": "9/28/2023 12:00:00 AM",
+        "appointment_status": "Completed",
+        "financial_class": "",
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "PAT_ID": "Z7004242",
+        "VISIT_PROV_ID": 3724611,
+        "visit_provider_name": "MAC LAB APL",
+        "DEPARTMENT_ID": 1700801005,
+        "DEPARTMENT_NAME": "MAC APL LABORATORY",
+        "HSP_ACCOUNT_ID": null,
+        "admission_time": "",
+        "discharge_time": ""
+      },
+      {
+        "PAT_ENC_CSN_ID": 1028766353,
+        "CONTACT_DATE": "9/28/2023 12:00:00 AM",
+        "appointment_status": "",
+        "financial_class": "",
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "PAT_ID": "Z7004242",
+        "VISIT_PROV_ID": 144590,
+        "visit_provider_name": "RAMMELKAMP, ZOE L",
+        "DEPARTMENT_ID": 1700801002,
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "HSP_ACCOUNT_ID": null,
+        "admission_time": "",
+        "discharge_time": ""
+      },
+      {
+        "PAT_ENC_CSN_ID": 787137346,
+        "CONTACT_DATE": "9/28/2019 12:00:00 AM",
+        "appointment_status": "",
+        "financial_class": "",
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "PAT_ID": "Z7004242",
+        "VISIT_PROV_ID": null,
+        "visit_provider_name": null,
+        "DEPARTMENT_ID": null,
+        "DEPARTMENT_NAME": null,
+        "HSP_ACCOUNT_ID": null,
+        "admission_time": "",
+        "discharge_time": ""
+      },
+      {
+        "PAT_ENC_CSN_ID": 1028606559,
+        "CONTACT_DATE": "9/27/2023 12:00:00 AM",
+        "appointment_status": "",
+        "financial_class": "",
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "PAT_ID": "Z7004242",
+        "VISIT_PROV_ID": null,
+        "visit_provider_name": null,
+        "DEPARTMENT_ID": null,
+        "DEPARTMENT_NAME": null,
+        "HSP_ACCOUNT_ID": null,
+        "admission_time": "",
+        "discharge_time": ""
+      },
+      {
+        "PAT_ENC_CSN_ID": 1027863229,
+        "CONTACT_DATE": "9/25/2023 12:00:00 AM",
+        "appointment_status": "",
+        "financial_class": "",
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "PAT_ID": "Z7004242",
+        "VISIT_PROV_ID": null,
+        "visit_provider_name": null,
+        "DEPARTMENT_ID": null,
+        "DEPARTMENT_NAME": null,
+        "HSP_ACCOUNT_ID": null,
+        "admission_time": "",
+        "discharge_time": ""
+      },
+      {
+        "PAT_ENC_CSN_ID": 962603110,
+        "CONTACT_DATE": "9/25/2022 12:00:00 AM",
+        "appointment_status": "",
+        "financial_class": "",
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "PAT_ID": "Z7004242",
+        "VISIT_PROV_ID": null,
+        "visit_provider_name": null,
+        "DEPARTMENT_ID": null,
+        "DEPARTMENT_NAME": null,
+        "HSP_ACCOUNT_ID": null,
+        "admission_time": "",
+        "discharge_time": ""
+      },
+      {
+        "PAT_ENC_CSN_ID": 898794674,
+        "CONTACT_DATE": "9/25/2021 12:00:00 AM",
+        "appointment_status": "",
+        "financial_class": "",
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "PAT_ID": "Z7004242",
+        "VISIT_PROV_ID": null,
+        "visit_provider_name": null,
+        "DEPARTMENT_ID": null,
+        "DEPARTMENT_NAME": null,
+        "HSP_ACCOUNT_ID": null,
+        "admission_time": "",
+        "discharge_time": ""
+      }
+    ],
+    "columns": [
+      "PAT_ENC_CSN_ID",
+      "CONTACT_DATE",
+      "appointment_status",
+      "financial_class",
+      "PAT_NAME",
+      "PAT_ID",
+      "VISIT_PROV_ID",
+      "visit_provider_name",
+      "DEPARTMENT_ID",
+      "DEPARTMENT_NAME",
+      "HSP_ACCOUNT_ID",
+      "admission_time",
+      "discharge_time"
+    ],
+    "error": null
+  },
+  {
+    "id": "05.3-reusable-join-library-2",
+    "originalQuery": "SELECT \n  pe.PAT_ENC_CSN_ID,\n  pe.CONTACT_DATE,\n  pe.APPT_STATUS_C_NAME as visit_type,\n  -- Diagnosis information with LINE\n  dx.LINE as diagnosis_sequence,\n  CASE \n    WHEN dx.LINE = 1 THEN 'Primary'\n    WHEN dx.LINE = 2 THEN 'Secondary'\n    ELSE 'Additional'\n  END as diagnosis_rank,\n  dx.DX_ID,\n  edg.DX_NAME,\n  -- Patient context\n  p.PAT_NAME\nFROM PAT_ENC pe\nINNER JOIN PATIENT p ON pe.PAT_ID = p.PAT_ID\nINNER JOIN PAT_ENC_DX dx ON pe.PAT_ENC_CSN_ID = dx.PAT_ENC_CSN_ID\nLEFT JOIN CLARITY_EDG edg ON dx.DX_ID = edg.DX_ID\nWHERE pe.CONTACT_DATE BETWEEN '2018-01-01' AND '2018-12-31'\n  AND pe.APPT_STATUS_C_NAME = 'Completed'\nORDER BY pe.PAT_ENC_CSN_ID, dx.LINE;",
+    "description": "Encounters with all diagnoses using LINE pattern",
+    "chapterId": "05.3-reusable-join-library",
+    "index": 2,
+    "results": [],
+    "columns": [],
+    "error": null
+  },
+  {
+    "id": "05.3-reusable-join-library-3",
+    "originalQuery": "WITH order_summary AS (\n  SELECT \n    op.PAT_ID,\n    op.PAT_ENC_CSN_ID,\n    op.ORDER_PROC_ID,\n    op.ORDER_TYPE_C_NAME as order_type,\n    op.DESCRIPTION as procedure_name,\n    op.ORDER_TIME,\n    op.RESULT_TIME,\n    -- Count components per order\n    COUNT(DISTINCT res.COMPONENT_ID) as result_components,\n    -- Check for any abnormal flags\n    MAX(CASE \n      WHEN res.RESULT_FLAG_C_NAME IN ('High', 'Low', 'Abnormal') \n      THEN 1 ELSE 0 \n    END) as has_abnormal_results\n  FROM ORDER_PROC op\n  LEFT JOIN ORDER_RESULTS res ON op.ORDER_PROC_ID = res.ORDER_PROC_ID\n  GROUP BY op.PAT_ID, op.PAT_ENC_CSN_ID, op.ORDER_PROC_ID,\n           op.ORDER_TYPE_C_NAME, op.DESCRIPTION, \n           op.ORDER_TIME, op.RESULT_TIME\n)\nSELECT \n  p.PAT_NAME,\n  pe.CONTACT_DATE,\n  os.procedure_name,\n  os.ORDER_TIME,\n  os.RESULT_TIME,\n  -- Calculate turnaround time in hours\n  ROUND((julianday(os.RESULT_TIME) - julianday(os.ORDER_TIME)) * 24, 1) as turnaround_hours,\n  os.result_components,\n  CASE \n    WHEN os.has_abnormal_results = 1 THEN 'Yes' \n    ELSE 'No' \n  END as abnormal_flag\nFROM order_summary os\nINNER JOIN PATIENT p ON os.PAT_ID = p.PAT_ID\nINNER JOIN PAT_ENC pe ON os.PAT_ENC_CSN_ID = pe.PAT_ENC_CSN_ID\nWHERE os.order_type = 'Lab'\n  AND os.RESULT_TIME IS NOT NULL\nORDER BY os.ORDER_TIME DESC\nLIMIT 20;",
+    "description": "Patient orders with results - multi-hop join",
+    "chapterId": "05.3-reusable-join-library",
+    "index": 3,
+    "results": [
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "9/28/2023 12:00:00 AM",
+        "procedure_name": "HEMOGLOBIN A1C",
+        "ORDER_TIME": "9/28/2023 10:10:00 AM",
+        "RESULT_TIME": "9/28/2023 10:47:00 AM",
+        "turnaround_hours": null,
+        "result_components": 2,
+        "abnormal_flag": "No"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "9/28/2023 12:00:00 AM",
+        "procedure_name": "LIPID PANEL",
+        "ORDER_TIME": "9/28/2023 10:10:00 AM",
+        "RESULT_TIME": "9/28/2023 11:18:00 AM",
+        "turnaround_hours": null,
+        "result_components": 5,
+        "abnormal_flag": "No"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "9/28/2023 12:00:00 AM",
+        "procedure_name": "HEPATITIS C ANTIBODY",
+        "ORDER_TIME": "9/28/2023 10:10:00 AM",
+        "RESULT_TIME": "9/28/2023 4:09:00 PM",
+        "turnaround_hours": null,
+        "result_components": 1,
+        "abnormal_flag": "No"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "9/28/2023 12:00:00 AM",
+        "procedure_name": "LIPID PANEL",
+        "ORDER_TIME": "9/28/2023 10:02:00 AM",
+        "RESULT_TIME": "",
+        "turnaround_hours": null,
+        "result_components": 0,
+        "abnormal_flag": "No"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "9/28/2023 12:00:00 AM",
+        "procedure_name": "HEMOGLOBIN A1C",
+        "ORDER_TIME": "9/28/2023 10:02:00 AM",
+        "RESULT_TIME": "",
+        "turnaround_hours": null,
+        "result_components": 0,
+        "abnormal_flag": "No"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "9/21/2020 12:00:00 AM",
+        "procedure_name": "COVID-19, EXTERNAL",
+        "ORDER_TIME": "9/15/2020 5:08:00 PM",
+        "RESULT_TIME": "9/17/2020 12:19:00 PM",
+        "turnaround_hours": null,
+        "result_components": 1,
+        "abnormal_flag": "No"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "8/9/2018 12:00:00 AM",
+        "procedure_name": "LIPID PANEL",
+        "ORDER_TIME": "8/9/2018 10:16:00 AM",
+        "RESULT_TIME": "8/9/2018 11:59:00 AM",
+        "turnaround_hours": null,
+        "result_components": 5,
+        "abnormal_flag": "No"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "8/9/2018 12:00:00 AM",
+        "procedure_name": "LIPID PANEL",
+        "ORDER_TIME": "8/9/2018 10:13:00 AM",
+        "RESULT_TIME": "",
+        "turnaround_hours": null,
+        "result_components": 0,
+        "abnormal_flag": "No"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "8/29/2022 12:00:00 AM",
+        "procedure_name": "BASIC METABOLIC PANEL",
+        "ORDER_TIME": "8/29/2022 2:32:00 PM",
+        "RESULT_TIME": "8/29/2022 3:41:00 PM",
+        "turnaround_hours": null,
+        "result_components": 12,
+        "abnormal_flag": "Yes"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "8/29/2022 12:00:00 AM",
+        "procedure_name": "BASIC METABOLIC PANEL",
+        "ORDER_TIME": "8/29/2022 2:23:00 PM",
+        "RESULT_TIME": "",
+        "turnaround_hours": null,
+        "result_components": 0,
+        "abnormal_flag": "No"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "8/29/2022 12:00:00 AM",
+        "procedure_name": "BASIC METABOLIC PANEL",
+        "ORDER_TIME": "8/29/2022 11:57:00 PM",
+        "RESULT_TIME": "",
+        "turnaround_hours": null,
+        "result_components": 0,
+        "abnormal_flag": "No"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "8/29/2022 12:00:00 AM",
+        "procedure_name": "HEPATITIS C ANTIBODY",
+        "ORDER_TIME": "8/29/2022 11:57:00 PM",
+        "RESULT_TIME": "",
+        "turnaround_hours": null,
+        "result_components": 0,
+        "abnormal_flag": "No"
+      }
+    ],
+    "columns": [
+      "PAT_NAME",
+      "CONTACT_DATE",
+      "procedure_name",
+      "ORDER_TIME",
+      "RESULT_TIME",
+      "turnaround_hours",
+      "result_components",
+      "abnormal_flag"
+    ],
+    "error": null
+  },
+  {
+    "id": "05.3-reusable-join-library-4",
+    "originalQuery": "SELECT \n  p.PAT_ID,\n  p.PAT_NAME,\n  -- Coverage details\n  c.COVERAGE_ID,\n  c.PAYOR_ID,\n  c.PAYOR_ID_PAYOR_NAME as payor_name,\n  c.PLAN_ID_BENEFIT_PLAN_NAME as plan_name,\n  -- Coverage dates\n  c.CVG_EFF_DT as effective_date,\n  c.CVG_TERM_DT as termination_date,\n  -- Check if currently active\n  CASE \n    WHEN c.CVG_EFF_DT <= date('now') \n     AND (c.CVG_TERM_DT IS NULL OR c.CVG_TERM_DT >= date('now'))\n    THEN 'Active'\n    ELSE 'Inactive'\n  END as coverage_status\nFROM PATIENT p\n-- Get all coverage records for filing order analysis\nLEFT JOIN PAT_CVG_FILE_ORDER pcfo ON p.PAT_ID = pcfo.PAT_ID\nLEFT JOIN COVERAGE c ON pcfo.COVERAGE_ID = c.COVERAGE_ID\nWHERE p.PAT_ID IS NOT NULL\nORDER BY p.PAT_ID, pcfo.FILING_ORDER;",
+    "description": "Patient coverage information with payor details",
+    "chapterId": "05.3-reusable-join-library",
+    "index": 4,
+    "results": [
+      {
+        "PAT_ID": "Z7004242",
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "COVERAGE_ID": 5934765,
+        "PAYOR_ID": 1302,
+        "payor_name": "BLUE CROSS OF WISCONSIN",
+        "plan_name": "BLUE CROSS WI PPO/FEDERAL",
+        "effective_date": "",
+        "termination_date": "",
+        "coverage_status": "Inactive"
+      }
+    ],
+    "columns": [
+      "PAT_ID",
+      "PAT_NAME",
+      "COVERAGE_ID",
+      "PAYOR_ID",
+      "payor_name",
+      "plan_name",
+      "effective_date",
+      "termination_date",
+      "coverage_status"
+    ],
+    "error": null
+  },
+  {
+    "id": "05.3-reusable-join-library-5",
+    "originalQuery": "-- Pattern: Filter early, select only needed columns\nWITH recent_encounters AS (\n  -- Step 1: Narrow down to relevant encounters first\n  SELECT \n    PAT_ID,\n    PAT_ENC_CSN_ID,\n    CONTACT_DATE,\n    DEPARTMENT_ID\n  FROM PAT_ENC\n  WHERE CONTACT_DATE >= date('now', '-90 days')\n    AND APPT_STATUS_C_NAME = 'Completed'\n),\nencounter_diagnoses AS (\n  -- Step 2: Get diagnoses only for filtered encounters\n  SELECT \n    re.PAT_ID,\n    re.PAT_ENC_CSN_ID,\n    re.CONTACT_DATE,\n    dx.LINE,\n    edg.DX_NAME\n  FROM recent_encounters re\n  INNER JOIN PAT_ENC_DX dx ON re.PAT_ENC_CSN_ID = dx.PAT_ENC_CSN_ID\n  LEFT JOIN CLARITY_EDG edg ON dx.DX_ID = edg.DX_ID\n  WHERE dx.LINE <= 3  -- Only first 3 diagnoses\n)\n-- Step 3: Final join for display\nSELECT \n  p.PAT_NAME,\n  ed.CONTACT_DATE,\n  GROUP_CONCAT(ed.DX_NAME, '; ') as diagnoses\nFROM encounter_diagnoses ed\nINNER JOIN PATIENT p ON ed.PAT_ID = p.PAT_ID\nGROUP BY p.PAT_NAME, ed.CONTACT_DATE\nORDER BY ed.CONTACT_DATE DESC;",
+    "description": "Optimized pattern using date filters and limited columns",
+    "chapterId": "05.3-reusable-join-library",
+    "index": 5,
+    "results": [
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "9/28/2023 12:00:00 AM",
+        "diagnoses": "Screening for hyperlipidemia; Screening for diabetes mellitus; Preventative health care; Screening for diabetes mellitus; Screening for hyperlipidemia; Preventative health care"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "8/9/2018 12:00:00 AM",
+        "diagnoses": "Encounter to establish care; Gastroesophageal reflux disease, esophagitis presence not specified; Dyspepsia; Encounter to establish care"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "8/29/2022 12:00:00 AM",
+        "diagnoses": "Primary hypertension; Preventative health care; Post concussion syndrome; Primary hypertension"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "8/18/2018 12:00:00 AM",
+        "diagnoses": "Gastroesophageal reflux disease, esophagitis presence not specified; Dyspepsia"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "7/14/2020 12:00:00 AM",
+        "diagnoses": "Traumatic injury of head, initial encounter"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "3/2/2023 12:00:00 AM",
+        "diagnoses": "Post concussion syndrome"
+      }
+    ],
+    "columns": [
+      "PAT_NAME",
+      "CONTACT_DATE",
+      "diagnoses"
+    ],
+    "error": null
+  },
+  {
+    "id": "05.3-reusable-join-library-6",
+    "originalQuery": "-- Pattern: Use LEFT JOIN to find missing relationships\nSELECT \n  p.PAT_ID,\n  p.PAT_NAME,\n  p.BIRTH_DATE,\n  -- Last encounter info (may be NULL)\n  MAX(pe.CONTACT_DATE) as last_encounter_date,\n  -- Calculate days since last visit\n  CASE \n    WHEN MAX(pe.CONTACT_DATE) IS NULL THEN 'Never'\n    ELSE CAST(julianday('now') - julianday(MAX(pe.CONTACT_DATE)) AS INTEGER) || ' days ago'\n  END as last_visit_info,\n  -- Count total encounters\n  COUNT(pe.PAT_ENC_CSN_ID) as total_encounters\nFROM PATIENT p\nLEFT JOIN PAT_ENC pe ON p.PAT_ID = pe.PAT_ID\nWHERE p.BIRTH_DATE < date('now', '-18 years')  -- Adults only\nGROUP BY p.PAT_ID, p.PAT_NAME, p.BIRTH_DATE\nHAVING COUNT(pe.PAT_ENC_CSN_ID) = 0  -- No encounters\n    OR MAX(pe.CONTACT_DATE) < date('now', '-365 days')  -- Or no recent visits\nORDER BY total_encounters, last_encounter_date;",
+    "description": "Find patients without recent encounters",
+    "chapterId": "05.3-reusable-join-library",
+    "index": 6,
+    "results": [],
+    "columns": [],
+    "error": null
+  },
+  {
+    "id": "05.3-reusable-join-library-7",
+    "originalQuery": "-- Note: This is a conceptual example - creating views requires appropriate permissions\n-- Save this pattern as a CTE in your queries instead\n\nWITH v_patient_summary AS (\n  SELECT \n    p.PAT_ID,\n    p.PAT_NAME,\n    p.BIRTH_DATE,\n    CAST((julianday('now') - julianday(p.BIRTH_DATE)) / 365.25 AS INTEGER) as age,\n    p.STATE_C_NAME as state,\n    -- Encounter metrics\n    COUNT(DISTINCT pe.PAT_ENC_CSN_ID) as total_encounters,\n    COUNT(DISTINCT CASE \n      WHEN pe.CONTACT_DATE >= date('now', '-365 days') \n      THEN pe.PAT_ENC_CSN_ID \n    END) as encounters_past_year,\n    MAX(pe.CONTACT_DATE) as last_encounter_date,\n    -- Order metrics  \n    COUNT(DISTINCT op.ORDER_PROC_ID) as total_orders\n  FROM PATIENT p\n  LEFT JOIN PAT_ENC pe ON p.PAT_ID = pe.PAT_ID\n  LEFT JOIN ORDER_PROC op ON p.PAT_ID = op.PAT_ID\n  GROUP BY p.PAT_ID, p.PAT_NAME, p.BIRTH_DATE, p.STATE_C_NAME\n)\nSELECT * FROM v_patient_summary\nWHERE encounters_past_year > 0\nORDER BY total_encounters DESC\nLIMIT 10;",
+    "description": "Create a reusable patient summary view",
+    "chapterId": "05.3-reusable-join-library",
+    "index": 7,
+    "results": [
+      {
+        "PAT_ID": "Z7004242",
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "BIRTH_DATE": "10/26/1982 12:00:00 AM",
+        "age": null,
+        "state": "Wisconsin",
+        "total_encounters": 111,
+        "encounters_past_year": 74,
+        "last_encounter_date": "9/8/2020 12:00:00 AM",
+        "total_orders": 25
+      }
+    ],
+    "columns": [
+      "PAT_ID",
+      "PAT_NAME",
+      "BIRTH_DATE",
+      "age",
+      "state",
+      "total_encounters",
+      "encounters_past_year",
+      "last_encounter_date",
+      "total_orders"
+    ],
+    "error": null
+  },
+  {
+    "id": "05.3-reusable-join-library-8",
+    "originalQuery": "-- Longitudinal patient view showing encounter timeline\nSELECT \n  p.PAT_NAME,\n  pe.CONTACT_DATE,\n  pe.APPT_STATUS_C_NAME as visit_type,\n  dep.DEPARTMENT_NAME,\n  -- Create narrative of visit\n  pe.CONTACT_DATE || ': ' || \n  COALESCE(pe.APPT_STATUS_C_NAME, 'Unknown') || ' at ' || \n  COALESCE(dep.DEPARTMENT_NAME, 'Unknown Dept') as visit_narrative\nFROM PATIENT p\nINNER JOIN PAT_ENC pe ON p.PAT_ID = pe.PAT_ID\nLEFT JOIN CLARITY_DEP dep ON pe.DEPARTMENT_ID = dep.DEPARTMENT_ID\nWHERE p.PAT_ID = 'Z7004242'  -- Replace with target patient\nORDER BY pe.CONTACT_DATE DESC;",
+    "description": "Track patient journey over time",
+    "chapterId": "05.3-reusable-join-library",
+    "index": 8,
+    "results": [
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "9/8/2020 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "visit_narrative": "9/8/2020 12:00:00 AM:  at MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "9/28/2023 12:00:00 AM",
+        "visit_type": "Completed",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "visit_narrative": "9/28/2023 12:00:00 AM: Completed at MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "9/28/2023 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "visit_narrative": "9/28/2023 12:00:00 AM:  at MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "9/28/2023 12:00:00 AM",
+        "visit_type": "Completed",
+        "DEPARTMENT_NAME": "MAC APL LABORATORY",
+        "visit_narrative": "9/28/2023 12:00:00 AM: Completed at MAC APL LABORATORY"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "9/28/2023 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "visit_narrative": "9/28/2023 12:00:00 AM:  at MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "9/28/2019 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "9/28/2019 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "9/27/2023 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "9/27/2023 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "9/25/2023 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "9/25/2023 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "9/25/2022 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "9/25/2022 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "9/25/2021 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "9/25/2021 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "9/25/2020 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "9/25/2020 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "9/21/2020 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": "GENERIC EXTERNAL DATA DEPARTMENT",
+        "visit_narrative": "9/21/2020 12:00:00 AM:  at GENERIC EXTERNAL DATA DEPARTMENT"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "8/9/2018 12:00:00 AM",
+        "visit_type": "Completed",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "visit_narrative": "8/9/2018 12:00:00 AM: Completed at MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "8/9/2018 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": "MAC APL BUSINESS SERVICES",
+        "visit_narrative": "8/9/2018 12:00:00 AM:  at MAC APL BUSINESS SERVICES"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "8/9/2018 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "visit_narrative": "8/9/2018 12:00:00 AM:  at MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "8/9/2018 12:00:00 AM",
+        "visit_type": "Completed",
+        "DEPARTMENT_NAME": "MAC APL LABORATORY",
+        "visit_narrative": "8/9/2018 12:00:00 AM: Completed at MAC APL LABORATORY"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "8/3/2023 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "8/3/2023 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "8/29/2022 12:00:00 AM",
+        "visit_type": "Completed",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "visit_narrative": "8/29/2022 12:00:00 AM: Completed at MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "8/29/2022 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "visit_narrative": "8/29/2022 12:00:00 AM:  at MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "8/29/2022 12:00:00 AM",
+        "visit_type": "Completed",
+        "DEPARTMENT_NAME": "MAC APL LABORATORY",
+        "visit_narrative": "8/29/2022 12:00:00 AM: Completed at MAC APL LABORATORY"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "8/28/2022 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "8/28/2022 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "8/28/2018 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "visit_narrative": "8/28/2018 12:00:00 AM:  at MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "8/25/2023 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "8/25/2023 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "8/25/2022 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "8/25/2022 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "8/25/2021 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "8/25/2021 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "8/25/2020 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "8/25/2020 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "8/25/2019 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "8/25/2019 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "8/21/2023 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "visit_narrative": "8/21/2023 12:00:00 AM:  at MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "8/18/2018 12:00:00 AM",
+        "visit_type": "Completed",
+        "DEPARTMENT_NAME": "MAC APL LABORATORY",
+        "visit_narrative": "8/18/2018 12:00:00 AM: Completed at MAC APL LABORATORY"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "8/14/2020 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "visit_narrative": "8/14/2020 12:00:00 AM:  at MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "8/11/2022 12:00:00 AM",
+        "visit_type": "Canceled",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "visit_narrative": "8/11/2022 12:00:00 AM: Canceled at MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "7/31/2020 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "visit_narrative": "7/31/2020 12:00:00 AM:  at MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "7/25/2023 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "7/25/2023 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "7/25/2022 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "7/25/2022 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "7/25/2021 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "7/25/2021 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "7/25/2020 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "7/25/2020 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "7/25/2019 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "7/25/2019 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "7/21/2020 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "visit_narrative": "7/21/2020 12:00:00 AM:  at MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "7/21/2020 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "7/21/2020 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "7/21/2020 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "visit_narrative": "7/21/2020 12:00:00 AM:  at MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "7/21/2020 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "visit_narrative": "7/21/2020 12:00:00 AM:  at MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "7/16/2020 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "visit_narrative": "7/16/2020 12:00:00 AM:  at MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "7/15/2020 12:00:00 AM",
+        "visit_type": "Canceled",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "visit_narrative": "7/15/2020 12:00:00 AM: Canceled at MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "7/15/2020 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "visit_narrative": "7/15/2020 12:00:00 AM:  at MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "7/15/2020 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "visit_narrative": "7/15/2020 12:00:00 AM:  at MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "7/14/2020 12:00:00 AM",
+        "visit_type": "Completed",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "visit_narrative": "7/14/2020 12:00:00 AM: Completed at MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "7/14/2020 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "7/14/2020 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "7/14/2020 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "7/14/2020 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "6/29/2020 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "6/29/2020 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "6/25/2023 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "6/25/2023 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "6/25/2022 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "6/25/2022 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "6/25/2021 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "6/25/2021 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "6/25/2019 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "6/25/2019 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "5/25/2023 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "5/25/2023 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "5/25/2022 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "5/25/2022 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "5/25/2021 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "5/25/2021 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "5/25/2019 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "5/25/2019 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "4/25/2023 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "4/25/2023 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "4/25/2022 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "4/25/2022 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "4/25/2021 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "4/25/2021 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "4/25/2019 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "4/25/2019 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "3/31/2023 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "visit_narrative": "3/31/2023 12:00:00 AM:  at MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "3/25/2023 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "3/25/2023 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "3/25/2022 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "3/25/2022 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "3/25/2021 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "3/25/2021 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "3/25/2019 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "3/25/2019 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "3/22/2022 12:00:00 AM",
+        "visit_type": "Completed",
+        "DEPARTMENT_NAME": "MHM OT NEURO CENTRAL",
+        "visit_narrative": "3/22/2022 12:00:00 AM: Completed at MHM OT NEURO CENTRAL"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "3/22/2022 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "3/22/2022 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "3/2/2023 12:00:00 AM",
+        "visit_type": "Completed",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "visit_narrative": "3/2/2023 12:00:00 AM: Completed at MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "3/2/2023 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "3/2/2023 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "3/2/2023 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "visit_narrative": "3/2/2023 12:00:00 AM:  at MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "3/11/2022 12:00:00 AM",
+        "visit_type": "Completed",
+        "DEPARTMENT_NAME": "MHM OT NEURO CENTRAL",
+        "visit_narrative": "3/11/2022 12:00:00 AM: Completed at MHM OT NEURO CENTRAL"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "3/11/2022 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": "GENERIC EXTERNAL DATA DEPARTMENT",
+        "visit_narrative": "3/11/2022 12:00:00 AM:  at GENERIC EXTERNAL DATA DEPARTMENT"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "3/11/2022 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "3/11/2022 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "2/9/2022 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": "MHM CENTRAL SCHEDULING",
+        "visit_narrative": "2/9/2022 12:00:00 AM:  at MHM CENTRAL SCHEDULING"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "2/25/2024 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "2/25/2024 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "2/25/2023 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "2/25/2023 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "2/25/2022 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "2/25/2022 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "2/25/2021 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "2/25/2021 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "2/25/2019 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "2/25/2019 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "2/19/2023 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "visit_narrative": "2/19/2023 12:00:00 AM:  at MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "2/17/2022 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "2/17/2022 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "2/1/2019 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": "MCM W WASH PEDS",
+        "visit_narrative": "2/1/2019 12:00:00 AM:  at MCM W WASH PEDS"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "12/25/2023 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "12/25/2023 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "12/25/2022 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "12/25/2022 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "12/25/2020 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "12/25/2020 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "12/25/2018 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "12/25/2018 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "12/22/2023 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "visit_narrative": "12/22/2023 12:00:00 AM:  at MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "12/22/2022 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "visit_narrative": "12/22/2022 12:00:00 AM:  at MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "12/1/2022 12:00:00 AM",
+        "visit_type": "Completed",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "visit_narrative": "12/1/2022 12:00:00 AM: Completed at MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "12/1/2022 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "12/1/2022 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "11/7/2024 12:00:00 AM",
+        "visit_type": "Scheduled",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "visit_narrative": "11/7/2024 12:00:00 AM: Scheduled at MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "11/28/2022 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "visit_narrative": "11/28/2022 12:00:00 AM:  at MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "11/25/2023 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "11/25/2023 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "11/25/2022 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "11/25/2022 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "11/25/2020 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "11/25/2020 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "11/25/2019 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "11/25/2019 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "11/25/2018 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "11/25/2018 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "10/25/2023 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "10/25/2023 12:00:00 AM:  at Unknown Dept"
+      },
+      {
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "CONTACT_DATE": "10/25/2022 12:00:00 AM",
+        "visit_type": "",
+        "DEPARTMENT_NAME": null,
+        "visit_narrative": "10/25/2022 12:00:00 AM:  at Unknown Dept"
+      }
+    ],
+    "columns": [
+      "PAT_NAME",
+      "CONTACT_DATE",
+      "visit_type",
+      "DEPARTMENT_NAME",
+      "visit_narrative"
+    ],
+    "error": null
+  },
+  {
+    "id": "05.3-reusable-join-library-9",
+    "originalQuery": "-- Department utilization analysis\nSELECT \n  dep.DEPARTMENT_NAME,\n  COUNT(DISTINCT pe.PAT_ENC_CSN_ID) as total_encounters,\n  COUNT(DISTINCT pe.PAT_ID) as unique_patients,\n  COUNT(DISTINCT DATE(pe.CONTACT_DATE)) as days_with_visits,\n  -- Calculate average daily volume\n  ROUND(\n    CAST(COUNT(DISTINCT pe.PAT_ENC_CSN_ID) AS FLOAT) / \n    COUNT(DISTINCT DATE(pe.CONTACT_DATE)), \n    1\n  ) as avg_daily_encounters\nFROM CLARITY_DEP dep\nINNER JOIN PAT_ENC pe ON dep.DEPARTMENT_ID = pe.DEPARTMENT_ID\nWHERE pe.CONTACT_DATE >= date('now', '-90 days')\n  AND pe.APPT_STATUS_C_NAME = 'Completed'\nGROUP BY dep.DEPARTMENT_NAME\nHAVING COUNT(DISTINCT pe.PAT_ENC_CSN_ID) > 5  -- Active departments only\nORDER BY total_encounters DESC;",
+    "description": "Analyze department utilization patterns",
+    "chapterId": "05.3-reusable-join-library",
+    "index": 9,
+    "results": [],
+    "columns": [],
+    "error": null
+  }
+]

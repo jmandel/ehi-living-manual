@@ -1,0 +1,23 @@
+---
+import type { ProcessedQuery } from '../types/query';
+import SQLWidget from './SQLWidget.tsx';
+
+export interface Props {
+  queryId: string;
+}
+
+const { queryId } = Astro.props;
+
+// Import all processed queries
+import processedQueries from '../data/all-processed-queries.json';
+
+// Find the specific query
+const query = processedQueries.find(q => q.id === queryId) as ProcessedQuery | undefined;
+
+if (!query) {
+  throw new Error(`Query not found: ${queryId}`);
+}
+---
+
+<!-- Use the React component directly with client:load for progressive enhancement -->
+<SQLWidget query={query} client:load />

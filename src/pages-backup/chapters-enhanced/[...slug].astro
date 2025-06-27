@@ -1,0 +1,74 @@
+---
+import ChapterLayoutEnhanced from '../../layouts/ChapterLayoutEnhanced.astro';
+import { marked } from 'marked';
+import { readdir, readFile } from 'fs/promises';
+import { join } from 'path';
+
+export async function getStaticPaths() {
+  // Get all chapter markdown files
+  const chaptersDir = join(process.cwd(), '../src/chapters');
+  const files = await readdir(chaptersDir);
+  const mdFiles = files.filter(f => f.endsWith('.md'));
+  
+  const paths = await Promise.all(mdFiles.map(async (file) => {
+    const slug = file.replace('.md', '');
+    const content = await readFile(join(chaptersDir, file), 'utf-8');
+    
+    // Extract title from first H1
+    const titleMatch = content.match(/^#\s+(.+)$/m);
+    const title = titleMatch ? titleMatch[1] : slug;
+    
+    return {
+      params: { slug },
+      props: {
+        title,
+        chapterId: slug,
+        markdown: content
+      }
+    };
+  }));
+  
+  return paths;
+}
+
+const { title, chapterId, markdown } = Astro.props;
+
+// Configure marked to preserve example-query tags and render properly
+marked.use({
+  extensions: [{
+    name: 'example-query',
+    level: 'block',
+    start(src: string) { return src.match(/<example-query/)?.index; },
+    tokenizer(src: string) {
+      const match = /^<example-query[^>]*>[\s\S]*?<\/example-query>/.exec(src);
+      if (match) {
+        return {
+          type: 'example-query',
+          raw: match[0],
+          text: match[0]
+        };
+      }
+    },
+    renderer(token: any) {
+      return token.text;
+    }
+  }],
+  mangle: false,
+  headerIds: false
+});
+
+// Configure marked options for better rendering
+marked.setOptions({
+  gfm: true,
+  breaks: false,
+  pedantic: false,
+  sanitize: false,
+  smartLists: true,
+  smartypants: false
+});
+
+// Convert markdown to HTML
+const content = marked(markdown);
+---
+
+<ChapterLayoutEnhanced title={title} chapterId={chapterId} content={content} />

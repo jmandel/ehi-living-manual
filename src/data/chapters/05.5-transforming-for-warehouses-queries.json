@@ -1,0 +1,461 @@
+[
+  {
+    "id": "05.5-transforming-for-warehouses-0",
+    "originalQuery": "-- Epic's normalized structure: multiple tables for one concept\nSELECT \n  pe.PAT_ENC_CSN_ID,\n  pe.CONTACT_DATE,\n  p.PAT_NAME,\n  cs.PROV_NAME as provider,\n  cd.DEPARTMENT_NAME as department\nFROM PAT_ENC pe\nJOIN PATIENT p ON pe.PAT_ID = p.PAT_ID\nLEFT JOIN CLARITY_SER cs ON pe.VISIT_PROV_ID = cs.PROV_ID\nLEFT JOIN CLARITY_DEP cd ON pe.DEPARTMENT_ID = cd.DEPARTMENT_ID\nWHERE pe.PAT_ENC_CSN_ID = 131130638;",
+    "description": "Understand Epic's encounter relationships",
+    "chapterId": "05.5-transforming-for-warehouses",
+    "index": 0,
+    "results": [],
+    "columns": [],
+    "error": null
+  },
+  {
+    "id": "05.5-transforming-for-warehouses-1",
+    "originalQuery": "-- Dimensional model for patient with history tracking\n-- (This is the CREATE TABLE pattern, not executable in our sample)\nSELECT \n  'CREATE TABLE dim_patient (' as ddl\nUNION ALL SELECT '  patient_key INTEGER PRIMARY KEY,    -- Surrogate key'\nUNION ALL SELECT '  pat_id TEXT,                       -- Natural key from Epic'\nUNION ALL SELECT '  pat_mrn_id TEXT,'\nUNION ALL SELECT '  -- Current attributes'\nUNION ALL SELECT '  pat_name TEXT,'\nUNION ALL SELECT '  birth_date TEXT,'\nUNION ALL SELECT '  sex TEXT,'\nUNION ALL SELECT '  address_line_1 TEXT,'\nUNION ALL SELECT '  city TEXT,'\nUNION ALL SELECT '  state TEXT,'\nUNION ALL SELECT '  zip TEXT,'\nUNION ALL SELECT '  -- SCD tracking'\nUNION ALL SELECT '  eff_start_date DATE,'\nUNION ALL SELECT '  eff_end_date DATE,'\nUNION ALL SELECT '  current_flag INTEGER'\nUNION ALL SELECT ');';",
+    "description": "Design pattern for patient dimension",
+    "chapterId": "05.5-transforming-for-warehouses",
+    "index": 1,
+    "results": [
+      {
+        "ddl": "CREATE TABLE dim_patient ("
+      },
+      {
+        "ddl": "  patient_key INTEGER PRIMARY KEY,    -- Surrogate key"
+      },
+      {
+        "ddl": "  pat_id TEXT,                       -- Natural key from Epic"
+      },
+      {
+        "ddl": "  pat_mrn_id TEXT,"
+      },
+      {
+        "ddl": "  -- Current attributes"
+      },
+      {
+        "ddl": "  pat_name TEXT,"
+      },
+      {
+        "ddl": "  birth_date TEXT,"
+      },
+      {
+        "ddl": "  sex TEXT,"
+      },
+      {
+        "ddl": "  address_line_1 TEXT,"
+      },
+      {
+        "ddl": "  city TEXT,"
+      },
+      {
+        "ddl": "  state TEXT,"
+      },
+      {
+        "ddl": "  zip TEXT,"
+      },
+      {
+        "ddl": "  -- SCD tracking"
+      },
+      {
+        "ddl": "  eff_start_date DATE,"
+      },
+      {
+        "ddl": "  eff_end_date DATE,"
+      },
+      {
+        "ddl": "  current_flag INTEGER"
+      },
+      {
+        "ddl": ");"
+      }
+    ],
+    "columns": [
+      "ddl"
+    ],
+    "error": null
+  },
+  {
+    "id": "05.5-transforming-for-warehouses-2",
+    "originalQuery": "-- Providers in our sample data\nSELECT \n  PROV_ID,\n  PROV_NAME,\n  EXTERNAL_NAME_\nFROM CLARITY_SER\nWHERE PROV_ID IS NOT NULL\nLIMIT 10;",
+    "description": "Explore provider patterns in Epic",
+    "chapterId": "05.5-transforming-for-warehouses",
+    "index": 2,
+    "results": [
+      {
+        "PROV_ID": "132946",
+        "PROV_NAME": "CAHILL, KATHRYN A",
+        "EXTERNAL_NAME_": "Kathryn A Cahill\r"
+      },
+      {
+        "PROV_ID": "144590",
+        "PROV_NAME": "RAMMELKAMP, ZOE L",
+        "EXTERNAL_NAME_": "Zoe L Rammelkamp\r"
+      },
+      {
+        "PROV_ID": "199995",
+        "PROV_NAME": "PROVIDER, NOT IN SYSTEM",
+        "EXTERNAL_NAME_": "Not in System Provider\r"
+      },
+      {
+        "PROV_ID": "219711",
+        "PROV_NAME": "PICONE, MARY A",
+        "EXTERNAL_NAME_": "Mary A Picone\r"
+      },
+      {
+        "PROV_ID": "3724611",
+        "PROV_NAME": "MAC LAB APL",
+        "EXTERNAL_NAME_": "\r"
+      },
+      {
+        "PROV_ID": "508903",
+        "PROV_NAME": "LOUGH, KAREN L",
+        "EXTERNAL_NAME_": "Karen L Lough\r"
+      },
+      {
+        "PROV_ID": "518228",
+        "PROV_NAME": "IRELAND, TRACY C",
+        "EXTERNAL_NAME_": "Tracy C Ireland\r"
+      },
+      {
+        "PROV_ID": "519715",
+        "PROV_NAME": "WHITTINGTON, THERESA C",
+        "EXTERNAL_NAME_": "Associated Physicians\r"
+      },
+      {
+        "PROV_ID": "522795",
+        "PROV_NAME": "PEPIN, PAMELA A",
+        "EXTERNAL_NAME_": "Pamela A Pepin\r"
+      },
+      {
+        "PROV_ID": "525016",
+        "PROV_NAME": "VANDYCK, KAYLA LOU A",
+        "EXTERNAL_NAME_": "Kayla Lou A VanDyck\r"
+      }
+    ],
+    "columns": [
+      "PROV_ID",
+      "PROV_NAME",
+      "EXTERNAL_NAME_"
+    ],
+    "error": null
+  },
+  {
+    "id": "05.5-transforming-for-warehouses-3",
+    "originalQuery": "-- Date dimension structure (showing pattern, not creating)\nSELECT \n  DATE('2024-01-15') as date_value,\n  20240115 as date_key,\n  2024 as year,\n  1 as quarter,\n  1 as month,\n  'January' as month_name,\n  15 as day_of_month,\n  3 as day_of_week,\n  'Monday' as day_name,\n  2024 as fiscal_year,  -- Assuming July 1 fiscal start\n  3 as fiscal_quarter,\n  7 as fiscal_month;",
+    "description": "Essential date dimension attributes",
+    "chapterId": "05.5-transforming-for-warehouses",
+    "index": 3,
+    "results": [
+      {
+        "date_value": "2024-01-15",
+        "date_key": 20240115,
+        "year": 2024,
+        "quarter": 1,
+        "month": 1,
+        "month_name": "January",
+        "day_of_month": 15,
+        "day_of_week": 3,
+        "day_name": "Monday",
+        "fiscal_year": 2024,
+        "fiscal_quarter": 3,
+        "fiscal_month": 7
+      }
+    ],
+    "columns": [
+      "date_value",
+      "date_key",
+      "year",
+      "quarter",
+      "month",
+      "month_name",
+      "day_of_month",
+      "day_of_week",
+      "day_name",
+      "fiscal_year",
+      "fiscal_quarter",
+      "fiscal_month"
+    ],
+    "error": null
+  },
+  {
+    "id": "05.5-transforming-for-warehouses-4",
+    "originalQuery": "-- Gather encounter metrics from Epic's structure\nSELECT \n  pe.PAT_ENC_CSN_ID,\n  pe.PAT_ID,\n  pe.CONTACT_DATE,\n  pe.DEPARTMENT_ID,\n  pe.VISIT_PROV_ID,\n  pe.HSP_ACCOUNT_ID,\n  -- Count would-be foreign keys for dimensional model\n  CASE WHEN pe.HOSP_ADMSN_TIME IS NOT NULL THEN 1 ELSE 0 END as is_admission\nFROM PAT_ENC pe\nWHERE pe.PAT_ENC_CSN_ID IS NOT NULL\nORDER BY pe.CONTACT_DATE DESC\nLIMIT 5;",
+    "description": "Core metrics for encounter fact table",
+    "chapterId": "05.5-transforming-for-warehouses",
+    "index": 4,
+    "results": [
+      {
+        "PAT_ENC_CSN_ID": 837844366,
+        "PAT_ID": "Z7004242",
+        "CONTACT_DATE": "9/8/2020 12:00:00 AM",
+        "DEPARTMENT_ID": 1700801002,
+        "VISIT_PROV_ID": 508903,
+        "HSP_ACCOUNT_ID": null,
+        "is_admission": 1
+      },
+      {
+        "PAT_ENC_CSN_ID": 991225117,
+        "PAT_ID": "Z7004242",
+        "CONTACT_DATE": "9/28/2023 12:00:00 AM",
+        "DEPARTMENT_ID": 1700801002,
+        "VISIT_PROV_ID": 144590,
+        "HSP_ACCOUNT_ID": null,
+        "is_admission": 1
+      },
+      {
+        "PAT_ENC_CSN_ID": 1028739468,
+        "PAT_ID": "Z7004242",
+        "CONTACT_DATE": "9/28/2023 12:00:00 AM",
+        "DEPARTMENT_ID": 1700801002,
+        "VISIT_PROV_ID": 144590,
+        "HSP_ACCOUNT_ID": null,
+        "is_admission": 1
+      },
+      {
+        "PAT_ENC_CSN_ID": 1028743701,
+        "PAT_ID": "Z7004242",
+        "CONTACT_DATE": "9/28/2023 12:00:00 AM",
+        "DEPARTMENT_ID": 1700801005,
+        "VISIT_PROV_ID": 3724611,
+        "HSP_ACCOUNT_ID": null,
+        "is_admission": 1
+      },
+      {
+        "PAT_ENC_CSN_ID": 1028766353,
+        "PAT_ID": "Z7004242",
+        "CONTACT_DATE": "9/28/2023 12:00:00 AM",
+        "DEPARTMENT_ID": 1700801002,
+        "VISIT_PROV_ID": 144590,
+        "HSP_ACCOUNT_ID": null,
+        "is_admission": 1
+      }
+    ],
+    "columns": [
+      "PAT_ENC_CSN_ID",
+      "PAT_ID",
+      "CONTACT_DATE",
+      "DEPARTMENT_ID",
+      "VISIT_PROV_ID",
+      "HSP_ACCOUNT_ID",
+      "is_admission"
+    ],
+    "error": null
+  },
+  {
+    "id": "05.5-transforming-for-warehouses-5",
+    "originalQuery": "-- Professional billing transactions\nSELECT \n  TX_ID,\n  ACCOUNT_ID, \n  SERVICE_DATE,\n  POST_DATE,\n  PROC_ID,\n  AMOUNT\nFROM ARPB_TRANSACTIONS\nWHERE AMOUNT != 0\nLIMIT 5;",
+    "description": "Explore billing transaction structures",
+    "chapterId": "05.5-transforming-for-warehouses",
+    "index": 5,
+    "results": [
+      {
+        "TX_ID": 355871699,
+        "ACCOUNT_ID": 1810018166,
+        "SERVICE_DATE": "9/28/2023 12:00:00 AM",
+        "POST_DATE": "10/12/2023 12:00:00 AM",
+        "PROC_ID": 23870,
+        "AMOUNT": 330
+      },
+      {
+        "TX_ID": 302543307,
+        "ACCOUNT_ID": 1810018166,
+        "SERVICE_DATE": "8/29/2022 12:00:00 AM",
+        "POST_DATE": "9/20/2022 12:00:00 AM",
+        "PROC_ID": 23660,
+        "AMOUNT": 222
+      },
+      {
+        "TX_ID": 302543306,
+        "ACCOUNT_ID": 1810018166,
+        "SERVICE_DATE": "8/29/2022 12:00:00 AM",
+        "POST_DATE": "9/20/2022 12:00:00 AM",
+        "PROC_ID": 23868,
+        "AMOUNT": 294
+      },
+      {
+        "TX_ID": 317236398,
+        "ACCOUNT_ID": 1810018166,
+        "SERVICE_DATE": "12/1/2022 12:00:00 AM",
+        "POST_DATE": "12/20/2022 12:00:00 AM",
+        "PROC_ID": 23662,
+        "AMOUNT": 315
+      },
+      {
+        "TX_ID": 315026147,
+        "ACCOUNT_ID": 1810018166,
+        "SERVICE_DATE": "12/1/2022 12:00:00 AM",
+        "POST_DATE": "12/6/2022 12:00:00 AM",
+        "PROC_ID": 23662,
+        "AMOUNT": 315
+      }
+    ],
+    "columns": [
+      "TX_ID",
+      "ACCOUNT_ID",
+      "SERVICE_DATE",
+      "POST_DATE",
+      "PROC_ID",
+      "AMOUNT"
+    ],
+    "error": null
+  },
+  {
+    "id": "05.5-transforming-for-warehouses-6",
+    "originalQuery": "-- Identify new encounters since last load\n-- (Showing concept - assumes you track last load date)\nSELECT \n  COUNT(*) as new_encounters\nFROM PAT_ENC\nWHERE CONTACT_DATE >= '9/1/2023'  -- Your last_load_date\n  AND PAT_ENC_CSN_ID IS NOT NULL;",
+    "description": "Pattern for detecting new encounters",
+    "chapterId": "05.5-transforming-for-warehouses",
+    "index": 6,
+    "results": [
+      {
+        "new_encounters": 12
+      }
+    ],
+    "columns": [
+      "new_encounters"
+    ],
+    "error": null
+  },
+  {
+    "id": "05.5-transforming-for-warehouses-7",
+    "originalQuery": "-- Find encounters that might update after initial load\nSELECT \n  CONTACT_DATE,\n  UPDATE_DATE,\n  julianday(UPDATE_DATE) - julianday(CONTACT_DATE) as days_delay\nFROM PAT_ENC\nWHERE UPDATE_DATE IS NOT NULL\n  AND julianday(UPDATE_DATE) - julianday(CONTACT_DATE) > 7\nORDER BY days_delay DESC\nLIMIT 5;",
+    "description": "Check for backdated encounters",
+    "chapterId": "05.5-transforming-for-warehouses",
+    "index": 7,
+    "results": [],
+    "columns": [],
+    "error": null
+  },
+  {
+    "id": "05.5-transforming-for-warehouses-8",
+    "originalQuery": "-- Analyze cardinality for index decisions\nSELECT \n  'DEPARTMENT_ID' as column_name,\n  COUNT(DISTINCT DEPARTMENT_ID) as distinct_values,\n  COUNT(*) as total_rows,\n  CAST(COUNT(DISTINCT DEPARTMENT_ID) AS FLOAT) / COUNT(*) as selectivity\nFROM PAT_ENC\nWHERE DEPARTMENT_ID IS NOT NULL;",
+    "description": "Identify high-cardinality columns for indexing",
+    "chapterId": "05.5-transforming-for-warehouses",
+    "index": 8,
+    "results": [
+      {
+        "column_name": "DEPARTMENT_ID",
+        "distinct_values": 7,
+        "total_rows": 45,
+        "selectivity": 0.15555555555555556
+      }
+    ],
+    "columns": [
+      "column_name",
+      "distinct_values",
+      "total_rows",
+      "selectivity"
+    ],
+    "error": null
+  },
+  {
+    "id": "05.5-transforming-for-warehouses-9",
+    "originalQuery": "-- Daily summary for dashboards\nSELECT \n  DATE(CONTACT_DATE) as encounter_date,\n  COUNT(*) as total_encounters,\n  COUNT(DISTINCT PAT_ID) as unique_patients,\n  COUNT(DISTINCT DEPARTMENT_ID) as departments_seen,\n  COUNT(DISTINCT VISIT_PROV_ID) as providers_working\nFROM PAT_ENC\nWHERE CONTACT_DATE >= '1/1/2023'\nGROUP BY DATE(CONTACT_DATE)\nORDER BY encounter_date DESC\nLIMIT 7;",
+    "description": "Pattern for daily encounter aggregates",
+    "chapterId": "05.5-transforming-for-warehouses",
+    "index": 9,
+    "results": [
+      {
+        "encounter_date": null,
+        "total_encounters": 111,
+        "unique_patients": 1,
+        "departments_seen": 7,
+        "providers_working": 14
+      }
+    ],
+    "columns": [
+      "encounter_date",
+      "total_encounters",
+      "unique_patients",
+      "departments_seen",
+      "providers_working"
+    ],
+    "error": null
+  },
+  {
+    "id": "05.5-transforming-for-warehouses-10",
+    "originalQuery": "-- Common Epic data quality checks\nSELECT \n  'Encounters without providers' as issue,\n  COUNT(*) as count\nFROM PAT_ENC\nWHERE VISIT_PROV_ID IS NULL\nUNION ALL\nSELECT \n  'Future dated encounters',\n  COUNT(*)\nFROM PAT_ENC  \nWHERE DATE(CONTACT_DATE) > DATE('now');",
+    "description": "Check for data quality issues",
+    "chapterId": "05.5-transforming-for-warehouses",
+    "index": 10,
+    "results": [
+      {
+        "issue": "Encounters without providers",
+        "count": 66
+      },
+      {
+        "issue": "Future dated encounters",
+        "count": 0
+      }
+    ],
+    "columns": [
+      "issue",
+      "count"
+    ],
+    "error": null
+  },
+  {
+    "id": "05.5-transforming-for-warehouses-11",
+    "originalQuery": "-- Encounters pointing to non-existent departments\nSELECT COUNT(*) as orphaned_encounters\nFROM PAT_ENC pe\nLEFT JOIN CLARITY_DEP cd ON pe.DEPARTMENT_ID = cd.DEPARTMENT_ID  \nWHERE pe.DEPARTMENT_ID IS NOT NULL\n  AND cd.DEPARTMENT_ID IS NULL;",
+    "description": "Find orphaned encounters",
+    "chapterId": "05.5-transforming-for-warehouses",
+    "index": 11,
+    "results": [
+      {
+        "orphaned_encounters": 0
+      }
+    ],
+    "columns": [
+      "orphaned_encounters"
+    ],
+    "error": null
+  },
+  {
+    "id": "05.5-transforming-for-warehouses-12",
+    "originalQuery": "-- Capture high-water marks\nSELECT \n  'PAT_ENC' as table_name,\n  MAX(PAT_ENC_CSN_ID) as max_id,\n  MAX(CONTACT_DATE) as max_date,\n  COUNT(*) as row_count\nFROM PAT_ENC;",
+    "description": "Track maximum values for incremental loads",
+    "chapterId": "05.5-transforming-for-warehouses",
+    "index": 12,
+    "results": [
+      {
+        "table_name": "PAT_ENC",
+        "max_id": 1054605204,
+        "max_date": "9/8/2020 12:00:00 AM",
+        "row_count": 111
+      }
+    ],
+    "columns": [
+      "table_name",
+      "max_id",
+      "max_date",
+      "row_count"
+    ],
+    "error": null
+  },
+  {
+    "id": "05.5-transforming-for-warehouses-13",
+    "originalQuery": "-- In production, you'd track merges\nSELECT \n  'Patient merge tracking requires:' as requirement\nUNION ALL SELECT '- Original PAT_ID'\nUNION ALL SELECT '- Target PAT_ID'  \nUNION ALL SELECT '- Merge date'\nUNION ALL SELECT '- Update all fact records';",
+    "description": "Pattern for handling patient merges",
+    "chapterId": "05.5-transforming-for-warehouses",
+    "index": 13,
+    "results": [
+      {
+        "requirement": "Patient merge tracking requires:"
+      },
+      {
+        "requirement": "- Original PAT_ID"
+      },
+      {
+        "requirement": "- Target PAT_ID"
+      },
+      {
+        "requirement": "- Merge date"
+      },
+      {
+        "requirement": "- Update all fact records"
+      }
+    ],
+    "columns": [
+      "requirement"
+    ],
+    "error": null
+  }
+]

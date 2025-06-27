@@ -1,0 +1,899 @@
+[
+  {
+    "id": "03.4-locations-and-adt-0",
+    "originalQuery": "SELECT \n    adt.EVENT_ID,\n    adt.PAT_ENC_CSN_ID,\n    adt.EVENT_TYPE_C_NAME,\n    adt.EFFECTIVE_TIME,\n    adt.DEPARTMENT_ID,\n    pe.CONTACT_DATE\nFROM CLARITY_ADT adt\nJOIN pat_enc pe ON adt.PAT_ENC_CSN_ID = pe.PAT_ENC_CSN_ID\nORDER BY adt.EFFECTIVE_TIME;",
+    "description": "View ADT events with their timestamps and types",
+    "chapterId": "03.4-locations-and-adt",
+    "index": 0,
+    "results": [
+      {
+        "EVENT_ID": 133792913,
+        "PAT_ENC_CSN_ID": 922942674,
+        "EVENT_TYPE_C_NAME": "Discharge",
+        "EFFECTIVE_TIME": "3/11/2022 11:59:00 PM",
+        "DEPARTMENT_ID": 101401044,
+        "CONTACT_DATE": "3/11/2022 12:00:00 AM"
+      },
+      {
+        "EVENT_ID": 133758524,
+        "PAT_ENC_CSN_ID": 922942674,
+        "EVENT_TYPE_C_NAME": "Hospital Outpatient",
+        "EFFECTIVE_TIME": "3/11/2022 2:41:00 PM",
+        "DEPARTMENT_ID": 101401044,
+        "CONTACT_DATE": "3/11/2022 12:00:00 AM"
+      },
+      {
+        "EVENT_ID": 134287607,
+        "PAT_ENC_CSN_ID": 922943112,
+        "EVENT_TYPE_C_NAME": "Discharge",
+        "EFFECTIVE_TIME": "3/22/2022 11:59:00 PM",
+        "DEPARTMENT_ID": 101401044,
+        "CONTACT_DATE": "3/22/2022 12:00:00 AM"
+      },
+      {
+        "EVENT_ID": 134253794,
+        "PAT_ENC_CSN_ID": 922943112,
+        "EVENT_TYPE_C_NAME": "Hospital Outpatient",
+        "EFFECTIVE_TIME": "3/22/2022 4:42:00 PM",
+        "DEPARTMENT_ID": 101401044,
+        "CONTACT_DATE": "3/22/2022 12:00:00 AM"
+      }
+    ],
+    "columns": [
+      "EVENT_ID",
+      "PAT_ENC_CSN_ID",
+      "EVENT_TYPE_C_NAME",
+      "EFFECTIVE_TIME",
+      "DEPARTMENT_ID",
+      "CONTACT_DATE"
+    ],
+    "error": null
+  },
+  {
+    "id": "03.4-locations-and-adt-1",
+    "originalQuery": "SELECT \n    l.LOC_ID,\n    l.LOC_NAME_ as location_name,\n    d.DEPARTMENT_ID,\n    d.DEPARTMENT_NAME\nFROM CLARITY_LOC l\nJOIN CLARITY_DEP d ON 1=1  -- Cross join to show all combinations\nORDER BY l.LOC_NAME_, d.DEPARTMENT_NAME;",
+    "description": "Explore the location hierarchy in our data",
+    "chapterId": "03.4-locations-and-adt",
+    "index": 1,
+    "results": [
+      {
+        "LOC_ID": 1700801,
+        "location_name": "CLN MAC ASSOCIATED PHYSICIANS LLP",
+        "DEPARTMENT_ID": 101061,
+        "DEPARTMENT_NAME": "CENTRAL BILLING OFFICE"
+      },
+      {
+        "LOC_ID": 1700801,
+        "location_name": "CLN MAC ASSOCIATED PHYSICIANS LLP",
+        "DEPARTMENT_ID": 103001001,
+        "DEPARTMENT_NAME": "CRS HEALTH INFO MGMT"
+      },
+      {
+        "LOC_ID": 1700801,
+        "location_name": "CLN MAC ASSOCIATED PHYSICIANS LLP",
+        "DEPARTMENT_ID": 8,
+        "DEPARTMENT_NAME": "GENERIC EXTERNAL DATA DEPARTMENT"
+      },
+      {
+        "LOC_ID": 1700801,
+        "location_name": "CLN MAC ASSOCIATED PHYSICIANS LLP",
+        "DEPARTMENT_ID": 1,
+        "DEPARTMENT_NAME": "INITIAL DEPT"
+      },
+      {
+        "LOC_ID": 1700801,
+        "location_name": "CLN MAC ASSOCIATED PHYSICIANS LLP",
+        "DEPARTMENT_ID": 1700801001,
+        "DEPARTMENT_NAME": "MAC APL BUSINESS SERVICES"
+      },
+      {
+        "LOC_ID": 1700801,
+        "location_name": "CLN MAC ASSOCIATED PHYSICIANS LLP",
+        "DEPARTMENT_ID": 1700801002,
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "LOC_ID": 1700801,
+        "location_name": "CLN MAC ASSOCIATED PHYSICIANS LLP",
+        "DEPARTMENT_ID": 1700801005,
+        "DEPARTMENT_NAME": "MAC APL LABORATORY"
+      },
+      {
+        "LOC_ID": 1700801,
+        "location_name": "CLN MAC ASSOCIATED PHYSICIANS LLP",
+        "DEPARTMENT_ID": 1700801008,
+        "DEPARTMENT_NAME": "MAC APL PT"
+      },
+      {
+        "LOC_ID": 1700801,
+        "location_name": "CLN MAC ASSOCIATED PHYSICIANS LLP",
+        "DEPARTMENT_ID": 1084600303,
+        "DEPARTMENT_NAME": "MCM W WASH PEDS"
+      },
+      {
+        "LOC_ID": 1700801,
+        "location_name": "CLN MAC ASSOCIATED PHYSICIANS LLP",
+        "DEPARTMENT_ID": 101401088,
+        "DEPARTMENT_NAME": "MHM CENTRAL SCHEDULING"
+      },
+      {
+        "LOC_ID": 1700801,
+        "location_name": "CLN MAC ASSOCIATED PHYSICIANS LLP",
+        "DEPARTMENT_ID": 101401044,
+        "DEPARTMENT_NAME": "MHM OT NEURO CENTRAL"
+      },
+      {
+        "LOC_ID": 1700801,
+        "location_name": "CLN MAC ASSOCIATED PHYSICIANS LLP",
+        "DEPARTMENT_ID": 101401034,
+        "DEPARTMENT_NAME": "MHM OT PARK"
+      },
+      {
+        "LOC_ID": 1700801,
+        "location_name": "CLN MAC ASSOCIATED PHYSICIANS LLP",
+        "DEPARTMENT_ID": 101401031,
+        "DEPARTMENT_NAME": "MHM PT ORTHO CENTRAL"
+      },
+      {
+        "LOC_ID": 1700801,
+        "location_name": "CLN MAC ASSOCIATED PHYSICIANS LLP",
+        "DEPARTMENT_ID": 101155,
+        "DEPARTMENT_NAME": "MYUNITYPOINT SUPPORT"
+      },
+      {
+        "LOC_ID": 18,
+        "location_name": "MAC ASSOCIATED PHYSICIANS LLP\r",
+        "DEPARTMENT_ID": 101061,
+        "DEPARTMENT_NAME": "CENTRAL BILLING OFFICE"
+      },
+      {
+        "LOC_ID": 18,
+        "location_name": "MAC ASSOCIATED PHYSICIANS LLP\r",
+        "DEPARTMENT_ID": 103001001,
+        "DEPARTMENT_NAME": "CRS HEALTH INFO MGMT"
+      },
+      {
+        "LOC_ID": 18,
+        "location_name": "MAC ASSOCIATED PHYSICIANS LLP\r",
+        "DEPARTMENT_ID": 8,
+        "DEPARTMENT_NAME": "GENERIC EXTERNAL DATA DEPARTMENT"
+      },
+      {
+        "LOC_ID": 18,
+        "location_name": "MAC ASSOCIATED PHYSICIANS LLP\r",
+        "DEPARTMENT_ID": 1,
+        "DEPARTMENT_NAME": "INITIAL DEPT"
+      },
+      {
+        "LOC_ID": 18,
+        "location_name": "MAC ASSOCIATED PHYSICIANS LLP\r",
+        "DEPARTMENT_ID": 1700801001,
+        "DEPARTMENT_NAME": "MAC APL BUSINESS SERVICES"
+      },
+      {
+        "LOC_ID": 18,
+        "location_name": "MAC ASSOCIATED PHYSICIANS LLP\r",
+        "DEPARTMENT_ID": 1700801002,
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "LOC_ID": 18,
+        "location_name": "MAC ASSOCIATED PHYSICIANS LLP\r",
+        "DEPARTMENT_ID": 1700801005,
+        "DEPARTMENT_NAME": "MAC APL LABORATORY"
+      },
+      {
+        "LOC_ID": 18,
+        "location_name": "MAC ASSOCIATED PHYSICIANS LLP\r",
+        "DEPARTMENT_ID": 1700801008,
+        "DEPARTMENT_NAME": "MAC APL PT"
+      },
+      {
+        "LOC_ID": 18,
+        "location_name": "MAC ASSOCIATED PHYSICIANS LLP\r",
+        "DEPARTMENT_ID": 1084600303,
+        "DEPARTMENT_NAME": "MCM W WASH PEDS"
+      },
+      {
+        "LOC_ID": 18,
+        "location_name": "MAC ASSOCIATED PHYSICIANS LLP\r",
+        "DEPARTMENT_ID": 101401088,
+        "DEPARTMENT_NAME": "MHM CENTRAL SCHEDULING"
+      },
+      {
+        "LOC_ID": 18,
+        "location_name": "MAC ASSOCIATED PHYSICIANS LLP\r",
+        "DEPARTMENT_ID": 101401044,
+        "DEPARTMENT_NAME": "MHM OT NEURO CENTRAL"
+      },
+      {
+        "LOC_ID": 18,
+        "location_name": "MAC ASSOCIATED PHYSICIANS LLP\r",
+        "DEPARTMENT_ID": 101401034,
+        "DEPARTMENT_NAME": "MHM OT PARK"
+      },
+      {
+        "LOC_ID": 18,
+        "location_name": "MAC ASSOCIATED PHYSICIANS LLP\r",
+        "DEPARTMENT_ID": 101401031,
+        "DEPARTMENT_NAME": "MHM PT ORTHO CENTRAL"
+      },
+      {
+        "LOC_ID": 18,
+        "location_name": "MAC ASSOCIATED PHYSICIANS LLP\r",
+        "DEPARTMENT_ID": 101155,
+        "DEPARTMENT_NAME": "MYUNITYPOINT SUPPORT"
+      },
+      {
+        "LOC_ID": 1,
+        "location_name": "UNITYPOINT HEALTH\r",
+        "DEPARTMENT_ID": 101061,
+        "DEPARTMENT_NAME": "CENTRAL BILLING OFFICE"
+      },
+      {
+        "LOC_ID": 1,
+        "location_name": "UNITYPOINT HEALTH\r",
+        "DEPARTMENT_ID": 103001001,
+        "DEPARTMENT_NAME": "CRS HEALTH INFO MGMT"
+      },
+      {
+        "LOC_ID": 1,
+        "location_name": "UNITYPOINT HEALTH\r",
+        "DEPARTMENT_ID": 8,
+        "DEPARTMENT_NAME": "GENERIC EXTERNAL DATA DEPARTMENT"
+      },
+      {
+        "LOC_ID": 1,
+        "location_name": "UNITYPOINT HEALTH\r",
+        "DEPARTMENT_ID": 1,
+        "DEPARTMENT_NAME": "INITIAL DEPT"
+      },
+      {
+        "LOC_ID": 1,
+        "location_name": "UNITYPOINT HEALTH\r",
+        "DEPARTMENT_ID": 1700801001,
+        "DEPARTMENT_NAME": "MAC APL BUSINESS SERVICES"
+      },
+      {
+        "LOC_ID": 1,
+        "location_name": "UNITYPOINT HEALTH\r",
+        "DEPARTMENT_ID": 1700801002,
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "LOC_ID": 1,
+        "location_name": "UNITYPOINT HEALTH\r",
+        "DEPARTMENT_ID": 1700801005,
+        "DEPARTMENT_NAME": "MAC APL LABORATORY"
+      },
+      {
+        "LOC_ID": 1,
+        "location_name": "UNITYPOINT HEALTH\r",
+        "DEPARTMENT_ID": 1700801008,
+        "DEPARTMENT_NAME": "MAC APL PT"
+      },
+      {
+        "LOC_ID": 1,
+        "location_name": "UNITYPOINT HEALTH\r",
+        "DEPARTMENT_ID": 1084600303,
+        "DEPARTMENT_NAME": "MCM W WASH PEDS"
+      },
+      {
+        "LOC_ID": 1,
+        "location_name": "UNITYPOINT HEALTH\r",
+        "DEPARTMENT_ID": 101401088,
+        "DEPARTMENT_NAME": "MHM CENTRAL SCHEDULING"
+      },
+      {
+        "LOC_ID": 1,
+        "location_name": "UNITYPOINT HEALTH\r",
+        "DEPARTMENT_ID": 101401044,
+        "DEPARTMENT_NAME": "MHM OT NEURO CENTRAL"
+      },
+      {
+        "LOC_ID": 1,
+        "location_name": "UNITYPOINT HEALTH\r",
+        "DEPARTMENT_ID": 101401034,
+        "DEPARTMENT_NAME": "MHM OT PARK"
+      },
+      {
+        "LOC_ID": 1,
+        "location_name": "UNITYPOINT HEALTH\r",
+        "DEPARTMENT_ID": 101401031,
+        "DEPARTMENT_NAME": "MHM PT ORTHO CENTRAL"
+      },
+      {
+        "LOC_ID": 1,
+        "location_name": "UNITYPOINT HEALTH\r",
+        "DEPARTMENT_ID": 101155,
+        "DEPARTMENT_NAME": "MYUNITYPOINT SUPPORT"
+      },
+      {
+        "LOC_ID": 10,
+        "location_name": "UNITYPOINT HEALTH SERVICE AREA\r",
+        "DEPARTMENT_ID": 101061,
+        "DEPARTMENT_NAME": "CENTRAL BILLING OFFICE"
+      },
+      {
+        "LOC_ID": 10,
+        "location_name": "UNITYPOINT HEALTH SERVICE AREA\r",
+        "DEPARTMENT_ID": 103001001,
+        "DEPARTMENT_NAME": "CRS HEALTH INFO MGMT"
+      },
+      {
+        "LOC_ID": 10,
+        "location_name": "UNITYPOINT HEALTH SERVICE AREA\r",
+        "DEPARTMENT_ID": 8,
+        "DEPARTMENT_NAME": "GENERIC EXTERNAL DATA DEPARTMENT"
+      },
+      {
+        "LOC_ID": 10,
+        "location_name": "UNITYPOINT HEALTH SERVICE AREA\r",
+        "DEPARTMENT_ID": 1,
+        "DEPARTMENT_NAME": "INITIAL DEPT"
+      },
+      {
+        "LOC_ID": 10,
+        "location_name": "UNITYPOINT HEALTH SERVICE AREA\r",
+        "DEPARTMENT_ID": 1700801001,
+        "DEPARTMENT_NAME": "MAC APL BUSINESS SERVICES"
+      },
+      {
+        "LOC_ID": 10,
+        "location_name": "UNITYPOINT HEALTH SERVICE AREA\r",
+        "DEPARTMENT_ID": 1700801002,
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "LOC_ID": 10,
+        "location_name": "UNITYPOINT HEALTH SERVICE AREA\r",
+        "DEPARTMENT_ID": 1700801005,
+        "DEPARTMENT_NAME": "MAC APL LABORATORY"
+      },
+      {
+        "LOC_ID": 10,
+        "location_name": "UNITYPOINT HEALTH SERVICE AREA\r",
+        "DEPARTMENT_ID": 1700801008,
+        "DEPARTMENT_NAME": "MAC APL PT"
+      },
+      {
+        "LOC_ID": 10,
+        "location_name": "UNITYPOINT HEALTH SERVICE AREA\r",
+        "DEPARTMENT_ID": 1084600303,
+        "DEPARTMENT_NAME": "MCM W WASH PEDS"
+      },
+      {
+        "LOC_ID": 10,
+        "location_name": "UNITYPOINT HEALTH SERVICE AREA\r",
+        "DEPARTMENT_ID": 101401088,
+        "DEPARTMENT_NAME": "MHM CENTRAL SCHEDULING"
+      },
+      {
+        "LOC_ID": 10,
+        "location_name": "UNITYPOINT HEALTH SERVICE AREA\r",
+        "DEPARTMENT_ID": 101401044,
+        "DEPARTMENT_NAME": "MHM OT NEURO CENTRAL"
+      },
+      {
+        "LOC_ID": 10,
+        "location_name": "UNITYPOINT HEALTH SERVICE AREA\r",
+        "DEPARTMENT_ID": 101401034,
+        "DEPARTMENT_NAME": "MHM OT PARK"
+      },
+      {
+        "LOC_ID": 10,
+        "location_name": "UNITYPOINT HEALTH SERVICE AREA\r",
+        "DEPARTMENT_ID": 101401031,
+        "DEPARTMENT_NAME": "MHM PT ORTHO CENTRAL"
+      },
+      {
+        "LOC_ID": 10,
+        "location_name": "UNITYPOINT HEALTH SERVICE AREA\r",
+        "DEPARTMENT_ID": 101155,
+        "DEPARTMENT_NAME": "MYUNITYPOINT SUPPORT"
+      },
+      {
+        "LOC_ID": 101401,
+        "location_name": "UPH MERITER HOSPITAL\r",
+        "DEPARTMENT_ID": 101061,
+        "DEPARTMENT_NAME": "CENTRAL BILLING OFFICE"
+      },
+      {
+        "LOC_ID": 101401,
+        "location_name": "UPH MERITER HOSPITAL\r",
+        "DEPARTMENT_ID": 103001001,
+        "DEPARTMENT_NAME": "CRS HEALTH INFO MGMT"
+      },
+      {
+        "LOC_ID": 101401,
+        "location_name": "UPH MERITER HOSPITAL\r",
+        "DEPARTMENT_ID": 8,
+        "DEPARTMENT_NAME": "GENERIC EXTERNAL DATA DEPARTMENT"
+      },
+      {
+        "LOC_ID": 101401,
+        "location_name": "UPH MERITER HOSPITAL\r",
+        "DEPARTMENT_ID": 1,
+        "DEPARTMENT_NAME": "INITIAL DEPT"
+      },
+      {
+        "LOC_ID": 101401,
+        "location_name": "UPH MERITER HOSPITAL\r",
+        "DEPARTMENT_ID": 1700801001,
+        "DEPARTMENT_NAME": "MAC APL BUSINESS SERVICES"
+      },
+      {
+        "LOC_ID": 101401,
+        "location_name": "UPH MERITER HOSPITAL\r",
+        "DEPARTMENT_ID": 1700801002,
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "LOC_ID": 101401,
+        "location_name": "UPH MERITER HOSPITAL\r",
+        "DEPARTMENT_ID": 1700801005,
+        "DEPARTMENT_NAME": "MAC APL LABORATORY"
+      },
+      {
+        "LOC_ID": 101401,
+        "location_name": "UPH MERITER HOSPITAL\r",
+        "DEPARTMENT_ID": 1700801008,
+        "DEPARTMENT_NAME": "MAC APL PT"
+      },
+      {
+        "LOC_ID": 101401,
+        "location_name": "UPH MERITER HOSPITAL\r",
+        "DEPARTMENT_ID": 1084600303,
+        "DEPARTMENT_NAME": "MCM W WASH PEDS"
+      },
+      {
+        "LOC_ID": 101401,
+        "location_name": "UPH MERITER HOSPITAL\r",
+        "DEPARTMENT_ID": 101401088,
+        "DEPARTMENT_NAME": "MHM CENTRAL SCHEDULING"
+      },
+      {
+        "LOC_ID": 101401,
+        "location_name": "UPH MERITER HOSPITAL\r",
+        "DEPARTMENT_ID": 101401044,
+        "DEPARTMENT_NAME": "MHM OT NEURO CENTRAL"
+      },
+      {
+        "LOC_ID": 101401,
+        "location_name": "UPH MERITER HOSPITAL\r",
+        "DEPARTMENT_ID": 101401034,
+        "DEPARTMENT_NAME": "MHM OT PARK"
+      },
+      {
+        "LOC_ID": 101401,
+        "location_name": "UPH MERITER HOSPITAL\r",
+        "DEPARTMENT_ID": 101401031,
+        "DEPARTMENT_NAME": "MHM PT ORTHO CENTRAL"
+      },
+      {
+        "LOC_ID": 101401,
+        "location_name": "UPH MERITER HOSPITAL\r",
+        "DEPARTMENT_ID": 101155,
+        "DEPARTMENT_NAME": "MYUNITYPOINT SUPPORT"
+      },
+      {
+        "LOC_ID": 1001,
+        "location_name": "UPH ROI SERVICE AREA\r",
+        "DEPARTMENT_ID": 101061,
+        "DEPARTMENT_NAME": "CENTRAL BILLING OFFICE"
+      },
+      {
+        "LOC_ID": 1001,
+        "location_name": "UPH ROI SERVICE AREA\r",
+        "DEPARTMENT_ID": 103001001,
+        "DEPARTMENT_NAME": "CRS HEALTH INFO MGMT"
+      },
+      {
+        "LOC_ID": 1001,
+        "location_name": "UPH ROI SERVICE AREA\r",
+        "DEPARTMENT_ID": 8,
+        "DEPARTMENT_NAME": "GENERIC EXTERNAL DATA DEPARTMENT"
+      },
+      {
+        "LOC_ID": 1001,
+        "location_name": "UPH ROI SERVICE AREA\r",
+        "DEPARTMENT_ID": 1,
+        "DEPARTMENT_NAME": "INITIAL DEPT"
+      },
+      {
+        "LOC_ID": 1001,
+        "location_name": "UPH ROI SERVICE AREA\r",
+        "DEPARTMENT_ID": 1700801001,
+        "DEPARTMENT_NAME": "MAC APL BUSINESS SERVICES"
+      },
+      {
+        "LOC_ID": 1001,
+        "location_name": "UPH ROI SERVICE AREA\r",
+        "DEPARTMENT_ID": 1700801002,
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE"
+      },
+      {
+        "LOC_ID": 1001,
+        "location_name": "UPH ROI SERVICE AREA\r",
+        "DEPARTMENT_ID": 1700801005,
+        "DEPARTMENT_NAME": "MAC APL LABORATORY"
+      },
+      {
+        "LOC_ID": 1001,
+        "location_name": "UPH ROI SERVICE AREA\r",
+        "DEPARTMENT_ID": 1700801008,
+        "DEPARTMENT_NAME": "MAC APL PT"
+      },
+      {
+        "LOC_ID": 1001,
+        "location_name": "UPH ROI SERVICE AREA\r",
+        "DEPARTMENT_ID": 1084600303,
+        "DEPARTMENT_NAME": "MCM W WASH PEDS"
+      },
+      {
+        "LOC_ID": 1001,
+        "location_name": "UPH ROI SERVICE AREA\r",
+        "DEPARTMENT_ID": 101401088,
+        "DEPARTMENT_NAME": "MHM CENTRAL SCHEDULING"
+      },
+      {
+        "LOC_ID": 1001,
+        "location_name": "UPH ROI SERVICE AREA\r",
+        "DEPARTMENT_ID": 101401044,
+        "DEPARTMENT_NAME": "MHM OT NEURO CENTRAL"
+      },
+      {
+        "LOC_ID": 1001,
+        "location_name": "UPH ROI SERVICE AREA\r",
+        "DEPARTMENT_ID": 101401034,
+        "DEPARTMENT_NAME": "MHM OT PARK"
+      },
+      {
+        "LOC_ID": 1001,
+        "location_name": "UPH ROI SERVICE AREA\r",
+        "DEPARTMENT_ID": 101401031,
+        "DEPARTMENT_NAME": "MHM PT ORTHO CENTRAL"
+      },
+      {
+        "LOC_ID": 1001,
+        "location_name": "UPH ROI SERVICE AREA\r",
+        "DEPARTMENT_ID": 101155,
+        "DEPARTMENT_NAME": "MYUNITYPOINT SUPPORT"
+      }
+    ],
+    "columns": [
+      "LOC_ID",
+      "location_name",
+      "DEPARTMENT_ID",
+      "DEPARTMENT_NAME"
+    ],
+    "error": null
+  },
+  {
+    "id": "03.4-locations-and-adt-2",
+    "originalQuery": "SELECT \n    pe.PAT_ENC_CSN_ID,\n    pe.CONTACT_DATE,\n    pe.DEPARTMENT_ID,\n    d.DEPARTMENT_NAME,\n    pe.HOSP_ADMSN_TYPE_C_NAME as admission_type\nFROM pat_enc pe\nLEFT JOIN CLARITY_DEP d ON pe.DEPARTMENT_ID = d.DEPARTMENT_ID\nWHERE pe.DEPARTMENT_ID IS NOT NULL\nORDER BY pe.CONTACT_DATE DESC\nLIMIT 10;",
+    "description": "See how encounters link to departments",
+    "chapterId": "03.4-locations-and-adt",
+    "index": 2,
+    "results": [
+      {
+        "PAT_ENC_CSN_ID": 837844366,
+        "CONTACT_DATE": "9/8/2020 12:00:00 AM",
+        "DEPARTMENT_ID": 1700801002,
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "admission_type": ""
+      },
+      {
+        "PAT_ENC_CSN_ID": 991225117,
+        "CONTACT_DATE": "9/28/2023 12:00:00 AM",
+        "DEPARTMENT_ID": 1700801002,
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "admission_type": "Elective"
+      },
+      {
+        "PAT_ENC_CSN_ID": 1028739468,
+        "CONTACT_DATE": "9/28/2023 12:00:00 AM",
+        "DEPARTMENT_ID": 1700801002,
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "admission_type": ""
+      },
+      {
+        "PAT_ENC_CSN_ID": 1028743701,
+        "CONTACT_DATE": "9/28/2023 12:00:00 AM",
+        "DEPARTMENT_ID": 1700801005,
+        "DEPARTMENT_NAME": "MAC APL LABORATORY",
+        "admission_type": "Elective"
+      },
+      {
+        "PAT_ENC_CSN_ID": 1028766353,
+        "CONTACT_DATE": "9/28/2023 12:00:00 AM",
+        "DEPARTMENT_ID": 1700801002,
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "admission_type": ""
+      },
+      {
+        "PAT_ENC_CSN_ID": 839256727,
+        "CONTACT_DATE": "9/21/2020 12:00:00 AM",
+        "DEPARTMENT_ID": 8,
+        "DEPARTMENT_NAME": "GENERIC EXTERNAL DATA DEPARTMENT",
+        "admission_type": ""
+      },
+      {
+        "PAT_ENC_CSN_ID": 720803470,
+        "CONTACT_DATE": "8/9/2018 12:00:00 AM",
+        "DEPARTMENT_ID": 1700801002,
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "admission_type": "Elective"
+      },
+      {
+        "PAT_ENC_CSN_ID": 724619887,
+        "CONTACT_DATE": "8/9/2018 12:00:00 AM",
+        "DEPARTMENT_ID": 1700801001,
+        "DEPARTMENT_NAME": "MAC APL BUSINESS SERVICES",
+        "admission_type": ""
+      },
+      {
+        "PAT_ENC_CSN_ID": 724623985,
+        "CONTACT_DATE": "8/9/2018 12:00:00 AM",
+        "DEPARTMENT_ID": 1700801002,
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "admission_type": ""
+      },
+      {
+        "PAT_ENC_CSN_ID": 724628999,
+        "CONTACT_DATE": "8/9/2018 12:00:00 AM",
+        "DEPARTMENT_ID": 1700801005,
+        "DEPARTMENT_NAME": "MAC APL LABORATORY",
+        "admission_type": "Elective"
+      }
+    ],
+    "columns": [
+      "PAT_ENC_CSN_ID",
+      "CONTACT_DATE",
+      "DEPARTMENT_ID",
+      "DEPARTMENT_NAME",
+      "admission_type"
+    ],
+    "error": null
+  },
+  {
+    "id": "03.4-locations-and-adt-3",
+    "originalQuery": "SELECT \n    EVENT_ID,\n    PAT_ENC_CSN_ID,\n    EVENT_TYPE_C_NAME,\n    EFFECTIVE_TIME,\n    ROOM_ID,\n    BED_ID,\n    BED_ID_BED_LABEL\nFROM CLARITY_ADT\nWHERE EVENT_TYPE_C_NAME = 'Hospital Outpatient'\nORDER BY EFFECTIVE_TIME;",
+    "description": "Check for room and bed assignments in ADT events",
+    "chapterId": "03.4-locations-and-adt",
+    "index": 3,
+    "results": [
+      {
+        "EVENT_ID": 133758524,
+        "PAT_ENC_CSN_ID": 922942674,
+        "EVENT_TYPE_C_NAME": "Hospital Outpatient",
+        "EFFECTIVE_TIME": "3/11/2022 2:41:00 PM",
+        "ROOM_ID": "",
+        "BED_ID": "",
+        "BED_ID_BED_LABEL": ""
+      },
+      {
+        "EVENT_ID": 134253794,
+        "PAT_ENC_CSN_ID": 922943112,
+        "EVENT_TYPE_C_NAME": "Hospital Outpatient",
+        "EFFECTIVE_TIME": "3/22/2022 4:42:00 PM",
+        "ROOM_ID": "",
+        "BED_ID": "",
+        "BED_ID_BED_LABEL": ""
+      }
+    ],
+    "columns": [
+      "EVENT_ID",
+      "PAT_ENC_CSN_ID",
+      "EVENT_TYPE_C_NAME",
+      "EFFECTIVE_TIME",
+      "ROOM_ID",
+      "BED_ID",
+      "BED_ID_BED_LABEL"
+    ],
+    "error": null
+  },
+  {
+    "id": "03.4-locations-and-adt-4",
+    "originalQuery": "SELECT \n    p.PAT_ID,\n    p.LOC_ID,\n    l.LOC_NAME_ as primary_location,\n    p.EFF_DATE as effective_date,\n    p.TERM_DATE as termination_date\nFROM PAT_PRIM_LOC p\nLEFT JOIN CLARITY_LOC l ON p.LOC_ID = l.LOC_ID\nORDER BY p.EFF_DATE;",
+    "description": "View patient primary location assignments",
+    "chapterId": "03.4-locations-and-adt",
+    "index": 4,
+    "results": [
+      {
+        "PAT_ID": "Z7004242",
+        "LOC_ID": 1700801,
+        "primary_location": "CLN MAC ASSOCIATED PHYSICIANS LLP",
+        "effective_date": "7/17/2018 12:00:00 AM",
+        "termination_date": ""
+      }
+    ],
+    "columns": [
+      "PAT_ID",
+      "LOC_ID",
+      "primary_location",
+      "effective_date",
+      "termination_date"
+    ],
+    "error": null
+  },
+  {
+    "id": "03.4-locations-and-adt-5",
+    "originalQuery": "SELECT \n    pe.PRIMARY_LOC_ID,\n    l.LOC_NAME_,\n    COUNT(*) as encounter_count,\n    COUNT(DISTINCT pe.PAT_ID) as unique_patients\nFROM pat_enc pe\nLEFT JOIN CLARITY_LOC l ON pe.PRIMARY_LOC_ID = l.LOC_ID\nWHERE pe.PRIMARY_LOC_ID IS NOT NULL\nGROUP BY pe.PRIMARY_LOC_ID, l.LOC_NAME_;",
+    "description": "Count encounters by location to understand volume",
+    "chapterId": "03.4-locations-and-adt",
+    "index": 5,
+    "results": [
+      {
+        "PRIMARY_LOC_ID": 1700801,
+        "LOC_NAME_": "CLN MAC ASSOCIATED PHYSICIANS LLP",
+        "encounter_count": 111,
+        "unique_patients": 1
+      }
+    ],
+    "columns": [
+      "PRIMARY_LOC_ID",
+      "LOC_NAME_",
+      "encounter_count",
+      "unique_patients"
+    ],
+    "error": null
+  },
+  {
+    "id": "03.4-locations-and-adt-6",
+    "originalQuery": "WITH patient_journey AS (\n    SELECT \n        adt.EVENT_ID,\n        adt.EVENT_TYPE_C_NAME as event_type,\n        adt.EFFECTIVE_TIME,\n        adt.DEPARTMENT_ID,\n        d.DEPARTMENT_NAME,\n        -- Calculate time since admission\n        JULIANDAY(adt.EFFECTIVE_TIME) - \n        FIRST_VALUE(JULIANDAY(adt.EFFECTIVE_TIME)) \n            OVER (PARTITION BY adt.PAT_ENC_CSN_ID \n                  ORDER BY adt.EFFECTIVE_TIME) as days_since_start\n    FROM CLARITY_ADT adt\n    LEFT JOIN CLARITY_DEP d ON adt.DEPARTMENT_ID = d.DEPARTMENT_ID\n    WHERE adt.PAT_ENC_CSN_ID = '922942674'\n)\nSELECT * FROM patient_journey\nORDER BY EFFECTIVE_TIME;",
+    "description": "Trace a patient's movement through ADT events",
+    "chapterId": "03.4-locations-and-adt",
+    "index": 6,
+    "results": [
+      {
+        "EVENT_ID": 133792913,
+        "event_type": "Discharge",
+        "EFFECTIVE_TIME": "3/11/2022 11:59:00 PM",
+        "DEPARTMENT_ID": 101401044,
+        "DEPARTMENT_NAME": "MHM OT NEURO CENTRAL",
+        "days_since_start": null
+      },
+      {
+        "EVENT_ID": 133758524,
+        "event_type": "Hospital Outpatient",
+        "EFFECTIVE_TIME": "3/11/2022 2:41:00 PM",
+        "DEPARTMENT_ID": 101401044,
+        "DEPARTMENT_NAME": "MHM OT NEURO CENTRAL",
+        "days_since_start": null
+      }
+    ],
+    "columns": [
+      "EVENT_ID",
+      "event_type",
+      "EFFECTIVE_TIME",
+      "DEPARTMENT_ID",
+      "DEPARTMENT_NAME",
+      "days_since_start"
+    ],
+    "error": null
+  },
+  {
+    "id": "03.4-locations-and-adt-7",
+    "originalQuery": "SELECT \n    EVENT_TYPE_C_NAME,\n    COUNT(*) as event_count,\n    AVG(\n        JULIANDAY(EFFECTIVE_TIME) - JULIANDAY('00:00:00')\n    ) * 24 as avg_hour_of_day\nFROM CLARITY_ADT\nGROUP BY EVENT_TYPE_C_NAME\nORDER BY event_count DESC;",
+    "description": "Analyze time between ADT events",
+    "chapterId": "03.4-locations-and-adt",
+    "index": 7,
+    "results": [
+      {
+        "EVENT_TYPE_C_NAME": "Hospital Outpatient",
+        "event_count": 2,
+        "avg_hour_of_day": null
+      },
+      {
+        "EVENT_TYPE_C_NAME": "Discharge",
+        "event_count": 2,
+        "avg_hour_of_day": null
+      }
+    ],
+    "columns": [
+      "EVENT_TYPE_C_NAME",
+      "event_count",
+      "avg_hour_of_day"
+    ],
+    "error": null
+  },
+  {
+    "id": "03.4-locations-and-adt-8",
+    "originalQuery": "SELECT \n    pe.PAT_ENC_CSN_ID,\n    pe.CONTACT_DATE,\n    d.DEPARTMENT_NAME,\n    COUNT(DISTINCT dx.LINE) as diagnosis_count\nFROM pat_enc pe\nLEFT JOIN CLARITY_DEP d ON pe.DEPARTMENT_ID = d.DEPARTMENT_ID\nLEFT JOIN pat_enc_dx dx ON pe.PAT_ENC_CSN_ID = dx.PAT_ENC_CSN_ID\nWHERE d.DEPARTMENT_NAME IS NOT NULL\nGROUP BY pe.PAT_ENC_CSN_ID, pe.CONTACT_DATE, d.DEPARTMENT_NAME\nORDER BY pe.CONTACT_DATE DESC\nLIMIT 10;",
+    "description": "Link clinical encounters to their departments",
+    "chapterId": "03.4-locations-and-adt",
+    "index": 8,
+    "results": [
+      {
+        "PAT_ENC_CSN_ID": 837844366,
+        "CONTACT_DATE": "9/8/2020 12:00:00 AM",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "diagnosis_count": 0
+      },
+      {
+        "PAT_ENC_CSN_ID": 991225117,
+        "CONTACT_DATE": "9/28/2023 12:00:00 AM",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "diagnosis_count": 4
+      },
+      {
+        "PAT_ENC_CSN_ID": 1028739468,
+        "CONTACT_DATE": "9/28/2023 12:00:00 AM",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "diagnosis_count": 0
+      },
+      {
+        "PAT_ENC_CSN_ID": 1028743701,
+        "CONTACT_DATE": "9/28/2023 12:00:00 AM",
+        "DEPARTMENT_NAME": "MAC APL LABORATORY",
+        "diagnosis_count": 3
+      },
+      {
+        "PAT_ENC_CSN_ID": 1028766353,
+        "CONTACT_DATE": "9/28/2023 12:00:00 AM",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "diagnosis_count": 0
+      },
+      {
+        "PAT_ENC_CSN_ID": 839256727,
+        "CONTACT_DATE": "9/21/2020 12:00:00 AM",
+        "DEPARTMENT_NAME": "GENERIC EXTERNAL DATA DEPARTMENT",
+        "diagnosis_count": 0
+      },
+      {
+        "PAT_ENC_CSN_ID": 720803470,
+        "CONTACT_DATE": "8/9/2018 12:00:00 AM",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "diagnosis_count": 3
+      },
+      {
+        "PAT_ENC_CSN_ID": 724619887,
+        "CONTACT_DATE": "8/9/2018 12:00:00 AM",
+        "DEPARTMENT_NAME": "MAC APL BUSINESS SERVICES",
+        "diagnosis_count": 0
+      },
+      {
+        "PAT_ENC_CSN_ID": 724623985,
+        "CONTACT_DATE": "8/9/2018 12:00:00 AM",
+        "DEPARTMENT_NAME": "MAC APL INTERNAL MEDICINE",
+        "diagnosis_count": 0
+      },
+      {
+        "PAT_ENC_CSN_ID": 724628999,
+        "CONTACT_DATE": "8/9/2018 12:00:00 AM",
+        "DEPARTMENT_NAME": "MAC APL LABORATORY",
+        "diagnosis_count": 1
+      }
+    ],
+    "columns": [
+      "PAT_ENC_CSN_ID",
+      "CONTACT_DATE",
+      "DEPARTMENT_NAME",
+      "diagnosis_count"
+    ],
+    "error": null
+  },
+  {
+    "id": "03.4-locations-and-adt-9",
+    "originalQuery": "SELECT \n    COUNT(*) as total_encounters,\n    COUNT(DEPARTMENT_ID) as with_department,\n    COUNT(PRIMARY_LOC_ID) as with_primary_loc,\n    ROUND(\n        100.0 * COUNT(DEPARTMENT_ID) / COUNT(*), 2\n    ) as pct_with_department\nFROM pat_enc;",
+    "description": "Check for encounters with missing location data",
+    "chapterId": "03.4-locations-and-adt",
+    "index": 9,
+    "results": [
+      {
+        "total_encounters": 111,
+        "with_department": 45,
+        "with_primary_loc": 111,
+        "pct_with_department": 40.54
+      }
+    ],
+    "columns": [
+      "total_encounters",
+      "with_department",
+      "with_primary_loc",
+      "pct_with_department"
+    ],
+    "error": null
+  }
+]

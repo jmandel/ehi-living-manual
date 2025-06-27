@@ -1,0 +1,100 @@
+[
+  {
+    "id": "02.2-the-identifier-trinity-0",
+    "chapterId": "02.2-the-identifier-trinity",
+    "originalQuery": "SELECT \n  p.PAT_ID as who_patient,\n  pe.PAT_ENC_CSN_ID as what_encounter,\n  pe.HSP_ACCOUNT_ID as why_billing\nFROM PATIENT p\nJOIN PAT_ENC pe ON p.PAT_ID = pe.PAT_ID\nWHERE pe.HSP_ACCOUNT_ID IS NOT NULL\nLIMIT 5;",
+    "description": "See the trinity in action",
+    "index": 0
+  },
+  {
+    "id": "02.2-the-identifier-trinity-1",
+    "chapterId": "02.2-the-identifier-trinity",
+    "originalQuery": "SELECT \n  PAT_ID,\n  PAT_NAME,\n  BIRTH_DATE\nFROM PATIENT\nWHERE PAT_ID = 'Z7004242';",
+    "description": "Explore patient identity",
+    "index": 1
+  },
+  {
+    "id": "02.2-the-identifier-trinity-2",
+    "chapterId": "02.2-the-identifier-trinity",
+    "originalQuery": "SELECT \n  COUNT(*) as tables_with_pat_id\nFROM _metadata\nWHERE column_name = 'PAT_ID';",
+    "description": "Count tables that link directly to PATIENT",
+    "index": 2
+  },
+  {
+    "id": "02.2-the-identifier-trinity-3",
+    "chapterId": "02.2-the-identifier-trinity",
+    "originalQuery": "SELECT \n  PAT_ID,\n  COUNT(DISTINCT PAT_ENC_CSN_ID) as total_encounters,\n  MIN(CONTACT_DATE) as first_visit,\n  MAX(CONTACT_DATE) as last_visit\nFROM PAT_ENC\nWHERE PAT_ID = 'Z7004242'\nGROUP BY PAT_ID;",
+    "description": "One patient, many encounters",
+    "index": 3
+  },
+  {
+    "id": "02.2-the-identifier-trinity-4",
+    "chapterId": "02.2-the-identifier-trinity",
+    "originalQuery": "SELECT \n  'Encounter Info' as data_type,\n  COUNT(*) as records\nFROM PAT_ENC \nWHERE PAT_ENC_CSN_ID = '720803470'\nUNION ALL\nSELECT 'Diagnoses', COUNT(*)\nFROM PAT_ENC_DX\nWHERE PAT_ENC_CSN_ID = '720803470'\nUNION ALL\nSELECT 'Orders', COUNT(*)\nFROM ORDER_PROC\nWHERE PAT_ENC_CSN_ID = '720803470';",
+    "description": "Everything linked to one encounter",
+    "index": 4
+  },
+  {
+    "id": "02.2-the-identifier-trinity-5",
+    "chapterId": "02.2-the-identifier-trinity",
+    "originalQuery": "SELECT \n  HSP_ACCOUNT_ID,\n  COUNT(*) as encounters_in_har,\n  MIN(CONTACT_DATE) as first_encounter,\n  MAX(CONTACT_DATE) as last_encounter\nFROM PAT_ENC\nWHERE HSP_ACCOUNT_ID IS NOT NULL\nGROUP BY HSP_ACCOUNT_ID\nHAVING COUNT(*) > 1;",
+    "description": "HARs group multiple encounters",
+    "index": 5
+  },
+  {
+    "id": "02.2-the-identifier-trinity-6",
+    "chapterId": "02.2-the-identifier-trinity",
+    "originalQuery": "SELECT \n  ha.HSP_ACCOUNT_ID,\n  ha.TOT_CHGS as total_charges,\n  -- Note: Total payments would need to be calculated from HSP_TRANSACTIONS\n  ha.TOT_CHGS - ha.TOT_ADJ as net_charges,\n  ha.ACCT_BILLSTS_HA_C_NAME as billing_status\nFROM HSP_ACCOUNT ha\nWHERE ha.HSP_ACCOUNT_ID = '376684810';",
+    "description": "Financial view of a HAR",
+    "index": 6
+  },
+  {
+    "id": "02.2-the-identifier-trinity-7",
+    "chapterId": "02.2-the-identifier-trinity",
+    "originalQuery": "SELECT \n  -- Patient info\n  p.PAT_NAME,\n  -- Encounter details\n  pe.PAT_ENC_CSN_ID,\n  pe.CONTACT_DATE,\n  pe.DEPARTMENT_ID,\n  -- Financial linkage\n  pe.HSP_ACCOUNT_ID,\n  -- Clinical data (diagnosis)\n  dx.DX_ID,\n  dx.LINE as diagnosis_priority\nFROM PATIENT p\nJOIN PAT_ENC pe ON p.PAT_ID = pe.PAT_ID\nLEFT JOIN PAT_ENC_DX dx ON pe.PAT_ENC_CSN_ID = dx.PAT_ENC_CSN_ID\nWHERE p.PAT_ID = 'Z7004242'\n  AND pe.CONTACT_DATE >= '2019-01-01'\nORDER BY pe.CONTACT_DATE, dx.LINE\nLIMIT 20;",
+    "description": "Complete patient journey",
+    "index": 7
+  },
+  {
+    "id": "02.2-the-identifier-trinity-8",
+    "chapterId": "02.2-the-identifier-trinity",
+    "originalQuery": "SELECT \n  pe.PAT_ENC_CSN_ID,\n  pe.CONTACT_DATE,\n  COUNT(DISTINCT ord.ORDER_PROC_ID) as orders_placed,\n  COUNT(DISTINCT dx.LINE) as diagnoses_recorded\nFROM PAT_ENC pe\nLEFT JOIN ORDER_PROC ord ON pe.PAT_ENC_CSN_ID = ord.PAT_ENC_CSN_ID\nLEFT JOIN PAT_ENC_DX dx ON pe.PAT_ENC_CSN_ID = dx.PAT_ENC_CSN_ID\nWHERE pe.PAT_ID = 'Z7004242'\nGROUP BY pe.PAT_ENC_CSN_ID, pe.CONTACT_DATE\nORDER BY pe.CONTACT_DATE DESC\nLIMIT 10;",
+    "description": "Clinical data via CSN",
+    "index": 8
+  },
+  {
+    "id": "02.2-the-identifier-trinity-9",
+    "chapterId": "02.2-the-identifier-trinity",
+    "originalQuery": "SELECT \n  ha.HSP_ACCOUNT_ID,\n  ha.ACCT_BILLSTS_HA_C_NAME as status,\n  ha.TOT_CHGS as charges,\n  ha.TOT_ADJ as adjustments,\n  ha.TOT_CHGS - ha.TOT_ADJ as net_charges\nFROM HSP_ACCOUNT ha\nWHERE ha.ACCT_BILLSTS_HA_C_NAME != 'Unbilled'\nORDER BY ha.TOT_CHGS DESC\nLIMIT 5;",
+    "description": "Financial data via HAR",
+    "index": 9
+  },
+  {
+    "id": "02.2-the-identifier-trinity-10",
+    "chapterId": "02.2-the-identifier-trinity",
+    "originalQuery": "SELECT \n  -- WHO\n  p.PAT_ID,\n  p.PAT_NAME,\n  -- WHAT  \n  pe.PAT_ENC_CSN_ID,\n  pe.CONTACT_DATE,\n  edg.DX_NAME as primary_diagnosis,\n  -- WHY\n  ha.HSP_ACCOUNT_ID,\n  ha.TOT_CHGS as total_charges\nFROM PATIENT p\nJOIN PAT_ENC pe ON p.PAT_ID = pe.PAT_ID\nLEFT JOIN PAT_ENC_DX dx ON pe.PAT_ENC_CSN_ID = dx.PAT_ENC_CSN_ID \n  AND dx.LINE = 1 -- Primary diagnosis only\nLEFT JOIN CLARITY_EDG edg ON dx.DX_ID = edg.DX_ID\nLEFT JOIN HSP_ACCOUNT ha ON pe.HSP_ACCOUNT_ID = ha.HSP_ACCOUNT_ID\nWHERE pe.CONTACT_DATE BETWEEN '2020-01-01' AND '2020-12-31'\n  AND ha.HSP_ACCOUNT_ID IS NOT NULL\nORDER BY pe.CONTACT_DATE\nLIMIT 10;",
+    "description": "Complete view using all three identifiers",
+    "index": 10
+  },
+  {
+    "id": "02.2-the-identifier-trinity-11",
+    "chapterId": "02.2-the-identifier-trinity",
+    "originalQuery": "SELECT \n  COUNT(*) as total_encounters,\n  SUM(CASE WHEN HSP_ACCOUNT_ID IS NULL THEN 1 ELSE 0 END) as no_har,\n  ROUND(100.0 * SUM(CASE WHEN HSP_ACCOUNT_ID IS NULL THEN 1 ELSE 0 END) / COUNT(*), 1) as pct_no_har\nFROM PAT_ENC\nWHERE PAT_ID = 'Z7004242';",
+    "description": "Encounters without financial data",
+    "index": 11
+  },
+  {
+    "id": "02.2-the-identifier-trinity-12",
+    "chapterId": "02.2-the-identifier-trinity",
+    "originalQuery": "-- Encounters without patients (should be 0)\nSELECT COUNT(*) as orphan_encounters\nFROM PAT_ENC pe\nLEFT JOIN PATIENT p ON pe.PAT_ID = p.PAT_ID\nWHERE p.PAT_ID IS NULL;",
+    "description": "Check data integrity",
+    "index": 12
+  },
+  {
+    "id": "02.2-the-identifier-trinity-13",
+    "chapterId": "02.2-the-identifier-trinity",
+    "originalQuery": "-- Each encounter should link to at most one HAR\nSELECT \n  PAT_ENC_CSN_ID,\n  COUNT(DISTINCT HSP_ACCOUNT_ID) as har_count\nFROM PAT_ENC\nWHERE HSP_ACCOUNT_ID IS NOT NULL\nGROUP BY PAT_ENC_CSN_ID\nHAVING COUNT(DISTINCT HSP_ACCOUNT_ID) > 1;",
+    "description": "Multiple HARs per encounter (should be 0)",
+    "index": 13
+  }
+]

@@ -1,0 +1,299 @@
+---
+import type { ProcessedQuery } from '../types/query';
+import SQLWidget from './SQLWidget.tsx';
+
+export interface Props {
+  queryId: string;
+}
+
+const { queryId } = Astro.props;
+
+// Import all processed queries
+import processedQueries from '../data/all-processed-queries.json';
+
+// Find the specific query
+const query = processedQueries.find(q => q.id === queryId) as ProcessedQuery | undefined;
+
+if (!query) {
+  throw new Error(`Query not found: ${queryId}`);
+}
+---
+
+<!-- Static HTML version (works without JavaScript) -->
+<div class="sql-widget-static" data-query-id={queryId}>
+  <div class="sql-widget">
+    {query.description && (
+      <div class="sql-widget-header">
+        <p class="sql-description">{query.description}</p>
+      </div>
+    )}
+    
+    <div class="sql-widget-body">
+      <details class="sql-query-details">
+        <summary>Show Query</summary>
+        <pre class="sql-query"><code>{query.originalQuery}</code></pre>
+      </details>
+  
+  {query.error ? (
+    <div class="sql-error">
+      <strong>Query Error:</strong> {query.error}
+    </div>
+  ) : query.results && query.results.length > 0 ? (
+    <div class="sql-results-wrapper">
+      <table class="sql-results">
+        <thead>
+          <tr>
+            {query.columns?.map(col => (
+              <th>{col}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {query.results.map((row, idx) => (
+            <tr>
+              {query.columns?.map(col => (
+                <td>{row[col] === null || row[col] === undefined ? 'NULL' : String(row[col])}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {query.results.length === 100 && (
+        <p class="sql-note">Results limited to 100 rows</p>
+      )}
+    </div>
+  ) : (
+    <p class="sql-no-results">No results returned</p>
+  )}
+    </div>
+  </div>
+</div>
+
+<!-- Progressive enhancement with React (only loads if JS is enabled) -->
+<div class="sql-widget-react" data-query-id={queryId} style="display: none;">
+  <SQLWidget query={query} client:load />
+</div>
+
+<script define:vars={{ queryId }}>
+  // Hide static version and show React version when JS loads
+  document.addEventListener('DOMContentLoaded', () => {
+    const staticWidget = document.querySelector(`[data-query-id="${queryId}"].sql-widget-static`);
+    const reactWidget = document.querySelector(`[data-query-id="${queryId}"].sql-widget-react`);
+    
+    if (staticWidget && reactWidget) {
+      staticWidget.style.display = 'none';
+      reactWidget.style.display = 'block';
+    }
+  });
+</script>
+
+<style>
+  .sql-widget-static,
+  .sql-widget-react {
+    margin: 1.5rem auto;
+    max-width: 900px;
+    width: 100%;
+  }
+  
+  .sql-widget {
+    background: #f8f9fa;
+    border: 1px solid #e1e4e8;
+    border-radius: 8px;
+    overflow: hidden;
+    width: 100%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+  
+  @media (max-width: 940px) {
+    .sql-widget-static,
+    .sql-widget-react {
+      margin: 1.5rem 1rem;
+      width: calc(100% - 2rem);
+    }
+  }
+
+  .sql-widget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: #f6f8fa;
+    border-bottom: 1px solid #e1e4e8;
+  }
+  
+  .sql-description {
+    font-weight: 600;
+    color: #24292e;
+    font-size: 0.875rem;
+    margin: 0;
+  }
+
+  .sql-query-details {
+    margin: 1rem 0;
+  }
+
+  .sql-query-details summary {
+    cursor: pointer;
+    font-weight: 500;
+    padding: 0.5rem;
+    background: #f5f5f5;
+    border-radius: 4px;
+  }
+
+  .sql-query-details summary:hover {
+    background: #e8e8e8;
+  }
+
+  .sql-query {
+    background: #f8f8f8;
+    padding: 1rem;
+    border-radius: 4px;
+    overflow-x: auto;
+    margin-top: 0.5rem;
+  }
+
+  .sql-query code {
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 0.9em;
+  }
+
+  .sql-results-wrapper {
+    overflow-x: auto;
+    margin: 1rem 0;
+  }
+
+  .sql-results {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+  }
+
+  .sql-results th,
+  .sql-results td {
+    padding: 0.5rem;
+    text-align: left;
+    border: 1px solid #ddd;
+  }
+
+  .sql-results th {
+    background: #f5f5f5;
+    font-weight: 600;
+  }
+
+  .sql-results tr:nth-child(even) {
+    background: #f9f9f9;
+  }
+
+  .sql-error {
+    background: #fee;
+    border: 1px solid #fcc;
+    padding: 1rem;
+    border-radius: 4px;
+    color: #c00;
+  }
+
+  .sql-no-results {
+    color: #666;
+    font-style: italic;
+    padding: 1rem;
+    text-align: center;
+    background: #f8f8f8;
+    border-radius: 4px;
+  }
+
+  .sql-note {
+    font-size: 0.85em;
+    color: #666;
+    font-style: italic;
+    margin-top: 0.5rem;
+  }
+
+  /* React component styles */
+  .sql-widget-body {
+    padding: 1rem;
+  }
+  
+  /* SQL Editor styles */
+  .sql-editor-container {
+    border: 1px solid #e1e4e8;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #fff;
+  }
+
+  .sql-editor {
+    width: 100%;
+    min-height: 100px;
+    padding: 1rem;
+    border: none;
+    font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    resize: vertical;
+    background: #fff;
+    color: #24292e;
+    box-sizing: border-box;
+    overflow-y: hidden;
+  }
+
+  .sql-editor:focus {
+    outline: none;
+    box-shadow: inset 0 0 0 2px #0366d6;
+  }
+
+  .sql-editor:disabled {
+    background: #f6f8fa;
+    color: #6a737d;
+  }
+
+  .sql-editor-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.5rem;
+    background: #f6f8fa;
+    border-top: 1px solid #e1e4e8;
+  }
+  
+  .sql-editor-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .sql-run-button,
+  .sql-reset-button {
+    padding: 0.375rem 1rem;
+    background: #0366d6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
+  }
+  
+  .sql-reset-button {
+    background: #6a737d;
+  }
+
+  .sql-run-button:hover:not(:disabled) {
+    background: #0256c7;
+  }
+  
+  .sql-reset-button:hover:not(:disabled) {
+    background: #586069;
+  }
+
+  .sql-run-button:disabled,
+  .sql-reset-button:disabled {
+    background: #d1d5da;
+    cursor: not-allowed;
+  }
+
+  .sql-execution-time {
+    font-size: 0.75rem;
+    color: #6a737d;
+  }
+</style>

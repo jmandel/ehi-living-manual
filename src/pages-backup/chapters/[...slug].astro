@@ -1,0 +1,72 @@
+---
+import ChapterLayout from '../../layouts/ChapterLayout.astro';
+import SQLWidget from '../../components/SQLWidget.astro';
+import { glob } from 'glob';
+import { basename } from 'path';
+
+export async function getStaticPaths() {
+  const chapters = await glob('src/content/processed/*.md');
+  
+  return chapters.map(chapterPath => {
+    const slug = basename(chapterPath, '.md');
+    return {
+      params: { slug },
+      props: { chapterPath, slug }
+    };
+  });
+}
+
+const { chapterPath, slug } = Astro.props;
+
+// Read and process the markdown
+const content = await Bun.file(chapterPath).text();
+
+// Extract title from first h1
+const titleMatch = content.match(/^#\s+(.+)$/m);
+const title = titleMatch ? titleMatch[1] : slug;
+
+// Process markdown to HTML (simple version for POC)
+// In production, you'd use a proper markdown processor
+let html = content
+  .replace(/^#\s+.+$/m, '') // Remove title (we'll render it separately)
+  .replace(/^###\s+(.+)$/gm, '<h3>$1</h3>')
+  .replace(/^##\s+(.+)$/gm, '<h2>$1</h2>')
+  .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+  .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+  .replace(/`([^`]+)`/g, '<code>$1</code>')
+  .replace(/\n\n/g, '</p><p>')
+  .replace(/^/, '<p>')
+  .replace(/$/, '</p>')
+  .replace(/<p><h/g, '<h')
+  .replace(/<\/h(\d)><\/p>/g, '</h$1>')
+  .replace(/<p><SQLWidget/g, '<SQLWidget')
+  .replace(/\/><\/p>/g, '/>')
+  .replace(/\n- /g, '</li><li>')
+  .replace(/<p>- /g, '<ul><li>')
+  .replace(/<\/li><\/p>/g, '</li></ul>');
+
+// Handle mermaid diagrams
+html = html.replace(/```mermaid\n([\s\S]*?)```/g, 
+  '<div class="mermaid-placeholder"><pre>$1</pre></div>');
+---
+
+<ChapterLayout title={title}>
+  <h1>{title}</h1>
+  <Fragment set:html={html} />
+</ChapterLayout>
+
+<style>
+  .mermaid-placeholder {
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin: 2rem 0;
+  }
+
+  .mermaid-placeholder pre {
+    margin: 0;
+    font-size: 0.875rem;
+    overflow-x: auto;
+  }
+</style>

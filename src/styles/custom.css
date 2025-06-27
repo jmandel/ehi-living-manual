@@ -1,0 +1,184 @@
+/* Custom styles for Epic EHI Manual */
+
+/* SQL Widget styles */
+.sql-widget-static,
+.sql-widget-react {
+  margin: 1.5rem 0;
+  width: 100%;
+}
+
+.sql-widget {
+  background: var(--sl-color-gray-6);
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  width: 100%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.sql-widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: var(--sl-color-gray-7);
+  border-bottom: 1px solid var(--sl-color-gray-5);
+}
+
+.sql-description {
+  font-weight: 600;
+  color: var(--sl-color-white);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.sql-widget-body {
+  padding: 1rem;
+}
+
+.sql-editor-container {
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 0.375rem;
+  overflow: hidden;
+  background: var(--sl-color-bg);
+}
+
+.sql-editor {
+  width: 100%;
+  min-height: 100px;
+  padding: 1rem;
+  border: none;
+  font-family: var(--sl-font-mono);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  resize: vertical;
+  background: var(--sl-color-bg);
+  color: var(--sl-color-text);
+  box-sizing: border-box;
+  overflow-y: hidden;
+}
+
+.sql-editor:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--sl-color-accent);
+}
+
+.sql-editor:disabled {
+  background: var(--sl-color-gray-6);
+  color: var(--sl-color-gray-3);
+}
+
+.sql-editor-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem;
+  background: var(--sl-color-gray-6);
+  border-top: 1px solid var(--sl-color-gray-5);
+}
+
+.sql-editor-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.sql-run-button,
+.sql-reset-button {
+  padding: 0.375rem 1rem;
+  background: var(--sl-color-accent);
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.sql-reset-button {
+  background: var(--sl-color-gray-4);
+}
+
+.sql-run-button:hover:not(:disabled) {
+  opacity: 0.8;
+}
+
+.sql-reset-button:hover:not(:disabled) {
+  opacity: 0.8;
+}
+
+.sql-run-button:disabled,
+.sql-reset-button:disabled {
+  background: var(--sl-color-gray-5);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.sql-execution-time {
+  font-size: 0.75rem;
+  color: var(--sl-color-gray-3);
+}
+
+.sql-results-wrapper {
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.sql-results {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.sql-results th,
+.sql-results td {
+  padding: 0.5rem;
+  text-align: left;
+  border: 1px solid var(--sl-color-gray-5);
+}
+
+.sql-results th {
+  background: var(--sl-color-gray-6);
+  font-weight: 600;
+}
+
+.sql-results tr:nth-child(even) {
+  background: var(--sl-color-gray-7);
+}
+
+.sql-error {
+  background: var(--sl-color-red-low);
+  border: 1px solid var(--sl-color-red);
+  padding: 1rem;
+  border-radius: 0.375rem;
+  color: var(--sl-color-red-high);
+}
+
+.sql-no-results {
+  color: var(--sl-color-gray-3);
+  font-style: italic;
+  padding: 1rem;
+  text-align: center;
+  background: var(--sl-color-gray-6);
+  border-radius: 0.375rem;
+}
+
+/* Mermaid diagram styles */
+.mermaid-wrapper {
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.mermaid-fallback {
+  background: var(--sl-color-gray-6);
+  padding: 1rem;
+  border-radius: 0.375rem;
+  overflow-x: auto;
+  text-align: left;
+}
+
+.mermaid {
+  display: flex;
+  justify-content: center;
+}

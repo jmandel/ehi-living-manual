@@ -1,0 +1,657 @@
+[
+  {
+    "id": "02.5-naming-and-reference-data-0",
+    "originalQuery": "SELECT \n  SUBSTR(name, 1, INSTR(name || '_', '_') - 1) AS prefix,\n  COUNT(*) as table_count\nFROM sqlite_master \nWHERE type='table' \n  AND name NOT LIKE 'sqlite_%'\nGROUP BY prefix\nORDER BY table_count DESC\nLIMIT 15;",
+    "description": "Count tables by module prefix",
+    "chapterId": "02.5-naming-and-reference-data",
+    "index": 0,
+    "results": [
+      {
+        "prefix": "PAT",
+        "table_count": 68
+      },
+      {
+        "prefix": "HSP",
+        "table_count": 52
+      },
+      {
+        "prefix": "ORDER",
+        "table_count": 48
+      },
+      {
+        "prefix": "CLARITY",
+        "table_count": 28
+      },
+      {
+        "prefix": "CL",
+        "table_count": 26
+      },
+      {
+        "prefix": "REFERRAL",
+        "table_count": 16
+      },
+      {
+        "prefix": "MYC",
+        "table_count": 16
+      },
+      {
+        "prefix": "ARPB",
+        "table_count": 15
+      },
+      {
+        "prefix": "PATIENT",
+        "table_count": 14
+      },
+      {
+        "prefix": "IP",
+        "table_count": 13
+      },
+      {
+        "prefix": "ORD",
+        "table_count": 11
+      },
+      {
+        "prefix": "MED",
+        "table_count": 11
+      },
+      {
+        "prefix": "CLM",
+        "table_count": 11
+      },
+      {
+        "prefix": "INV",
+        "table_count": 8
+      },
+      {
+        "prefix": "COVERAGE",
+        "table_count": 7
+      }
+    ],
+    "columns": [
+      "prefix",
+      "table_count"
+    ],
+    "error": null
+  },
+  {
+    "id": "02.5-naming-and-reference-data-1",
+    "originalQuery": "-- Find tables with 'PATIENT' or 'PAT_' prefix using the metadata\nSELECT DISTINCT table_name\nFROM _metadata\nWHERE table_name LIKE 'PAT_%' OR table_name LIKE 'PATIENT%'\nORDER BY table_name\nLIMIT 10;",
+    "description": "Find all patient-related tables",
+    "chapterId": "02.5-naming-and-reference-data",
+    "index": 1,
+    "results": [
+      {
+        "table_name": "PATIENT"
+      },
+      {
+        "table_name": "PATIENT_2"
+      },
+      {
+        "table_name": "PATIENT_3"
+      },
+      {
+        "table_name": "PATIENT_4"
+      },
+      {
+        "table_name": "PATIENT_5"
+      },
+      {
+        "table_name": "PATIENT_6"
+      },
+      {
+        "table_name": "PATIENT_ALG_UPD_HX"
+      },
+      {
+        "table_name": "PATIENT_ALIAS"
+      },
+      {
+        "table_name": "PATIENT_DOCS"
+      },
+      {
+        "table_name": "PATIENT_ENC_VIDEO_VISIT"
+      }
+    ],
+    "columns": [
+      "table_name"
+    ],
+    "error": null
+  },
+  {
+    "id": "02.5-naming-and-reference-data-2",
+    "originalQuery": "SELECT \n  APPT_STATUS_C_NAME,\n  COUNT(*) as frequency\nFROM PAT_ENC\nWHERE APPT_STATUS_C_NAME IS NOT NULL\nGROUP BY APPT_STATUS_C_NAME\nORDER BY frequency DESC;",
+    "description": "See the _C_NAME pattern in action",
+    "chapterId": "02.5-naming-and-reference-data",
+    "index": 2,
+    "results": [
+      {
+        "APPT_STATUS_C_NAME": "",
+        "frequency": 94
+      },
+      {
+        "APPT_STATUS_C_NAME": "Completed",
+        "frequency": 13
+      },
+      {
+        "APPT_STATUS_C_NAME": "Canceled",
+        "frequency": 3
+      },
+      {
+        "APPT_STATUS_C_NAME": "Scheduled",
+        "frequency": 1
+      }
+    ],
+    "columns": [
+      "APPT_STATUS_C_NAME",
+      "frequency"
+    ],
+    "error": null
+  },
+  {
+    "id": "02.5-naming-and-reference-data-3",
+    "originalQuery": "WITH category_values AS (\n  SELECT DISTINCT\n    'HOSP_ADMSN_TYPE' as category,\n    HOSP_ADMSN_TYPE_C_NAME as value\n  FROM PAT_ENC\n  WHERE HOSP_ADMSN_TYPE_C_NAME IS NOT NULL\n  \n  UNION ALL\n  \n  SELECT DISTINCT\n    'APPT_STATUS' as category,\n    APPT_STATUS_C_NAME as value\n  FROM PAT_ENC\n  WHERE APPT_STATUS_C_NAME IS NOT NULL\n)\nSELECT \n  category,\n  value,\n  'Extracted from PAT_ENC' as source\nFROM category_values\nORDER BY category, value;",
+    "description": "Extract reference data from denormalized columns",
+    "chapterId": "02.5-naming-and-reference-data",
+    "index": 3,
+    "results": [
+      {
+        "category": "APPT_STATUS",
+        "value": "",
+        "source": "Extracted from PAT_ENC"
+      },
+      {
+        "category": "APPT_STATUS",
+        "value": "Canceled",
+        "source": "Extracted from PAT_ENC"
+      },
+      {
+        "category": "APPT_STATUS",
+        "value": "Completed",
+        "source": "Extracted from PAT_ENC"
+      },
+      {
+        "category": "APPT_STATUS",
+        "value": "Scheduled",
+        "source": "Extracted from PAT_ENC"
+      },
+      {
+        "category": "HOSP_ADMSN_TYPE",
+        "value": "",
+        "source": "Extracted from PAT_ENC"
+      },
+      {
+        "category": "HOSP_ADMSN_TYPE",
+        "value": "Elective",
+        "source": "Extracted from PAT_ENC"
+      }
+    ],
+    "columns": [
+      "category",
+      "value",
+      "source"
+    ],
+    "error": null
+  },
+  {
+    "id": "02.5-naming-and-reference-data-4",
+    "originalQuery": "WITH column_patterns AS (\n  SELECT column_name\n  FROM (\n    SELECT 'PAT_ID' as column_name UNION ALL\n    SELECT 'PAT_ENC_CSN_ID' UNION ALL\n    SELECT 'CONTACT_DATE' UNION ALL\n    SELECT 'ENC_CLOSED_YN' UNION ALL\n    SELECT 'PCP_PROV_ID' UNION ALL\n    SELECT 'APPT_STATUS_C_NAME'\n  )\n)\nSELECT \n  CASE\n    WHEN column_name LIKE '%_ID' THEN 'Identifier'\n    WHEN column_name LIKE '%_C_NAME' THEN 'Category Name'\n    WHEN column_name LIKE '%_YN' THEN 'Yes/No Flag'\n    WHEN column_name LIKE '%_DATE' THEN 'Date'\n    WHEN column_name LIKE '%_DTTM' THEN 'DateTime'\n    ELSE 'Other'\n  END as pattern_type,\n  column_name as example\nFROM column_patterns\nORDER BY pattern_type;",
+    "description": "Analyze column naming patterns in PAT_ENC",
+    "chapterId": "02.5-naming-and-reference-data",
+    "index": 4,
+    "results": [
+      {
+        "pattern_type": "Category Name",
+        "example": "APPT_STATUS_C_NAME"
+      },
+      {
+        "pattern_type": "Date",
+        "example": "CONTACT_DATE"
+      },
+      {
+        "pattern_type": "Identifier",
+        "example": "PAT_ID"
+      },
+      {
+        "pattern_type": "Identifier",
+        "example": "PAT_ENC_CSN_ID"
+      },
+      {
+        "pattern_type": "Identifier",
+        "example": "PCP_PROV_ID"
+      },
+      {
+        "pattern_type": "Yes/No Flag",
+        "example": "ENC_CLOSED_YN"
+      }
+    ],
+    "columns": [
+      "pattern_type",
+      "example"
+    ],
+    "error": null
+  },
+  {
+    "id": "02.5-naming-and-reference-data-5",
+    "originalQuery": "SELECT \n  name as history_table,\n  REPLACE(name, '_HX', '') as parent_table\nFROM sqlite_master \nWHERE type='table' \n  AND name LIKE '%_HX'\nORDER BY name\nLIMIT 10;",
+    "description": "Find all history tables",
+    "chapterId": "02.5-naming-and-reference-data",
+    "index": 5,
+    "results": [
+      {
+        "history_table": "ACCT_HOME_PHONE_HX",
+        "parent_table": "ACCT_HOME_PHONE"
+      },
+      {
+        "history_table": "ARPB_TX_CHG_REV_HX",
+        "parent_table": "ARPB_TX_CHG_REV"
+      },
+      {
+        "history_table": "ARPB_TX_MATCH_HX",
+        "parent_table": "ARPB_TX_MATCH"
+      },
+      {
+        "history_table": "ARPB_TX_STMCLAIMHX",
+        "parent_table": "ARPB_TX_STMCLAIMHX"
+      },
+      {
+        "history_table": "FAMILY_HX",
+        "parent_table": "FAMILY"
+      },
+      {
+        "history_table": "FRONT_END_PMT_COLL_HX",
+        "parent_table": "FRONT_END_PMT_COLL"
+      },
+      {
+        "history_table": "GUAR_ACCT_STMT_HX",
+        "parent_table": "GUAR_ACCT_STMT"
+      },
+      {
+        "history_table": "GUAR_ADDR_HX",
+        "parent_table": "GUAR_ADDR"
+      },
+      {
+        "history_table": "GUAR_PMT_SCORE_PB_HX",
+        "parent_table": "GUAR_PMT_SCORE_PB"
+      },
+      {
+        "history_table": "HSP_BKT_NAA_ADJ_HX",
+        "parent_table": "HSP_BKT_NAA_ADJ"
+      }
+    ],
+    "columns": [
+      "history_table",
+      "parent_table"
+    ],
+    "error": null
+  },
+  {
+    "id": "02.5-naming-and-reference-data-6",
+    "originalQuery": "SELECT name as table_name\nFROM sqlite_master \nWHERE type='table' \n  AND (name LIKE 'PATIENT_%' OR name = 'PATIENT')\n  AND name GLOB '*[0-9]'\nORDER BY name;",
+    "description": "Find overflow table patterns",
+    "chapterId": "02.5-naming-and-reference-data",
+    "index": 6,
+    "results": [
+      {
+        "table_name": "PATIENT_2"
+      },
+      {
+        "table_name": "PATIENT_3"
+      },
+      {
+        "table_name": "PATIENT_4"
+      },
+      {
+        "table_name": "PATIENT_5"
+      },
+      {
+        "table_name": "PATIENT_6"
+      }
+    ],
+    "columns": [
+      "table_name"
+    ],
+    "error": null
+  },
+  {
+    "id": "02.5-naming-and-reference-data-7",
+    "originalQuery": "SELECT \n  name as view_table,\n  CASE\n    WHEN name LIKE '%BIL%' THEN 'Billing'\n    WHEN name LIKE '%HNO%' THEN 'History'\n    WHEN name LIKE '%HSB%' THEN 'Hospital'\n    ELSE 'Other'\n  END as category\nFROM sqlite_master \nWHERE type='table' \n  AND name LIKE 'V_%'\nORDER BY name;",
+    "description": "List available view tables",
+    "chapterId": "02.5-naming-and-reference-data",
+    "index": 7,
+    "results": [
+      {
+        "view_table": "V_BIL_ALL",
+        "category": "Billing"
+      },
+      {
+        "view_table": "V_EHI_CLM_FILTER_STATIC",
+        "category": "Other"
+      },
+      {
+        "view_table": "V_EHI_HNO_LINKED_PATS",
+        "category": "History"
+      },
+      {
+        "view_table": "V_EHI_HSB_LINKED_PATS",
+        "category": "Hospital"
+      }
+    ],
+    "columns": [
+      "view_table",
+      "category"
+    ],
+    "error": null
+  },
+  {
+    "id": "02.5-naming-and-reference-data-8",
+    "originalQuery": "-- Extract all category values from PAT_ENC\nWITH all_categories AS (\n  -- Appointment Status\n  SELECT DISTINCT \n    'Appointment Status' as category_type,\n    APPT_STATUS_C_NAME as value,\n    COUNT(*) as usage_count\n  FROM PAT_ENC\n  WHERE APPT_STATUS_C_NAME IS NOT NULL\n  GROUP BY APPT_STATUS_C_NAME\n  \n  UNION ALL\n  \n  -- Hospital Admission Type  \n  SELECT DISTINCT\n    'Hospital Admission Type' as category_type,\n    HOSP_ADMSN_TYPE_C_NAME as value,\n    COUNT(*) as usage_count\n  FROM PAT_ENC\n  WHERE HOSP_ADMSN_TYPE_C_NAME IS NOT NULL\n  GROUP BY HOSP_ADMSN_TYPE_C_NAME\n  \n  UNION ALL\n  \n  -- Consent Type\n  SELECT DISTINCT\n    'Consent Type' as category_type,\n    CONSENT_TYPE_C_NAME as value,\n    COUNT(*) as usage_count\n  FROM PAT_ENC\n  WHERE CONSENT_TYPE_C_NAME IS NOT NULL\n  GROUP BY CONSENT_TYPE_C_NAME\n)\nSELECT \n  category_type,\n  value,\n  usage_count\nFROM all_categories\nWHERE value != ''  -- Skip empty strings\nORDER BY category_type, usage_count DESC;",
+    "description": "Build comprehensive reference catalog",
+    "chapterId": "02.5-naming-and-reference-data",
+    "index": 8,
+    "results": [
+      {
+        "category_type": "Appointment Status",
+        "value": "Completed",
+        "usage_count": 13
+      },
+      {
+        "category_type": "Appointment Status",
+        "value": "Canceled",
+        "usage_count": 3
+      },
+      {
+        "category_type": "Appointment Status",
+        "value": "Scheduled",
+        "usage_count": 1
+      },
+      {
+        "category_type": "Hospital Admission Type",
+        "value": "Elective",
+        "usage_count": 18
+      }
+    ],
+    "columns": [
+      "category_type",
+      "value",
+      "usage_count"
+    ],
+    "error": null
+  },
+  {
+    "id": "02.5-naming-and-reference-data-9",
+    "originalQuery": "-- Find tables with documentation mentioning 'diagnosis'\nSELECT DISTINCT table_name\nFROM _metadata\nWHERE documentation LIKE '%diagnosis%'\nORDER BY table_name;",
+    "description": "Find diagnosis-related tables",
+    "chapterId": "02.5-naming-and-reference-data",
+    "index": 9,
+    "results": [
+      {
+        "table_name": "ADDITIONAL_EM_CODE"
+      },
+      {
+        "table_name": "ADT_ORDER_INFORMATION"
+      },
+      {
+        "table_name": "ARPB_CHG_ENTRY_DX"
+      },
+      {
+        "table_name": "ARPB_TRANSACTIONS"
+      },
+      {
+        "table_name": "ARPB_TX_ACTIONS"
+      },
+      {
+        "table_name": "ARPB_TX_MODERATE"
+      },
+      {
+        "table_name": "CLAIM_INFO"
+      },
+      {
+        "table_name": "CLAIM_INFO2"
+      },
+      {
+        "table_name": "CLAIM_INFO3"
+      },
+      {
+        "table_name": "CLARITY_EDG"
+      },
+      {
+        "table_name": "CLM_DX"
+      },
+      {
+        "table_name": "CLM_OTHER_DXS"
+      },
+      {
+        "table_name": "CLM_VALUES_2"
+      },
+      {
+        "table_name": "CLM_VALUES_4"
+      },
+      {
+        "table_name": "CL_RMT_CLM_INFO"
+      },
+      {
+        "table_name": "CL_RMT_INP_ADJ_INF"
+      },
+      {
+        "table_name": "CL_RMT_PRV_SUP_INF"
+      },
+      {
+        "table_name": "COVERAGE"
+      },
+      {
+        "table_name": "EXT_CAUSE_INJ_DX"
+      },
+      {
+        "table_name": "FAMILY_HX"
+      },
+      {
+        "table_name": "HSP_ACCOUNT"
+      },
+      {
+        "table_name": "HSP_ACCOUNT_3"
+      },
+      {
+        "table_name": "HSP_ACCOUNT_4"
+      },
+      {
+        "table_name": "HSP_ACCT_ADMIT_DX"
+      },
+      {
+        "table_name": "HSP_ACCT_BILL_DRG"
+      },
+      {
+        "table_name": "HSP_ACCT_DX_LIST"
+      },
+      {
+        "table_name": "HSP_ACCT_EXTINJ_CD"
+      },
+      {
+        "table_name": "HSP_ADMIT_DIAG"
+      },
+      {
+        "table_name": "HSP_ADMIT_PROC"
+      },
+      {
+        "table_name": "HSP_CLAIM_DETAIL1"
+      },
+      {
+        "table_name": "HSP_CLAIM_DETAIL2"
+      },
+      {
+        "table_name": "HSP_CLP_CMS_LINE"
+      },
+      {
+        "table_name": "HSP_CLP_DIAGNOSIS"
+      },
+      {
+        "table_name": "HSP_TRANSACTIONS_2"
+      },
+      {
+        "table_name": "HSP_TX_DIAG"
+      },
+      {
+        "table_name": "HV_ORDER_PROC"
+      },
+      {
+        "table_name": "INVOICE"
+      },
+      {
+        "table_name": "INV_CLM_LN_ADDL"
+      },
+      {
+        "table_name": "INV_DX_INFO"
+      },
+      {
+        "table_name": "MEDICAL_HX"
+      },
+      {
+        "table_name": "MED_CVG_DX_VALUE"
+      },
+      {
+        "table_name": "ORDER_DX_MED"
+      },
+      {
+        "table_name": "ORDER_DX_PROC"
+      },
+      {
+        "table_name": "PATIENT_5"
+      },
+      {
+        "table_name": "PAT_ENC_3"
+      },
+      {
+        "table_name": "PAT_ENC_ADMIT_DX_AUDIT"
+      },
+      {
+        "table_name": "PAT_ENC_DX"
+      },
+      {
+        "table_name": "PAT_ENC_LOS_DX"
+      },
+      {
+        "table_name": "PROBLEM_LIST"
+      },
+      {
+        "table_name": "PROBLEM_LIST_HX"
+      },
+      {
+        "table_name": "REFERRAL_2"
+      },
+      {
+        "table_name": "REFERRAL_5"
+      },
+      {
+        "table_name": "REFERRAL_DX"
+      },
+      {
+        "table_name": "SVC_LN_INFO"
+      },
+      {
+        "table_name": "SVC_LN_INFO_2"
+      },
+      {
+        "table_name": "SVC_LN_INFO_3"
+      },
+      {
+        "table_name": "TIMEOUT_ANSWERS_2"
+      },
+      {
+        "table_name": "TX_DIAG"
+      },
+      {
+        "table_name": "UNIV_CHG_LN_DX"
+      }
+    ],
+    "columns": [
+      "table_name"
+    ],
+    "error": null
+  },
+  {
+    "id": "02.5-naming-and-reference-data-10",
+    "originalQuery": "-- Find all columns named PAT_ID and their tables\nSELECT \n  table_name,\n  documentation\nFROM _metadata\nWHERE column_name = 'PAT_ID'\nORDER BY table_name\nLIMIT 10;",
+    "description": "Find potential foreign keys to PATIENT",
+    "chapterId": "02.5-naming-and-reference-data",
+    "index": 10,
+    "results": [
+      {
+        "table_name": "ACCT_GUAR_PAT_INFO",
+        "documentation": "The unique ID for the patient related to the guarantor of the account."
+      },
+      {
+        "table_name": "ALLERGY_FLAG",
+        "documentation": "The unique ID of the patient record for this row. This column is frequently used to link to the PATIENT table."
+      },
+      {
+        "table_name": "ANTICOAG_SELF_REGULATING",
+        "documentation": "The unique ID of the patient record for this row. This column is frequently used to link to the PATIENT table."
+      },
+      {
+        "table_name": "BENEFITS",
+        "documentation": "Patient ID"
+      },
+      {
+        "table_name": "CLAIMS_DERIVE_PAT_FLAGS",
+        "documentation": "The unique ID of the patient record for this row. This column is frequently used to link to the PATIENT table."
+      },
+      {
+        "table_name": "CLARITY_ADT",
+        "documentation": "The ID of the patient of the event record at the effective time."
+      },
+      {
+        "table_name": "CL_REMIT",
+        "documentation": "The patient from the invoice to which the payment in the remittance image record is posted."
+      },
+      {
+        "table_name": "COMMUNITY_RESRC_REVIEWED",
+        "documentation": "The unique ID of the patient record for this row. This column is frequently used to link to the PATIENT table."
+      },
+      {
+        "table_name": "COVERAGE_MEMBER_LIST",
+        "documentation": "The unique ID assigned to the patient record (EPT .1)."
+      },
+      {
+        "table_name": "EXT_DATA_LAST_DONE",
+        "documentation": "The unique ID of the patient record for this row. This column is frequently used to link to the PATIENT table."
+      }
+    ],
+    "columns": [
+      "table_name",
+      "documentation"
+    ],
+    "error": null
+  },
+  {
+    "id": "02.5-naming-and-reference-data-11",
+    "originalQuery": "-- Good: Follows Epic naming conventions\nSELECT \n  'CREATE TABLE ANALYSIS_PAT_RISK (' as ddl\nUNION ALL SELECT '  PAT_ID TEXT,'\nUNION ALL SELECT '  RISK_SCORE_C INTEGER,'\nUNION ALL SELECT '  RISK_SCORE_C_NAME TEXT,'\nUNION ALL SELECT '  CALC_DTTM TEXT,'\nUNION ALL SELECT '  CALC_USER_ID TEXT'\nUNION ALL SELECT ');';",
+    "description": "Example: Creating analysis tables following Epic patterns",
+    "chapterId": "02.5-naming-and-reference-data",
+    "index": 11,
+    "results": [
+      {
+        "ddl": "CREATE TABLE ANALYSIS_PAT_RISK ("
+      },
+      {
+        "ddl": "  PAT_ID TEXT,"
+      },
+      {
+        "ddl": "  RISK_SCORE_C INTEGER,"
+      },
+      {
+        "ddl": "  RISK_SCORE_C_NAME TEXT,"
+      },
+      {
+        "ddl": "  CALC_DTTM TEXT,"
+      },
+      {
+        "ddl": "  CALC_USER_ID TEXT"
+      },
+      {
+        "ddl": ");"
+      }
+    ],
+    "columns": [
+      "ddl"
+    ],
+    "error": null
+  }
+]

@@ -1,0 +1,280 @@
+---
+import SQLWidgetAstro from '../components/SQLWidgetAstro.astro';
+import MermaidDiagram from '../components/MermaidDiagram.astro';
+
+export interface Props {
+  title: string;
+  chapterId: string;
+  content: string;
+}
+
+const { title, chapterId, content } = Astro.props;
+
+// Import the processed queries for this chapter
+let chapterQueries;
+try {
+  chapterQueries = await import(`../data/chapters/${chapterId}-queries.json`);
+} catch (e) {
+  console.error(`Failed to load queries for chapter ${chapterId}:`, e);
+  chapterQueries = { default: [] };
+}
+const queriesByIndex = new Map(chapterQueries.default.map((q: any) => [q.index, q]));
+
+// Process content to replace example-query tags and mermaid blocks
+function processContent(html: string): string {
+  let processedHtml = html;
+  let queryIndex = 0;
+  let mermaidIndex = 0;
+  
+  // Debug: check if example-query tags exist in the HTML
+  const hasExampleQuery = html.includes('example-query');
+  console.log(`Chapter ${chapterId}: HTML contains 'example-query': ${hasExampleQuery}`);
+  
+  // First check if we have any SQLWidget tags (from marked processing)
+  const hasSQLWidget = html.includes('<SQLWidget');
+  if (hasSQLWidget) {
+    console.log(`Chapter ${chapterId}: Found SQLWidget tags, processing...`);
+    // Replace SQLWidget tags with placeholders
+    processedHtml = processedHtml.replace(
+      /<SQLWidget\s+queryId="([^"]+)"\s*\/>/g,
+      (match, queryId) => {
+        console.log(`Replacing SQLWidget tag with widget ${queryId}`);
+        return `<!-- SQL_WIDGET:${queryId} -->`;
+      }
+    );
+  }
+  
+  // Replace example-query tags with placeholders
+  processedHtml = processedHtml.replace(
+    /<example-query(?:\s+description="([^"]+)")?\s*>[\s\S]*?<\/example-query>/g,
+    (match, description) => {
+      const queryId = `${chapterId}-${queryIndex}`;
+      queryIndex++;
+      console.log(`Replacing example-query ${queryIndex} with widget ${queryId}`);
+      return `<!-- SQL_WIDGET:${queryId} -->`;
+    }
+  );
+  
+  // Replace mermaid code blocks with placeholders
+  processedHtml = processedHtml.replace(
+    /<pre><code class="language-mermaid">([\s\S]*?)<\/code><\/pre>/g,
+    (match, mermaidCode) => {
+      const mermaidId = `${chapterId}-mermaid-${mermaidIndex}`;
+      mermaidIndex++;
+      // Decode HTML entities
+      const decodedCode = mermaidCode
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&amp;/g, '&');
+      // Store the mermaid code for later
+      if (!mermaidDiagrams.has(chapterId)) {
+        mermaidDiagrams.set(chapterId, []);
+      }
+      mermaidDiagrams.get(chapterId)!.push({ id: mermaidId, code: decodedCode });
+      return `<!-- MERMAID_DIAGRAM:${mermaidId} -->`;
+    }
+  );
+  
+  return processedHtml;
+}
+
+// Store mermaid diagrams
+const mermaidDiagrams = new Map<string, Array<{ id: string; code: string }>>();
+
+const processedContent = processContent(content);
+// Split content and extract widget IDs
+const parts: Array<{ type: 'html' | 'widget' | 'mermaid', content: string }> = [];
+let lastIndex = 0;
+const placeholderRegex = /<!-- (SQL_WIDGET|MERMAID_DIAGRAM):([\w.-]+-\d+) -->/g;
+let match;
+
+// Debug: check if processed content has widgets
+const widgetMatches = processedContent.match(/<!-- SQL_WIDGET:[\w.-]+-\d+ -->/g);
+console.log(`Chapter ${chapterId}: Found widget placeholders:`, widgetMatches?.length || 0);
+
+while ((match = placeholderRegex.exec(processedContent)) !== null) {
+  // Add HTML content before the placeholder
+  if (match.index > lastIndex) {
+    parts.push({ type: 'html', content: processedContent.slice(lastIndex, match.index) });
+  }
+  // Add widget or mermaid
+  const placeholderType = match[1];
+  const id = match[2];
+  if (placeholderType === 'SQL_WIDGET') {
+    parts.push({ type: 'widget', content: id });
+  } else if (placeholderType === 'MERMAID_DIAGRAM') {
+    parts.push({ type: 'mermaid', content: id });
+  }
+  lastIndex = match.index + match[0].length;
+}
+
+// Add remaining HTML content
+if (lastIndex < processedContent.length) {
+  parts.push({ type: 'html', content: processedContent.slice(lastIndex) });
+}
+
+console.log(`Chapter ${chapterId}: Found ${parts.filter(p => p.type === 'widget').length} SQL widgets`);
+console.log(`Chapter ${chapterId}: Found ${parts.filter(p => p.type === 'mermaid').length} Mermaid diagrams`);
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={`Epic EHI Missing Manual - ${title}`} />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/ehi-manual/favicon.svg" />
+    <title>{title} - Epic EHI Missing Manual</title>
+    <link rel="stylesheet" href="/ehi-manual/assets/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+  </head>
+  <body>
+    <div class="layout">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-content">
+          <div class="header-title">
+            <a href="/ehi-manual/">Epic EHI Missing Manual</a>
+          </div>
+        </div>
+      </header>
+      
+      <!-- Content wrapper -->
+      <div class="content-wrapper">
+        <!-- Main content -->
+        <main class="main-content">
+          <article class="chapter">
+            <h1>{title}</h1>
+            
+            {parts.map((part) => {
+              if (part.type === 'html') {
+                return <Fragment set:html={part.content} />;
+              } else if (part.type === 'widget') {
+                return <SQLWidgetAstro queryId={part.content} />;
+              } else if (part.type === 'mermaid') {
+                const diagram = mermaidDiagrams.get(chapterId)?.find(d => d.id === part.content);
+                if (diagram) {
+                  return <MermaidDiagram id={diagram.id} code={diagram.code} />;
+                }
+                return null;
+              }
+            })}
+          </article>
+        </main>
+      </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+  </body>
+</html>
+
+<style is:global>
+  /* Import the existing styles from the original site */
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  
+  .layout {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  
+  .header {
+    background: #1a1a1a;
+    color: white;
+    padding: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  
+  .header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .header-title a {
+    color: white;
+    text-decoration: none;
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+  
+  .content-wrapper {
+    flex: 1;
+    display: flex;
+  }
+  
+  .main-content {
+    flex: 1;
+    padding: 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  
+  .chapter {
+    line-height: 1.6;
+  }
+  
+  .chapter h1 {
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .chapter h2 {
+    font-size: 1.75rem;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+  }
+  
+  .chapter h3 {
+    font-size: 1.25rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .chapter p {
+    margin-bottom: 1rem;
+  }
+  
+  .chapter pre {
+    background: #f8f8f8;
+    padding: 1rem;
+    border-radius: 4px;
+    overflow-x: auto;
+  }
+  
+  .chapter code {
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 0.9em;
+  }
+  
+  .chapter table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+  }
+  
+  .chapter th,
+  .chapter td {
+    padding: 0.5rem;
+    text-align: left;
+    border: 1px solid #ddd;
+  }
+  
+  .chapter th {
+    background: #f5f5f5;
+    font-weight: 600;
+  }
+  
+  /* Mermaid diagram styles */
+  .mermaid {
+    text-align: center;
+    margin: 2rem 0;
+  }
+</style>

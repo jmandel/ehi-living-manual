@@ -1,0 +1,123 @@
+/* Mermaid Diagram Styles */
+
+.mermaid-wrapper {
+  margin: 2rem 0;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: var(--sl-border-radius);
+  overflow: hidden;
+  background: var(--sl-color-bg);
+}
+
+.mermaid-tabs {
+  display: flex;
+  background: var(--sl-color-gray-6);
+  border-bottom: 1px solid var(--sl-color-gray-5);
+}
+
+.mermaid-tab {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  margin: 0;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--sl-color-gray-5);
+  color: var(--sl-color-gray-3);
+  font-size: var(--sl-text-xs);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  height: 36px;
+}
+
+.mermaid-tab:last-child {
+  border-right: none;
+}
+
+.mermaid-tab:hover {
+  background: var(--sl-color-gray-5);
+  color: var(--sl-color-text);
+}
+
+.mermaid-tab.active {
+  background: var(--sl-color-bg);
+  color: var(--sl-color-accent);
+  border-bottom: 2px solid var(--sl-color-accent);
+  margin-bottom: -1px;
+}
+
+.mermaid-content {
+  min-height: 200px;
+}
+
+.mermaid-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  padding: 2rem;
+  position: relative;
+  overflow: auto;
+}
+
+.mermaid-loading {
+  color: var(--sl-color-gray-3);
+  font-style: italic;
+}
+
+.mermaid-error {
+  color: var(--sl-color-red-high);
+  padding: 1rem;
+  background: var(--sl-color-red-low);
+  border: 1px solid var(--sl-color-red);
+  border-radius: var(--sl-border-radius);
+  margin: 1rem;
+}
+
+.mermaid-svg-container {
+  width: 100%;
+  overflow: auto;
+}
+
+.mermaid-svg-container svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.mermaid-code {
+  background: var(--sl-color-bg-inline-code);
+  padding: 1rem;
+  overflow-x: auto;
+  font-family: var(--sl-font-mono);
+  font-size: var(--sl-text-code);
+  line-height: 1.5;
+  margin: 0;
+  text-align: left;
+  white-space: pre;
+}
+
+.mermaid-code code {
+  background: none;
+  padding: 0;
+  color: var(--sl-color-text);
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .mermaid-svg-container {
+  filter: invert(1) hue-rotate(180deg);
+  background: white;
+  padding: 1rem;
+  border-radius: var(--sl-border-radius);
+}
+
+/* Responsive */
+@media (max-width: 50rem) {
+  .mermaid-container {
+    padding: 1rem;
+    min-height: 150px;
+  }
+  
+  .mermaid-tab {
+    font-size: var(--sl-text-xs);
+    padding: 0.5rem 0.75rem;
+  }
+}

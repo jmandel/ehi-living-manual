@@ -1,0 +1,189 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { readdir, readFile } from 'fs/promises';
+import { join } from 'path';
+
+// Get all chapters and organize by part
+const chaptersDir = join(process.cwd(), '../src/chapters');
+const files = await readdir(chaptersDir);
+const mdFiles = files.filter(f => f.endsWith('.md')).sort();
+
+interface Chapter {
+  id: string;
+  title: string;
+  part: string;
+  partTitle: string;
+  order: number;
+}
+
+const chapters: Chapter[] = await Promise.all(mdFiles.map(async (file) => {
+  const id = file.replace('.md', '');
+  const content = await readFile(join(chaptersDir, file), 'utf-8');
+  
+  // Extract title from first H1
+  const titleMatch = content.match(/^#\s+Chapter\s+\d+\.\d+:\s+(.+)$/m) || content.match(/^#\s+(.+)$/m);
+  const title = titleMatch ? titleMatch[1] : id;
+  
+  // Extract part from filename (00, 01, 02, etc.)
+  const partMatch = id.match(/^(\d{2})/);
+  const part = partMatch ? partMatch[1] : '00';
+  
+  // Extract order from filename
+  const orderMatch = id.match(/^(\d{2})\.(\d+)/);
+  const order = orderMatch ? parseInt(orderMatch[1]) * 100 + parseInt(orderMatch[2]) : 0;
+  
+  return { id, title, part, partTitle: getPartTitle(part), order };
+}));
+
+// Group chapters by part
+const chaptersByPart = new Map<string, Chapter[]>();
+chapters.forEach(chapter => {
+  if (!chaptersByPart.has(chapter.part)) {
+    chaptersByPart.set(chapter.part, []);
+  }
+  chaptersByPart.get(chapter.part)!.push(chapter);
+});
+
+// Sort chapters within each part
+chaptersByPart.forEach(chapters => {
+  chapters.sort((a, b) => a.order - b.order);
+});
+
+function getPartTitle(part: string): string {
+  const titles: Record<string, string> = {
+    '00': 'Getting Started',
+    '01': 'Core Architecture',
+    '02': 'Fundamental Patterns',
+    '03': 'Clinical Data Model',
+    '04': 'Financial Data Model',
+    '05': 'Technical Reference',
+    '06': 'Additional Topics'
+  };
+  return titles[part] || `Part ${part}`;
+}
+---
+
+<Layout title="Epic EHI Missing Manual">
+  <div class="hero">
+    <h1>Epic EHI Missing Manual</h1>
+    <p class="tagline">The definitive guide to Epic's Electronic Health Information export format</p>
+  </div>
+  
+  <div class="intro">
+    <p>This manual provides comprehensive documentation for working with Epic's EHI (Electronic Health Information) export format. Each chapter includes interactive SQL examples that run against a real Epic EHI database.</p>
+  </div>
+  
+  <div class="toc">
+    {Array.from(chaptersByPart.entries()).map(([part, chapters]) => (
+      <section class="part">
+        <h2>Part {part}: {chapters[0].partTitle}</h2>
+        <ul class="chapter-list">
+          {chapters.map(chapter => (
+            <li>
+              <a href={`/ehi-manual/chapters-enhanced/${chapter.id}`}>
+                Chapter {chapter.id.replace(/^(\d{2})\.(\d+)-/, '$1.$2: ')}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))}
+  </div>
+  
+  <div class="features">
+    <h2>Features</h2>
+    <ul>
+      <li>✨ Progressive enhancement - works without JavaScript</li>
+      <li>🔍 Interactive SQL queries with real data</li>
+      <li>📊 278 example queries across all chapters</li>
+      <li>🚀 Fast static site with no backend required</li>
+      <li>📱 Mobile-friendly responsive design</li>
+    </ul>
+  </div>
+</Layout>
+
+<style>
+  .hero {
+    text-align: center;
+    padding: 4rem 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    margin: -2rem -2rem 2rem -2rem;
+  }
+  
+  .hero h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+  
+  .tagline {
+    font-size: 1.25rem;
+    opacity: 0.9;
+  }
+  
+  .intro {
+    max-width: 800px;
+    margin: 2rem auto;
+    font-size: 1.1rem;
+    line-height: 1.8;
+  }
+  
+  .toc {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin: 3rem 0;
+  }
+  
+  .part {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+  }
+  
+  .part h2 {
+    margin-top: 0;
+    color: #333;
+    font-size: 1.25rem;
+  }
+  
+  .chapter-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .chapter-list li {
+    margin: 0.5rem 0;
+  }
+  
+  .chapter-list a {
+    color: #007acc;
+    text-decoration: none;
+  }
+  
+  .chapter-list a:hover {
+    text-decoration: underline;
+  }
+  
+  .features {
+    margin-top: 3rem;
+    padding: 2rem;
+    background: #f0f4f8;
+    border-radius: 8px;
+  }
+  
+  .features h2 {
+    margin-top: 0;
+  }
+  
+  .features ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .features li {
+    padding: 0.5rem 0;
+    font-size: 1.1rem;
+  }
+</style>

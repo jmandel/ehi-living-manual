@@ -1,0 +1,82 @@
+[
+  {
+    "id": "02.1-epic-speak-crash-course-0",
+    "originalQuery": "-- The Clinical Trinity: Every healthcare interaction connects these three\nSELECT \n  p.PAT_ID,\n  p.PAT_NAME,\n  pe.PAT_ENC_CSN_ID,  -- The magic linking number\n  pe.CONTACT_DATE,\n  pe.VISIT_PROV_ID,\n  pe.DEPARTMENT_ID\nFROM PATIENT p\nJOIN PAT_ENC pe ON p.PAT_ID = pe.PAT_ID\nWHERE pe.PAT_ENC_CSN_ID = 720803470;  -- A specific encounter",
+    "description": "See the core clinical relationship",
+    "chapterId": "02.1-epic-speak-crash-course",
+    "index": 0,
+    "results": [
+      {
+        "PAT_ID": "Z7004242",
+        "PAT_NAME": "MANDEL,JOSHUA C",
+        "PAT_ENC_CSN_ID": 720803470,
+        "CONTACT_DATE": "8/9/2018 12:00:00 AM",
+        "VISIT_PROV_ID": 802011,
+        "DEPARTMENT_ID": 1700801002
+      }
+    ],
+    "columns": [
+      "PAT_ID",
+      "PAT_NAME",
+      "PAT_ENC_CSN_ID",
+      "CONTACT_DATE",
+      "VISIT_PROV_ID",
+      "DEPARTMENT_ID"
+    ],
+    "error": null
+  },
+  {
+    "id": "02.1-epic-speak-crash-course-1",
+    "originalQuery": "-- Providers aren't just people\nSELECT \n  PROV_ID,\n  PROV_NAME,\n  -- In real data, PROV_TYPE would tell us: Person, Resource, Department, etc.\n  EXTERNAL_NAME_\nFROM CLARITY_SER\nWHERE PROV_ID IN ('24', '17', '32')\nLIMIT 10;",
+    "description": "See different types of providers",
+    "chapterId": "02.1-epic-speak-crash-course",
+    "index": 1,
+    "results": [],
+    "columns": [],
+    "error": null
+  },
+  {
+    "id": "02.1-epic-speak-crash-course-2",
+    "originalQuery": "-- How clinical encounters link to financial accounts\nSELECT \n  pe.PAT_ENC_CSN_ID,\n  pe.CONTACT_DATE,\n  ha.HSP_ACCOUNT_ID,  -- The HAR\n  ha.ACCT_BILLSTS_HA_C_NAME as billing_status,\n  ha.TOT_CHGS as total_charges\nFROM PAT_ENC pe\nJOIN HSP_ACCOUNT ha ON pe.HSP_ACCOUNT_ID = ha.HSP_ACCOUNT_ID\nWHERE ha.HSP_ACCOUNT_ID = 377811219;",
+    "description": "See the financial flow from encounter to account",
+    "chapterId": "02.1-epic-speak-crash-course",
+    "index": 2,
+    "results": [],
+    "columns": [],
+    "error": null
+  },
+  {
+    "id": "02.1-epic-speak-crash-course-3",
+    "originalQuery": "-- One encounter, multiple diagnoses, distinguished by LINE\nSELECT \n  PAT_ENC_CSN_ID,\n  LINE,  -- 1, 2, 3... The sequence number\n  DX_ID,\n  PRIMARY_DX_YN  -- 'Y' for primary diagnosis\nFROM PAT_ENC_DX\nWHERE PAT_ENC_CSN_ID = 720803470\nORDER BY LINE;",
+    "description": "See the LINE pattern with encounter diagnoses",
+    "chapterId": "02.1-epic-speak-crash-course",
+    "index": 3,
+    "results": [
+      {
+        "PAT_ENC_CSN_ID": 720803470,
+        "LINE": 1,
+        "DX_ID": 444804,
+        "PRIMARY_DX_YN": "Y"
+      },
+      {
+        "PAT_ENC_CSN_ID": 720803470,
+        "LINE": 2,
+        "DX_ID": 1181154,
+        "PRIMARY_DX_YN": "N"
+      },
+      {
+        "PAT_ENC_CSN_ID": 720803470,
+        "LINE": 3,
+        "DX_ID": 94362,
+        "PRIMARY_DX_YN": "N"
+      }
+    ],
+    "columns": [
+      "PAT_ENC_CSN_ID",
+      "LINE",
+      "DX_ID",
+      "PRIMARY_DX_YN"
+    ],
+    "error": null
+  }
+]

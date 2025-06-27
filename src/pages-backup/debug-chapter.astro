@@ -1,0 +1,58 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { marked } from 'marked';
+
+// Sample markdown with an example-query
+const testMarkdown = `
+# Test Chapter
+
+This is a test paragraph.
+
+<example-query description="Test query">
+SELECT * FROM PATIENT LIMIT 5;
+</example-query>
+
+## Another section
+
+More content here.
+`;
+
+// Configure marked
+marked.use({
+  extensions: [{
+    name: 'example-query',
+    level: 'block',
+    start(src: string) { return src.match(/<example-query/)?.index; },
+    tokenizer(src: string) {
+      const match = /^<example-query[^>]*>[\s\S]*?<\/example-query>/.exec(src);
+      if (match) {
+        return {
+          type: 'example-query',
+          raw: match[0],
+          text: match[0]
+        };
+      }
+    },
+    renderer(token: any) {
+      // Keep the original tag
+      return token.text;
+    }
+  }]
+});
+
+const htmlContent = marked(testMarkdown);
+console.log('Marked output:', htmlContent);
+---
+
+<Layout title="Debug Chapter">
+  <h1>Debug Chapter</h1>
+  
+  <h2>Raw Markdown:</h2>
+  <pre>{testMarkdown}</pre>
+  
+  <h2>Marked HTML Output:</h2>
+  <pre>{htmlContent}</pre>
+  
+  <h2>Rendered HTML:</h2>
+  <div set:html={htmlContent} />
+</Layout>

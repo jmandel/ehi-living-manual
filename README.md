@@ -1,47 +1,77 @@
-# Astro Starter Kit: Minimal
+# Epic EHI Missing Manual - Astro Site
 
-```sh
-bun create astro@latest -- --template minimal
+This is the Astro-based version of the Epic EHI Missing Manual, featuring interactive SQL widgets and Mermaid diagrams.
+
+## Quick Start
+
+```bash
+# Install dependencies
+bun install
+
+# Generate the SQLite database (if not already present)
+bun run generate-db
+
+# Start development server
+bun run dev
 ```
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/minimal)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/astro/tree/latest/examples/minimal)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/withastro/astro?devcontainer_path=.devcontainer/minimal/devcontainer.json)
+## Features
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+- **Static Site with Progressive Enhancement**: Base HTML works without JavaScript, enhanced features when JS is available
+- **Interactive SQL Editor**: Edit and run SQL queries directly in the browser
+- **Mermaid Diagrams**: Interactive diagrams with source code view
+- **Local Database**: All SQL queries run against a local SQLite database in your browser
+- **GitHub Pages Ready**: Configured for deployment to GitHub Pages
 
-## 🚀 Project Structure
+## Project Structure
 
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-/
+```
+astro-poc/
 ├── public/
+│   └── assets/
+│       └── data/
+│           └── ehi.sqlite      # SQLite database (generated)
+├── scripts/
+│   ├── prebuild.ts            # Pre-build tasks (runs before dev/build)
+│   └── prepare-sqlite3-db.ts  # Database generation script
 ├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
+│   ├── components/            # React components
+│   ├── content/              # Markdown content
+│   ├── lib/                  # Utility functions
+│   └── styles/               # CSS files
+└── astro.config.mjs          # Astro configuration
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## Database Generation
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+The SQLite database is generated from the Epic EHI sample data repository. The generation process:
 
-Any static assets, like images, can be placed in the `public/` directory.
+1. Clones/updates the [my-health-data-ehi-wip](https://github.com/jmandel/my-health-data-ehi-wip) repository
+2. Converts TSV files to SQLite tables
+3. Adds documentation from JSON schema files
+4. Creates indexes for common queries
 
-## 🧞 Commands
+To regenerate the database:
 
-All commands are run from the root of the project, from a terminal:
+```bash
+bun run generate-db
+```
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `bun install`             | Installs dependencies                            |
-| `bun dev`             | Starts local dev server at `localhost:4321`      |
-| `bun build`           | Build your production site to `./dist/`          |
-| `bun preview`         | Preview your build locally, before deploying     |
-| `bun astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `bun astro -- --help` | Get help using the Astro CLI                     |
+## Deployment
 
-## 👀 Want to learn more?
+The site is configured to deploy to GitHub Pages at `/ehi-missing-manual/`. 
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+Push to the `main` branch to trigger automatic deployment via GitHub Actions.
+
+## Development Notes
+
+- The site uses relative paths throughout to support deployment at any base path
+- SQL.js runs entirely in the browser - no server-side database needed
+- All paths are resolved relative to `import.meta.env.BASE_URL`
+
+## Scripts
+
+- `bun run dev` - Start development server
+- `bun run build` - Build for production
+- `bun run preview` - Preview production build
+- `bun run generate-db` - Generate SQLite database from source data

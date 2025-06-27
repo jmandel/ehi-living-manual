@@ -1,0 +1,29 @@
+---
+import Layout from '../layouts/Layout.astro';
+import SQLWidgetAstro from '../components/SQLWidgetAstro.astro';
+import processedQueries from '../data/processed-queries.json';
+
+// Get first few queries to test
+const testQueries = processedQueries.slice(0, 3);
+---
+
+<Layout title="Test SQL Widget">
+  <h1>Test SQL Widget Progressive Enhancement</h1>
+  
+  <p>Testing {testQueries.length} SQL widgets with progressive enhancement. These work without JavaScript but are enhanced when JS is available.</p>
+  
+  <hr />
+  
+  {testQueries.map(query => (
+    <>
+      <h2>Query #{query.index + 1}</h2>
+      <SQLWidgetAstro queryId={query.id} />
+      <hr />
+    </>
+  ))}
+  
+  <h2>Test Error Handling</h2>
+  <p>Here's what happens with an invalid query ID:</p>
+  <!-- This will throw an error during build, which we want to test -->
+  <!-- <SQLWidgetAstro queryId="invalid-query-id" /> -->
+</Layout>
