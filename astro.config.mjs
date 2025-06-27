@@ -28,7 +28,7 @@ export default defineConfig({
         {
           label: 'Resources',
           items: [
-            { label: 'SQL Playground', link: '/playground/' },
+            { label: 'EHI Playground', link: '/playground/' },
             { label: 'GitHub Repository', link: 'https://github.com/jmandel/ehi-missing-manual' },
           ]
         }

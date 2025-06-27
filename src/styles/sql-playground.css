@@ -94,6 +94,12 @@
   border-bottom: 1px solid var(--sl-color-gray-5);
 }
 
+.sql-editor-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
 .sql-label {
   font-weight: 600;
   color: var(--sl-color-text-accent);

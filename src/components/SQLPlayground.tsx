@@ -31,7 +31,6 @@ export default function SQLPlayground() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedExample, setSelectedExample] = useState<string>('');
-  const [copyButtonText, setCopyButtonText] = useState('📋 Copy Query');
   const [shareButtonText, setShareButtonText] = useState('🔗 Share');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
@@ -104,13 +103,17 @@ export default function SQLPlayground() {
     }
   };
 
-  const handleExampleChange = (exampleId: string) => {
+  const handleExampleChange = async (exampleId: string) => {
     setSelectedExample(exampleId);
     if (exampleId) {
       const example = exampleQueries.find(q => q.id === exampleId);
       if (example) {
         setQuery(example.query);
         setQueryName(example.description || example.name);
+        // Auto-run the query after a brief delay to ensure state is updated
+        setTimeout(() => {
+          handleRunQuery();
+        }, 100);
       }
     }
   };
@@ -143,11 +146,6 @@ export default function SQLPlayground() {
     }
   };
 
-  const handleCopyQuery = () => {
-    navigator.clipboard.writeText(query);
-    setCopyButtonText('✓ Copied!');
-    setTimeout(() => setCopyButtonText('📋 Copy Query'), 2000);
-  };
 
   return (
     <div className="sql-playground">
@@ -183,27 +181,24 @@ export default function SQLPlayground() {
           </div>
         </div>
         
-        <div className="playground-actions">
-          <button onClick={handleCopyQuery} className="sql-copy-button" title="Copy Query">
-            {copyButtonText}
-          </button>
-          <button onClick={handleShare} className="sql-share-button" title="Share Query">
-            {shareButtonText}
-          </button>
-        </div>
       </div>
 
       <div className="sql-editor-container">
         <div className="sql-editor-header">
           <span className="sql-label">SQL Query Editor</span>
-          <button
-            onClick={handleRunQuery}
-            disabled={isLoading}
-            className="sql-run-button"
-            title="Run Query (Ctrl+Enter)"
-          >
-            {isLoading ? '⏳ Running...' : '▶ Run Query'}
-          </button>
+          <div className="sql-editor-actions">
+            <button
+              onClick={handleRunQuery}
+              disabled={isLoading}
+              className="sql-run-button"
+              title="Run Query (Ctrl+Enter)"
+            >
+              {isLoading ? '⏳ Running...' : '▶ Run Query'}
+            </button>
+            <button onClick={handleShare} className="sql-share-button" title="Share Query">
+              {shareButtonText}
+            </button>
+          </div>
         </div>
         
         <textarea
