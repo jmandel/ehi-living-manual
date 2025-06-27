@@ -11,9 +11,20 @@ async function initDatabase() {
   isDbLoading = true;
   dbLoadPromise = (async () => {
     try {
-      // Determine the base path based on current location
-      const isInChapter = window.location.pathname.includes('/chapters/');
-      const basePath = isInChapter ? '../' : '';
+      // Determine the base path dynamically
+      // Get the path to the root of the site
+      const pathSegments = window.location.pathname.split('/').filter(s => s);
+      const inChapters = pathSegments[pathSegments.length - 2] === 'chapters';
+      
+      // For GitHub Pages or subpath deployments
+      let basePath = '';
+      if (inChapters) {
+        // We're in /chapters/, need to go up one level
+        basePath = '../';
+      } else if (window.location.pathname.endsWith('.html') && !window.location.pathname.endsWith('index.html')) {
+        // We're at root level (like playground.html)
+        basePath = '';
+      }
       
       // Initialize SQL.js with proper config
       const sqlPromise = window.initSqlJs({
