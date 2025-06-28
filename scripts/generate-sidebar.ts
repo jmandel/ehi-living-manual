@@ -15,7 +15,9 @@ const chapterGroups = {
   '00': 'Getting Started',
   '01': 'Fundamental Patterns', 
   '02': 'Clinical Data Model',
-  '03': 'Financial Data Model'
+  '03': 'Financial Data Model',
+  '04': 'Advanced Topics',
+  '05': 'Reference'
 };
 
 // Words that should remain uppercase
