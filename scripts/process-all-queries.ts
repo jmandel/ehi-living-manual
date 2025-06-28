@@ -42,9 +42,10 @@ async function extractQueriesFromMarkdown(content: string, chapterId: string): P
 async function processAllChapters() {
   console.log("Extracting queries from all chapters...");
   
-  const chaptersDir = join(import.meta.dir, "../../src/chapters");
+  const chaptersDir = join(import.meta.dir, "../src/chapters");
   const chapters = await readdir(chaptersDir);
-  const mdFiles = chapters.filter(f => f.endsWith('.md'));
+  // Only process new format chapters (XX-YY-*.md or XX-intro.md)
+  const mdFiles = chapters.filter(f => f.endsWith('.md') && /^\d{2}(-\d{2}|-intro)/.test(f));
   
   const allQueries: Query[] = [];
   
@@ -56,13 +57,15 @@ async function processAllChapters() {
     if (queries.length > 0) {
       console.log(`Found ${queries.length} queries in ${file}`);
       allQueries.push(...queries);
+    } else if (content.includes('<example-query')) {
+      console.log(`Warning: ${file} contains <example-query> tags but no queries were extracted`);
     }
   }
   
   console.log(`\nTotal queries found: ${allQueries.length}`);
   
-  // Save all queries
-  const outputPath = join(import.meta.dir, "../src/data/all-queries.json");
+  // Save all queries (replacing the old queries.json)
+  const outputPath = join(import.meta.dir, "../src/data/queries.json");
   writeFileSync(outputPath, JSON.stringify(allQueries, null, 2));
   console.log(`Queries saved to: ${outputPath}`);
   

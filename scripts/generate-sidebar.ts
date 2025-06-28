@@ -13,12 +13,9 @@ interface SidebarGroup {
 
 const chapterGroups = {
   '00': 'Getting Started',
-  '01': 'Core Architecture', 
-  '02': 'Fundamental Patterns',
-  '03': 'Clinical Data Model',
-  '04': 'Financial Data Model',
-  '05': 'Technical Reference',
-  '06': 'Additional Topics'
+  '01': 'Fundamental Patterns', 
+  '02': 'Clinical Data Model',
+  '03': 'Financial Data Model'
 };
 
 // Words that should remain uppercase
@@ -27,9 +24,14 @@ const UPPERCASE_WORDS = ['ehi', 'adt', 'id', 'arpb', 'sql', 'api', 'csn', 'pat',
 function formatChapterTitle(filename: string): string {
   // Remove number prefix and extension, convert to title case
   const name = filename
-    .replace(/^\d+\.\d+-/, '')
+    .replace(/^\d{2}(-\d{2}|-intro)-/, '')
     .replace(/\.mdx?$/, '')
     .replace(/-/g, ' ');
+  
+  // Handle intro files specially
+  if (filename.includes('-intro')) {
+    return 'Introduction';
+  }
   
   return name
     .split(' ')
@@ -64,7 +66,8 @@ export async function generateSidebar() {
     const grouped = new Map<string, SidebarItem[]>();
     
     for (const file of mdFiles) {
-      const match = file.match(/^(\d+)\.\d+-/);
+      // Match both "00-01-title" and "00-intro" patterns
+      const match = file.match(/^(\d{2})(-\d{2}|-intro)/);
       if (match) {
         const group = match[1];
         const slug = file.replace(/\.mdx?$/, '');
@@ -73,8 +76,8 @@ export async function generateSidebar() {
           grouped.set(group, []);
         }
         
-        // Starlight strips dots from URLs, so 02.5-naming becomes 025-naming
-        const urlSlug = slug.replace(/\./g, '');
+        // No need to strip dots anymore as new format uses dashes
+        const urlSlug = slug;
         
         grouped.get(group)!.push({
           label: formatChapterTitle(file),
@@ -86,9 +89,18 @@ export async function generateSidebar() {
     // Convert to sidebar structure
     for (const [group, items] of grouped) {
       if (chapterGroups[group]) {
+        // Sort items so intro comes first
+        const sortedItems = items.sort((a, b) => {
+          // If one is intro and the other isn't, intro comes first
+          if (a.link.includes('-intro/') && !b.link.includes('-intro/')) return -1;
+          if (!a.link.includes('-intro/') && b.link.includes('-intro/')) return 1;
+          // Otherwise sort by the link (which includes the number)
+          return a.link.localeCompare(b.link);
+        });
+        
         sidebar.push({
           label: chapterGroups[group],
-          items
+          items: sortedItems
         });
       }
     }

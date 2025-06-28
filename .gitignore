@@ -6,8 +6,9 @@ dist-final/
 # generated types
 .astro/
 
-# generated MDX files from markdown chapters (only chapter files)
-src/content/docs/[0-9][0-9].[0-9]-*.mdx
+# generated MDX files from markdown chapters (new format)
+src/content/docs/[0-9][0-9]-[0-9][0-9]-*.mdx
+src/content/docs/[0-9][0-9]-intro.mdx
 
 # dependencies
 node_modules/
@@ -36,8 +37,19 @@ scripts/my-health-data-ehi-wip/
 temp-preview/
 
 # generated query results (these are processed at build time)
+src/data/queries.json
 src/data/processed-queries.json
 src/data/all-processed-queries.json
 
 # processed content files
 src/content/processed/
+
+# per-chapter query files
+src/data/chapters/
+
+# temporary files
+*.tmp
+*.temp
+.cache/
+temp/
+tmp/

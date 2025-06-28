@@ -26,7 +26,7 @@ const extractDescription = (content: string, position: number): string | undefin
 
 export const extractQueries = async (): Promise<ExtractedQuery[]> => {
   const queries: ExtractedQuery[] = [];
-  const chapters = await glob('src/content/chapters/*.md');
+  const chapters = await glob('src/chapters/*.md');
   
   for (const chapterPath of chapters) {
     const content = await Bun.file(chapterPath).text();

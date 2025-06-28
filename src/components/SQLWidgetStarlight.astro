@@ -9,7 +9,7 @@ export interface Props {
 const { queryId } = Astro.props;
 
 // Import all processed queries
-import processedQueries from '../data/all-processed-queries.json';
+import processedQueries from '../data/processed-queries.json';
 
 // Find the specific query
 const query = processedQueries.find(q => q.id === queryId) as ProcessedQuery | undefined;

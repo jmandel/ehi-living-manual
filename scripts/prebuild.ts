@@ -19,8 +19,8 @@ if (!existsSync(dbPath)) {
 const docsDir = join(process.cwd(), 'src/content/docs');
 if (existsSync(docsDir)) {
   console.log('📁 Cleaning generated chapter files...');
-  // Only delete files matching the chapter pattern: ##.#-*.mdx
-  const files = execSync(`find ${docsDir} -regex ".*/[0-9][0-9]\\.[0-9]-.*\\.mdx$"`).toString().trim().split('\n');
+  // Only delete files matching the chapter patterns: ##-##-*.mdx or ##-intro.mdx (and old format ##.#-*.mdx)
+  const files = execSync(`find ${docsDir} -regex ".*/\\([0-9][0-9]\\.[0-9]\\|[0-9][0-9]-[0-9][0-9]\\|[0-9][0-9]-intro\\).*\\.mdx$"`).toString().trim().split('\n');
   files.forEach(file => {
     if (file && existsSync(file)) {
       rmSync(file);
@@ -31,5 +31,12 @@ if (existsSync(docsDir)) {
 // Run the chapter conversion
 console.log('📝 Converting chapters to MDX...');
 execSync('bun run scripts/convert-chapters-to-mdx.ts', { stdio: 'inherit' });
+
+// Extract and process queries
+console.log('🔍 Extracting queries from chapters...');
+execSync('bun run scripts/process-all-queries.ts', { stdio: 'inherit' });
+
+console.log('⚙️ Processing queries against database...');
+execSync('bun run scripts/process-all-chapter-queries.ts', { stdio: 'inherit' });
 
 console.log('✅ Pre-build tasks complete!');

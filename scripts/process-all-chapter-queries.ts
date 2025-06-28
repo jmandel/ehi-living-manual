@@ -17,7 +17,7 @@ interface ProcessedQuery extends Query {
 }
 
 // Read all extracted queries
-const queriesPath = join(import.meta.dir, "../src/data/all-queries.json");
+const queriesPath = join(import.meta.dir, "../src/data/queries.json");
 const queries: Query[] = JSON.parse(readFileSync(queriesPath, "utf-8"));
 
 // Connect to the database
@@ -87,8 +87,8 @@ processedQueries.forEach(q => {
   queriesByChapter.get(q.chapterId)!.push(q);
 });
 
-// Save processed queries - both as one file and per chapter
-const allOutputPath = join(import.meta.dir, "../src/data/all-processed-queries.json");
+// Save processed queries (replacing the old processed-queries.json)
+const allOutputPath = join(import.meta.dir, "../src/data/processed-queries.json");
 writeFileSync(allOutputPath, JSON.stringify(processedQueries, null, 2));
 
 // Save per-chapter files
