@@ -41,6 +41,7 @@ export default defineConfig({
       ],
       components: {
         SocialIcons: './src/components/overrides/SocialIcons.astro',
+        Header: './src/components/overrides/Header.astro',
       },
     }),
     react(),

@@ -1,0 +1,232 @@
+---
+import config from 'virtual:starlight/user-config';
+import LanguageSelect from 'virtual:starlight/components/LanguageSelect';
+import Search from 'virtual:starlight/components/Search';
+import SiteTitle from 'virtual:starlight/components/SiteTitle';
+import SocialIcons from 'virtual:starlight/components/SocialIcons';
+import ThemeSelect from 'virtual:starlight/components/ThemeSelect';
+
+let chapterMarkdown = {};
+try {
+  const imported = await import('../../data/chapter-markdown.json');
+  chapterMarkdown = imported.default || imported;
+} catch (e) {
+  console.error('Failed to load chapter markdown:', e);
+}
+
+const shouldRenderSearch =
+	config.pagefind || config.components.Search !== '@astrojs/starlight/components/Search.astro';
+---
+
+<div class="header">
+	<div class="title-wrapper sl-flex">
+		<SiteTitle />
+	</div>
+	<div class="sl-flex print:hidden">
+		{shouldRenderSearch && <Search />}
+	</div>
+	<div class="custom-header-buttons print:hidden">
+		<button class="copy-llm-button" style="display: none;" title="Copy markdown source for LLM">
+			<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+				<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+				<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+			</svg>
+			<span class="button-text">Copy for LLM</span>
+		</button>
+		<a href="/ehi-missing-manual/playground/" class="playground-link">
+			<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+				<polyline points="4 17 10 11 4 5"></polyline>
+				<line x1="12" y1="19" x2="20" y2="19"></line>
+			</svg>
+			<span class="button-text">EHI Playground</span>
+		</a>
+	</div>
+	<div class="sl-hidden md:sl-flex print:hidden right-group">
+		<div class="sl-flex social-icons">
+			<SocialIcons />
+		</div>
+		<ThemeSelect />
+		<LanguageSelect />
+	</div>
+</div>
+
+<style>
+	@layer starlight.core {
+		.header {
+			display: flex;
+			gap: var(--sl-nav-gap);
+			justify-content: space-between;
+			align-items: center;
+			height: 100%;
+		}
+
+		.title-wrapper {
+			/* Prevent long titles overflowing and covering the search and menu buttons on narrow viewports. */
+			overflow: clip;
+			/* Avoid clipping focus ring around link inside title wrapper. */
+			padding: 0.25rem;
+			margin: -0.25rem;
+			min-width: 0;
+		}
+
+		.right-group {
+			gap: 1rem;
+			align-items: center;
+		}
+		.social-icons {
+			gap: 0.75rem;
+		}
+
+		@media (min-width: 50rem) {
+			:global(:is(:where(.sl-two-column) .right-group)) {
+				/* We make room for the mobile menu button, even though it's visually hidden,
+				   because it's still in the tab order and we don't want it to overlap. */
+				margin-inline-end: var(--sl-nav-height);
+			}
+		}
+	}
+
+	.custom-header-buttons {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-left: auto;
+		margin-right: 0.5rem;
+	}
+	
+	.playground-link,
+	.copy-llm-button {
+		display: flex;
+		align-items: center;
+		gap: 0.375rem;
+		color: var(--sl-color-text-accent);
+		text-decoration: none;
+		font-weight: 500;
+		font-size: var(--sl-text-sm);
+		transition: all 0.2s;
+		padding: 0.375rem 0.75rem;
+		border-radius: 0.375rem;
+		background: transparent;
+		border: 1px solid var(--sl-color-gray-5);
+		cursor: pointer;
+		font-family: inherit;
+	}
+	
+	.playground-link:hover,
+	.copy-llm-button:hover {
+		background: var(--sl-color-gray-6);
+		border-color: var(--sl-color-gray-4);
+	}
+	
+	.copy-llm-button:active {
+		transform: translateY(1px);
+	}
+	
+	.copy-llm-button.copied {
+		color: var(--sl-color-green);
+		border-color: var(--sl-color-green);
+	}
+	
+	.playground-link svg,
+	.copy-llm-button svg {
+		width: 1em;
+		height: 1em;
+		flex-shrink: 0;
+	}
+	
+	/* Hide text on very small screens, keep icon */
+	@media (max-width: 640px) {
+		.button-text {
+			display: none;
+		}
+		
+		.playground-link,
+		.copy-llm-button {
+			padding: 0.375rem 0.5rem;
+		}
+	}
+</style>
+
+<script define:vars={{ chapterMarkdown }}>
+	// Show the button only when JavaScript is enabled
+	document.addEventListener('DOMContentLoaded', () => {
+		const copyButton = document.querySelector('.copy-llm-button');
+		if (copyButton) {
+			copyButton.style.display = 'flex';
+		}
+	});
+
+	// Get all chapter files for the index page
+	function getAllChapterMarkdown() {
+		try {
+			const chapters = Object.entries(chapterMarkdown)
+				.filter(([key]) => /^\d{2}-\d{2}-/.test(key) && !key.includes('-intro'))
+				.sort(([a], [b]) => a.localeCompare(b))
+				.map(([key, content]) => `\n\n## ${key}\n\n${content}`);
+			
+			return `# Epic EHI Missing Manual - All Chapters\n${chapters.join('\n')}`;
+		} catch (error) {
+			console.error('Error getting chapters:', error);
+			return '';
+		}
+	}
+
+	// Get current chapter markdown
+	function getCurrentChapterMarkdown() {
+		const path = window.location.pathname;
+		const match = path.match(/\/(\d{2}-\d{2}-[^\/]+)\//);
+		
+		if (match) {
+			const chapterName = match[1];
+			if (chapterMarkdown[chapterName]) {
+				return chapterMarkdown[chapterName];
+			}
+		}
+		
+		return '';
+	}
+
+	// Copy functionality
+	document.querySelector('.copy-llm-button')?.addEventListener('click', async (e) => {
+		const button = e.currentTarget;
+		const originalText = button.querySelector('.button-text')?.textContent || '';
+		
+		try {
+			let content = '';
+			
+			// Check if we're on the index page
+			if (window.location.pathname === '/ehi-missing-manual/' || window.location.pathname === '/ehi-missing-manual/index.html') {
+				content = getAllChapterMarkdown();
+			} else {
+				content = getCurrentChapterMarkdown();
+			}
+			
+			if (content) {
+				await navigator.clipboard.writeText(content);
+				
+				// Show success state
+				button.classList.add('copied');
+				const span = button.querySelector('.button-text');
+				if (span) span.textContent = 'Copied!';
+				
+				// Reset after 2 seconds
+				setTimeout(() => {
+					button.classList.remove('copied');
+					if (span) span.textContent = originalText;
+				}, 2000);
+			} else {
+				throw new Error('No content to copy');
+			}
+		} catch (error) {
+			console.error('Failed to copy:', error);
+			// Show error state
+			const span = button.querySelector('.button-text');
+			if (span) {
+				span.textContent = 'Failed';
+				setTimeout(() => {
+					span.textContent = originalText;
+				}, 2000);
+			}
+		}
+	});
+</script>

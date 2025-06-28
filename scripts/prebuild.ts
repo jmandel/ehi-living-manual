@@ -39,4 +39,8 @@ execSync('bun run scripts/process-all-queries.ts', { stdio: 'inherit' });
 console.log('⚙️ Processing queries against database...');
 execSync('bun run scripts/process-all-chapter-queries.ts', { stdio: 'inherit' });
 
+// Bundle chapter markdown for LLM copy feature
+console.log('📦 Bundling chapter markdown...');
+execSync('bun run scripts/bundle-chapter-markdown.ts', { stdio: 'inherit' });
+
 console.log('✅ Pre-build tasks complete!');

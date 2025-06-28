@@ -196,6 +196,25 @@
   color: var(--sl-color-gray-3);
   font-style: italic;
   margin-top: 0.5rem;
+  text-align: center;
+}
+
+.show-all-button {
+  background: none;
+  border: 1px solid var(--sl-color-gray-5);
+  color: var(--sl-color-text-accent);
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  margin-left: 0.5rem;
+  transition: all 0.2s;
+  font-style: normal;
+}
+
+.show-all-button:hover {
+  background: var(--sl-color-gray-6);
+  border-color: var(--sl-color-gray-4);
 }
 
 /* Loading State */

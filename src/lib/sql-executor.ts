@@ -79,9 +79,11 @@ export interface QueryResult {
   columns: string[] | null;
   error: string | null;
   executionTime?: number;
+  totalRows?: number;
+  hasMore?: boolean;
 }
 
-export async function executeQuery(query: string): Promise<QueryResult> {
+export async function executeQuery(query: string, limit?: number): Promise<QueryResult> {
   const startTime = performance.now();
   
   try {
@@ -97,6 +99,7 @@ export async function executeQuery(query: string): Promise<QueryResult> {
     const results: any[] = [];
     let columns: string[] | null = null;
     
+    let hasMore = false;
     while (stmt.step()) {
       if (!columns) {
         columns = stmt.getColumnNames();
@@ -109,8 +112,10 @@ export async function executeQuery(query: string): Promise<QueryResult> {
       });
       results.push(row);
       
-      // Limit results for performance
-      if (results.length >= 100) {
+      // If a limit is specified, check if we've reached it
+      if (limit && results.length >= limit) {
+        // Check if there's at least one more row
+        hasMore = stmt.step();
         break;
       }
     }
@@ -123,7 +128,9 @@ export async function executeQuery(query: string): Promise<QueryResult> {
       results,
       columns: columns || [],
       error: null,
-      executionTime
+      executionTime,
+      totalRows: results.length,
+      hasMore
     };
   } catch (error) {
     console.error('Query execution error:', error);

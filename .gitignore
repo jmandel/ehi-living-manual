@@ -41,6 +41,9 @@ src/data/queries.json
 src/data/processed-queries.json
 src/data/all-processed-queries.json
 
+# bundled chapter markdown for LLM copy feature
+src/data/chapter-markdown.json
+
 # processed content files
 src/content/processed/
 

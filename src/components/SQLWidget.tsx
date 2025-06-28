@@ -12,6 +12,7 @@ export default function SQLWidget({ query }: SQLWidgetProps) {
   const [isRunning, setIsRunning] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
   const [showQuery, setShowQuery] = useState(false);
+  const [showAllRows, setShowAllRows] = useState(false);
   const [currentResult, setCurrentResult] = useState<QueryResult>({
     results: query.results,
     columns: query.columns,
@@ -42,15 +43,21 @@ export default function SQLWidget({ query }: SQLWidgetProps) {
     }
   }, [editableQuery, isInteractive]);
 
-  const runQuery = async () => {
+  const runQuery = async (fetchAll = false) => {
     setIsRunning(true);
-    setLoadingMessage('Loading database...');
+    setLoadingMessage(fetchAll ? 'Loading all results...' : 'Loading database...');
+    if (!fetchAll) {
+      setShowAllRows(false); // Reset to show only 100 rows for new results
+    }
     
     try {
-      // Execute the actual query
-      const result = await executeQuery(editableQuery);
+      // Execute the actual query with optional limit
+      const result = await executeQuery(editableQuery, fetchAll ? undefined : 100);
       setCurrentResult(result);
       setLoadingMessage('');
+      if (fetchAll) {
+        setShowAllRows(true);
+      }
     } catch (error) {
       setCurrentResult({
         results: null,
@@ -66,7 +73,7 @@ export default function SQLWidget({ query }: SQLWidgetProps) {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.ctrlKey && e.key === 'Enter') {
       e.preventDefault();
-      runQuery();
+      runQuery(false);
     }
   };
 
@@ -77,6 +84,7 @@ export default function SQLWidget({ query }: SQLWidgetProps) {
       columns: query.columns,
       error: query.error
     });
+    setShowAllRows(false);
   };
 
   const formatValue = (value: any): string => {
@@ -115,7 +123,7 @@ export default function SQLWidget({ query }: SQLWidgetProps) {
                 <div className="sql-editor-actions">
                   <button 
                     className="sql-run-button"
-                    onClick={runQuery}
+                    onClick={() => runQuery(false)}
                     disabled={isRunning}
                   >
                     {isRunning ? (loadingMessage || 'Running...') : 'Run'}
@@ -155,29 +163,65 @@ export default function SQLWidget({ query }: SQLWidgetProps) {
             <strong>Error:</strong> {currentResult.error}
           </div>
         ) : currentResult.results && currentResult.results.length > 0 ? (
-          <div className="sql-results-wrapper">
-            <table className="sql-results">
-              <thead>
-                <tr>
-                  {currentResult.columns?.map(col => (
-                    <th key={col}>{col}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {currentResult.results.map((row, idx) => (
-                  <tr key={idx}>
+          <>
+            <div className="sql-results-wrapper">
+              <table className="sql-results">
+                <thead>
+                  <tr>
                     {currentResult.columns?.map(col => (
-                      <td key={col}>{formatValue(row[col])}</td>
+                      <th key={col}>{col}</th>
                     ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            {currentResult.results.length === 100 && (
-              <p className="sql-note">Results limited to 100 rows</p>
-            )}
-          </div>
+                </thead>
+                <tbody>
+                  {currentResult.results.map((row, idx) => (
+                    <tr key={idx}>
+                      {currentResult.columns?.map(col => (
+                        <td key={col}>{formatValue(row[col])}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {(() => {
+              console.log('Debug info:', {
+                resultsLength: currentResult.results.length,
+                isInteractive,
+                showAllRows,
+                hasMore: currentResult.hasMore
+              });
+              
+              if (currentResult.hasMore && isInteractive) {
+                return (
+                  <p className="sql-note">
+                    Results limited to {currentResult.results.length} rows{' '}
+                    <button 
+                      className="show-all-button"
+                      onClick={() => runQuery(true)}
+                      disabled={isRunning}
+                    >
+                      Show all results
+                    </button>
+                  </p>
+                );
+              } else if (currentResult.hasMore && !isInteractive) {
+                return (
+                  <p className="sql-note">
+                    Results limited to {currentResult.results.length} rows
+                  </p>
+                );
+              } else if (showAllRows && currentResult.results.length > 100) {
+                return (
+                  <p className="sql-note">
+                    Showing all {currentResult.results.length} rows
+                  </p>
+                );
+              }
+              
+              return null;
+            })()}
+          </>
         ) : (
           <p className="sql-no-results">No results returned</p>
         )}

@@ -177,7 +177,10 @@ async function convertChapterToMdx(sourcePath: string, destPath: string) {
   }
   
   // Escape quotes in title and description for YAML
-  const escapeYaml = (str: string) => str.replace(/"/g, '\\"');
+  // Also strip backticks from titles since Starlight doesn't render them
+  const escapeYaml = (str: string) => str
+    .replace(/`/g, '')
+    .replace(/"/g, '\\"');
   
   // Build the MDX file
   const mdx = `---
