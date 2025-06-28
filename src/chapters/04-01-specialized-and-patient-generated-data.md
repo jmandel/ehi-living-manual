@@ -183,7 +183,7 @@ LIMIT 10
 
 ### What's Missing: Notable Absences
 
-Understanding what's NOT in the EHI export is crucial. Several specialized Epic modules are typically excluded:
+Understanding what's NOT in this particular EHI export sample is instructive. Several specialized Epic modules are not present in our sample data:
 
 <example-query description="Search for specialized modules not in EHI">
 -- OpTime (Surgical)
@@ -214,22 +214,22 @@ WHERE name LIKE '%IMPLANT%'
    OR name LIKE '%UDI%';
 </example-query>
 
-These absences aren't oversights—they reflect deliberate decisions about the EHI's scope:
+These absences in our sample data likely reflect the characteristics of this particular patient record rather than general EHI export policies:
 
 **OpTime (Surgical Module)**:
 - Contains detailed OR workflows
 - Tracks surgical teams, times, and equipment
-- Often considered operational rather than part of the designated record set
+- This patient may not have had surgical procedures
 
 **Clinical Trials Module**:
 - Manages research protocols and consent
 - Tracks study visits and adverse events
-- May contain proprietary research data
+- This patient may not have participated in clinical trials
 
 **Device Tracking**:
 - UDI (Unique Device Identifier) scanning
 - Implant lot numbers and expiration dates
-- May be stored in separate systems for recall management
+- This patient may not have implanted devices
 
 ### Working with Patient-Generated Data
 
@@ -297,7 +297,7 @@ Together, they paint a more complete picture of the patient's health journey.
 - Message content is stored in RTF format in MYC_MESG_RTF_TEXT with (MESSAGE_ID, LINE) keys
 - Referrals track the complete lifecycle from request to completion via RFL_STATUS_C_NAME
 - Social history combines categorical (TOBACCO_USER_C_NAME) and quantitative (ALCOHOL_OZ_PER_WK) data
-- Specialized modules (OpTime, Trials, Devices) are typically excluded from EHI exports
+- Specialized modules (OpTime, Trials, Devices) are not present in this sample data
 - Patient-generated data requires special attention to privacy and engagement metrics
 - The THREAD_ID links conversations to multiple messages, enabling full context retrieval
 
