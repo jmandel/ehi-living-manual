@@ -20,8 +20,8 @@ interface ProcessedQuery extends Query {
 const queriesPath = join(import.meta.dir, "../src/data/queries.json");
 const queries: Query[] = JSON.parse(readFileSync(queriesPath, "utf-8"));
 
-// Connect to the database
-const dbPath = join(import.meta.dir, "../../dist/assets/data/ehi.sqlite");
+// Connect to the database (use public directory, not dist)
+const dbPath = join(import.meta.dir, "../public/assets/data/ehi.sqlite");
 const db = new Database(dbPath, { readonly: true });
 
 console.log(`Processing ${queries.length} queries from all chapters...`);
