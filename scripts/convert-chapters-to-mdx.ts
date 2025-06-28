@@ -113,6 +113,8 @@ async function convertChapterToMdx(sourcePath: string, destPath: string) {
     // Remove the markdown title since it'll be in frontmatter
     .replace(/^#\s+Chapter\s+\d+\.\d+:.*\n/, '')
     .replace(/^#\s+Part\s+\d+:.*\n/, '')
+    // Also remove any H1 heading at the start (new format)
+    .replace(/^#\s+.*\n/, '')
     // Convert {{query-N}} to <SQLWidget queryId="chapter-N" />
     .replace(/\{\{query-(\d+)\}\}/g, (match, num) => {
       return `<SQLWidget queryId="${info.number}-${info.slug}-${num}" />`;
@@ -200,7 +202,8 @@ async function main() {
   const docsDir = join(cwd(), 'src/content/docs');
   
   const files = await readdir(chaptersDir);
-  const chapterFiles = files.filter(f => f.endsWith('.md') && /^\d{2}(-\d{2}|-intro)/.test(f));
+  // Skip intro files entirely
+  const chapterFiles = files.filter(f => f.endsWith('.md') && /^\d{2}-\d{2}/.test(f));
   
   console.log(`Found ${chapterFiles.length} chapter files to convert`);
   

@@ -18,11 +18,16 @@ const DB_FILE = join(ASTRO_POC_DIR, "public", "assets", "data", "ehi.sqlite");
 
 // Helper to parse TSV content
 function parseTSV(content: string): { headers: string[], rows: string[][] } {
-  const lines = content.trim().split('\n');
+  // Normalize line endings and trim
+  const normalizedContent = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+  const lines = normalizedContent.split('\n');
   if (lines.length === 0) return { headers: [], rows: [] };
   
-  const headers = lines[0].split('\t');
-  const rows = lines.slice(1).map(line => line.split('\t'));
+  // Split by tab and trim each value
+  const headers = lines[0].split('\t').map(h => h.trim());
+  const rows = lines.slice(1).map(line => 
+    line.split('\t').map(cell => cell.trim())
+  );
   
   return { headers, rows };
 }

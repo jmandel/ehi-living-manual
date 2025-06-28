@@ -27,7 +27,7 @@ History tables mirror their parent tables but add crucial temporal tracking:
 SELECT 
     PAT_ID,
     LINE,
-    ADDRESS_
+    ADDRESS
 FROM PAT_ADDRESS
 WHERE PAT_ID = 'Z7004242';
 </example-query>

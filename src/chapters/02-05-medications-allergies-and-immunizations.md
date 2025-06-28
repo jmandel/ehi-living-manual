@@ -24,7 +24,7 @@ We explored ORDER_MED in the previous chapter, but medications have unique lifec
 <example-query description="Analyze medication lifecycle with discontinuation">
 SELECT 
     om.ORDER_MED_ID,
-    cm.GENERIC_NAME_,
+    cm.GENERIC_NAME,
     om.ORDERING_DATE,
     om.ORDER_END_TIME,
     om.DISCON_TIME,
@@ -74,12 +74,12 @@ Epic's allergy model uses multiple related tables:
 SELECT 
     pa.PAT_ID,
     pa.LINE,
-    pa.ALLERGY_RECORD_ID_,
+    pa.ALLERGY_RECORD_ID,
     a.ALLERGEN_ID_ALLERGEN_NAME,
     a.SEVERITY_C_NAME,
     a.ALRGY_STATUS_C_NAME
 FROM PAT_ALLERGIES pa
-JOIN ALLERGY a ON a.ALLERGY_ID = pa.ALLERGY_RECORD_ID_
+JOIN ALLERGY a ON a.ALLERGY_ID = pa.ALLERGY_RECORD_ID
 WHERE pa.PAT_ID = 'Z7004242'
 ORDER BY pa.LINE;
 </example-query>
@@ -97,11 +97,11 @@ SELECT
     a.ALLERGEN_ID_ALLERGEN_NAME as allergen,
     a.SEVERITY_C_NAME as severity,
     ar.LINE,
-    ar.REACTION_C_NAME_
+    ar.REACTION_C_NAME
 FROM ALLERGY a
 JOIN ALLERGY_REACTIONS ar ON a.ALLERGY_ID = ar.ALLERGY_ID
 WHERE a.ALLERGY_ID IN (
-    SELECT ALLERGY_RECORD_ID_ 
+    SELECT ALLERGY_RECORD_ID 
     FROM PAT_ALLERGIES 
     WHERE PAT_ID = 'Z7004242'
 )
@@ -160,7 +160,7 @@ SELECT
     i.ROUTE_C_NAME,
     i.IMMNZTN_STATUS_C_NAME
 FROM PAT_IMMUNIZATIONS pi
-JOIN IMMUNE i ON pi.IMMUNE_ID_ = i.IMMUNE_ID
+JOIN IMMUNE i ON pi.IMMUNE_ID = i.IMMUNE_ID
 WHERE pi.PAT_ID = 'Z7004242'
 ORDER BY i.IMMUNE_DATE DESC;
 </example-query>
@@ -223,7 +223,7 @@ WITH patient_allergies AS (
         pa.PAT_ID,
         COUNT(DISTINCT a.ALLERGEN_ID) as allergy_count
     FROM PAT_ALLERGIES pa
-    JOIN ALLERGY a ON pa.ALLERGY_RECORD_ID_ = a.ALLERGY_ID
+    JOIN ALLERGY a ON pa.ALLERGY_RECORD_ID = a.ALLERGY_ID
     WHERE a.ALRGY_STATUS_C_NAME = 'Active'
     GROUP BY pa.PAT_ID
 ),
@@ -278,7 +278,7 @@ Track medication and allergy timelines:
 SELECT 
     'Medication Started' as event_type,
     ORDERING_DATE as event_date,
-    GENERIC_NAME_ as description
+    GENERIC_NAME as description
 FROM ORDER_MED om
 JOIN CLARITY_MEDICATION cm ON om.MEDICATION_ID = cm.MEDICATION_ID
 WHERE om.PAT_ID = 'Z7004242'
@@ -290,7 +290,7 @@ SELECT
     a.DATE_NOTED as event_date,
     a.ALLERGEN_ID_ALLERGEN_NAME as description
 FROM ALLERGY a
-JOIN PAT_ALLERGIES pa ON a.ALLERGY_ID = pa.ALLERGY_RECORD_ID_
+JOIN PAT_ALLERGIES pa ON a.ALLERGY_ID = pa.ALLERGY_RECORD_ID
 WHERE pa.PAT_ID = 'Z7004242'
 
 ORDER BY event_date DESC;
@@ -321,9 +321,9 @@ WITH safety_summary AS (
            AND om.ORDER_STATUS_C_NAME = 'Sent'
            AND om.DISCON_TIME IS NULL) as active_meds,
         -- Count active allergies
-        (SELECT COUNT(DISTINCT pa.ALLERGY_RECORD_ID_) 
+        (SELECT COUNT(DISTINCT pa.ALLERGY_RECORD_ID) 
          FROM PAT_ALLERGIES pa
-         JOIN ALLERGY a ON pa.ALLERGY_RECORD_ID_ = a.ALLERGY_ID
+         JOIN ALLERGY a ON pa.ALLERGY_RECORD_ID = a.ALLERGY_ID
          WHERE pa.PAT_ID = p.PAT_ID
            AND a.ALRGY_STATUS_C_NAME = 'Active') as active_allergies,
         -- Count immunizations

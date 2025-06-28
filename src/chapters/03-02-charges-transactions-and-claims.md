@@ -30,7 +30,7 @@ SELECT
     t.TX_TYPE_C_NAME,
     t.AMOUNT,
     t.PROC_ID,
-    e.PROC_NAME_,
+    e.PROC_NAME,
     t.MODIFIER_ONE
 FROM ARPB_TRANSACTIONS t
 LEFT JOIN CLARITY_EAP e ON t.PROC_ID = e.PROC_ID
@@ -143,7 +143,7 @@ SELECT
     t.TX_ID,
     t.SERVICE_DATE,
     t.AMOUNT,
-    e.PROC_NAME_,
+    e.PROC_NAME,
     pe.DEPARTMENT_ID,
     dx.DX_NAME as primary_diagnosis
 FROM ARPB_TRANSACTIONS t
@@ -169,7 +169,7 @@ Hospital charges require revenue codes for UB-04 claim forms:
 SELECT 
     t.DFLT_UB_REV_CD_ID,
     t.DFLT_UB_REV_CD_ID_REVENUE_CODE_NAME,
-    r.REVENUE_CODE_NAME_,
+    r.REVENUE_CODE_NAME,
     COUNT(*) as usage_count,
     SUM(t.TX_AMOUNT) as total_charges
 FROM HSP_TRANSACTIONS t

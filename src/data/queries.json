@@ -35,442 +35,442 @@
     "index": 3
   },
   {
-    "id": "00-03-the-golden-key-metadata-table-0",
+    "id": "00-03-understanding-the-metadata-table-0",
     "originalQuery": "SELECT \n    table_name,\n    column_name,\n    SUBSTR(documentation, 1, 100) || '...' as documentation_preview\nFROM _metadata\nWHERE table_name = 'PATIENT' \n  AND column_name = 'PAT_ID'\nLIMIT 1;",
     "description": "Your first look at the _metadata table structure",
-    "chapterId": "00-03-the-golden-key-metadata-table",
+    "chapterId": "00-03-understanding-the-metadata-table",
     "index": 0
   },
   {
-    "id": "00-03-the-golden-key-metadata-table-1",
+    "id": "00-03-understanding-the-metadata-table-1",
     "originalQuery": "SELECT \n    COUNT(DISTINCT table_name) as documented_tables,\n    COUNT(*) as total_documentation_entries,\n    COUNT(CASE WHEN column_name IS NULL THEN 1 END) as table_descriptions,\n    COUNT(CASE WHEN column_name IS NOT NULL THEN 1 END) as column_descriptions\nFROM _metadata;",
     "description": "Understanding the _metadata structure",
-    "chapterId": "00-03-the-golden-key-metadata-table",
+    "chapterId": "00-03-understanding-the-metadata-table",
     "index": 1
   },
   {
-    "id": "00-03-the-golden-key-metadata-table-2",
+    "id": "00-03-understanding-the-metadata-table-2",
     "originalQuery": "SELECT \n    table_name,\n    SUBSTR(documentation, 1, 150) as table_purpose\nFROM _metadata\nWHERE column_name IS NULL\n  AND table_name IN ('PATIENT', 'PAT_ENC', 'ORDER_MED', 'CLARITY_EDG')\nORDER BY table_name;",
-    "description": "Discover what each table does",
-    "chapterId": "00-03-the-golden-key-metadata-table",
+    "description": "Discover what key tables do",
+    "chapterId": "00-03-understanding-the-metadata-table",
     "index": 2
   },
   {
-    "id": "00-03-the-golden-key-metadata-table-3",
+    "id": "00-03-understanding-the-metadata-table-3",
     "originalQuery": "-- Replace 'PAT_ENC' with any table name\nWITH table_info AS (\n    SELECT name as column_name, cid as column_order\n    FROM pragma_table_info('PAT_ENC')\n)\nSELECT \n    ti.column_name,\n    COALESCE(m.documentation, '(No documentation available)') as description\nFROM table_info ti\nLEFT JOIN _metadata m \n    ON m.table_name = 'PAT_ENC' \n    AND m.column_name = ti.column_name\nORDER BY ti.column_order;",
-    "description": "The Rosetta Stone: Get full documentation for any table",
-    "chapterId": "00-03-the-golden-key-metadata-table",
+    "description": "Get full documentation for any table",
+    "chapterId": "00-03-understanding-the-metadata-table",
     "index": 3
   },
   {
-    "id": "00-03-the-golden-key-metadata-table-4",
+    "id": "00-03-understanding-the-metadata-table-4",
     "originalQuery": "SELECT DISTINCT\n    table_name,\n    COUNT(*) as relevant_columns\nFROM _metadata\nWHERE LOWER(documentation) LIKE '%diagnos%'\n  AND column_name IS NOT NULL\nGROUP BY table_name\nORDER BY relevant_columns DESC\nLIMIT 10;",
     "description": "Find all tables related to diagnoses",
-    "chapterId": "00-03-the-golden-key-metadata-table",
+    "chapterId": "00-03-understanding-the-metadata-table",
     "index": 4
   },
   {
-    "id": "00-03-the-golden-key-metadata-table-5",
+    "id": "00-03-understanding-the-metadata-table-5",
     "originalQuery": "SELECT \n    table_name,\n    column_name,\n    SUBSTR(documentation, 1, 100) as description\nFROM _metadata\nWHERE column_name LIKE '%ADMSN%' \n   OR (LOWER(documentation) LIKE '%admission%' AND column_name LIKE '%_DT%')\nORDER BY table_name, column_name\nLIMIT 10;",
     "description": "Find all date/time columns related to admission",
-    "chapterId": "00-03-the-golden-key-metadata-table",
+    "chapterId": "00-03-understanding-the-metadata-table",
     "index": 5
   },
   {
-    "id": "00-03-the-golden-key-metadata-table-6",
+    "id": "00-03-understanding-the-metadata-table-6",
     "originalQuery": "SELECT \n    table_name,\n    COUNT(*) as patient_linked_columns\nFROM _metadata\nWHERE column_name = 'PAT_ID'\n  AND table_name != 'PATIENT'\nGROUP BY table_name\nORDER BY table_name\nLIMIT 15;",
     "description": "Find foreign key relationships for patients",
-    "chapterId": "00-03-the-golden-key-metadata-table",
+    "chapterId": "00-03-understanding-the-metadata-table",
     "index": 6
   },
   {
-    "id": "00-03-the-golden-key-metadata-table-7",
+    "id": "00-03-understanding-the-metadata-table-7",
     "originalQuery": "WITH all_tables AS (\n    SELECT name as table_name\n    FROM sqlite_master\n    WHERE type = 'table' AND name != '_metadata'\n),\ndocumented_tables AS (\n    SELECT DISTINCT table_name\n    FROM _metadata\n)\nSELECT \n    (SELECT COUNT(*) FROM all_tables) as total_tables,\n    (SELECT COUNT(*) FROM documented_tables) as documented_tables,\n    ROUND(\n        100.0 * (SELECT COUNT(*) FROM documented_tables) / \n        (SELECT COUNT(*) FROM all_tables), \n        1\n    ) as documentation_percentage,\n    -- List any undocumented tables\n    GROUP_CONCAT(\n        CASE \n            WHEN at.table_name NOT IN (SELECT table_name FROM documented_tables)\n            THEN at.table_name\n        END\n    ) as undocumented_tables\nFROM all_tables at;",
     "description": "Analyze metadata completeness",
-    "chapterId": "00-03-the-golden-key-metadata-table",
+    "chapterId": "00-03-understanding-the-metadata-table",
     "index": 7
   },
   {
-    "id": "00-03-the-golden-key-metadata-table-8",
-    "originalQuery": "-- First get the documentation\nSELECT documentation \nFROM _metadata \nWHERE table_name = 'PAT_ENC' AND column_name = 'CONTACT_DATE';",
-    "description": "Combine documentation with real examples",
-    "chapterId": "00-03-the-golden-key-metadata-table",
+    "id": "00-03-understanding-the-metadata-table-8",
+    "originalQuery": "SELECT documentation \nFROM _metadata \nWHERE table_name = 'PAT_ENC' AND column_name = 'CONTACT_DATE';",
+    "description": "First, get the documentation",
+    "chapterId": "00-03-understanding-the-metadata-table",
     "index": 8
   },
   {
-    "id": "00-03-the-golden-key-metadata-table-9",
-    "originalQuery": "-- Then see it in practice\nSELECT \n    CONTACT_DATE,\n    COUNT(*) as encounters_on_date\nFROM PAT_ENC\nWHERE CONTACT_DATE IS NOT NULL\nGROUP BY CONTACT_DATE\nORDER BY encounters_on_date DESC\nLIMIT 5;",
+    "id": "00-03-understanding-the-metadata-table-9",
+    "originalQuery": "SELECT \n    CONTACT_DATE,\n    COUNT(*) as encounters_on_date\nFROM PAT_ENC\nWHERE CONTACT_DATE IS NOT NULL\nGROUP BY CONTACT_DATE\nORDER BY encounters_on_date DESC\nLIMIT 5;",
     "description": "Then see actual data patterns",
-    "chapterId": "00-03-the-golden-key-metadata-table",
+    "chapterId": "00-03-understanding-the-metadata-table",
     "index": 9
   },
   {
-    "id": "00-04-epic-data-architecture-0",
+    "id": "01-01-epic-data-architecture-0",
     "originalQuery": "-- Count tables that use the LINE pattern\nSELECT COUNT(DISTINCT table_name) as tables_with_line_column\nFROM _metadata\nWHERE column_name = 'LINE';",
     "description": "See evidence of hierarchical data in relational form",
-    "chapterId": "00-04-epic-data-architecture",
+    "chapterId": "01-01-epic-data-architecture",
     "index": 0
   },
   {
-    "id": "00-04-epic-data-architecture-1",
+    "id": "01-01-epic-data-architecture-1",
     "originalQuery": "SELECT \n    ACCOUNT_ID,\n    LINE,\n    LETTER_NAME as contact_name,\n    CONTACT_STATUS_C_NAME,\n    CONTACT_DATE\nFROM ACCOUNT_CONTACT\nWHERE ACCOUNT_ID IN (\n    SELECT ACCOUNT_ID \n    FROM ACCOUNT_CONTACT \n    GROUP BY ACCOUNT_ID \n    HAVING COUNT(*) > 1\n)\nORDER BY ACCOUNT_ID, LINE\nLIMIT 10;",
     "description": "Observe hierarchical patterns in account contacts",
-    "chapterId": "00-04-epic-data-architecture",
+    "chapterId": "01-01-epic-data-architecture",
     "index": 1
   },
   {
-    "id": "00-04-epic-data-architecture-2",
+    "id": "01-01-epic-data-architecture-2",
     "originalQuery": "-- Epic must handle massive transaction volumes\nSELECT \n    'Orders' as data_type, COUNT(*) as record_count FROM ORDER_PROC\nUNION ALL\nSELECT 'Results', COUNT(*) FROM ORDER_RESULTS\nUNION ALL\nSELECT 'Medications', COUNT(*) FROM ORDER_MED\nUNION ALL\nSELECT 'Encounters', COUNT(*) FROM PAT_ENC\nORDER BY record_count DESC;",
     "description": "See the scale that demands this architecture",
-    "chapterId": "00-04-epic-data-architecture",
+    "chapterId": "01-01-epic-data-architecture",
     "index": 2
   },
   {
-    "id": "00-04-epic-data-architecture-3",
+    "id": "01-01-epic-data-architecture-3",
     "originalQuery": "-- Epic stores dates as days since 12/31/1840\nSELECT \n    column_name,\n    COUNT(DISTINCT table_name) as table_count,\n    GROUP_CONCAT(DISTINCT table_name) as appears_in_tables\nFROM _metadata\nWHERE column_name LIKE '%_REAL'\nGROUP BY column_name\nORDER BY table_count DESC\nLIMIT 5;",
     "description": "Discover Epic's internal date system",
-    "chapterId": "00-04-epic-data-architecture",
+    "chapterId": "01-01-epic-data-architecture",
     "index": 3
   },
   {
-    "id": "00-04-epic-data-architecture-4",
+    "id": "01-01-epic-data-architecture-4",
     "originalQuery": "-- Find tables that share the same base record structure\nWITH base_tables AS (\n    SELECT DISTINCT \n        SUBSTR(table_name, 1, LENGTH(table_name) - 2) as base_name,\n        table_name\n    FROM _metadata\n    WHERE table_name LIKE '%\\_2' ESCAPE '\\'\n       OR table_name LIKE '%\\_3' ESCAPE '\\'\n       OR table_name LIKE '%\\_4' ESCAPE '\\'\n)\nSELECT \n    base_name,\n    GROUP_CONCAT(table_name, ', ') as related_tables,\n    COUNT(*) as table_count\nFROM base_tables\nGROUP BY base_name\nHAVING table_count > 1\nORDER BY table_count DESC\nLIMIT 10;",
     "description": "Trace hierarchical relationships through shared IDs",
-    "chapterId": "00-04-epic-data-architecture",
+    "chapterId": "01-01-epic-data-architecture",
     "index": 4
   },
   {
-    "id": "00-04-epic-data-architecture-5",
+    "id": "01-01-epic-data-architecture-5",
     "originalQuery": "SELECT \n    SUBSTR(table_name, 1, 3) as prefix,\n    COUNT(*) as table_count,\n    GROUP_CONCAT(DISTINCT table_name) as example_tables\nFROM (\n    SELECT table_name\n    FROM _metadata\n    WHERE column_name IS NULL\n      AND table_name NOT LIKE '\\_%' ESCAPE '\\'\n    ORDER BY table_name\n    LIMIT 200\n)\nGROUP BY SUBSTR(table_name, 1, 3)\nHAVING COUNT(*) >= 3\nORDER BY table_count DESC\nLIMIT 10;",
     "description": "Common Epic master file prefixes",
-    "chapterId": "00-04-epic-data-architecture",
+    "chapterId": "01-01-epic-data-architecture",
     "index": 5
   },
   {
-    "id": "01-01-modeling-a-simple-list-id-line-pattern-0",
+    "id": "01-02-modeling-a-simple-list-id-line-pattern-0",
     "originalQuery": "SELECT COUNT(DISTINCT table_name) as tables_with_line_column\nFROM _metadata\nWHERE column_name = 'LINE';",
     "description": "Discover the prevalence of the LINE pattern",
-    "chapterId": "01-01-modeling-a-simple-list-id-line-pattern",
+    "chapterId": "01-02-modeling-a-simple-list-id-line-pattern",
     "index": 0
   },
   {
-    "id": "01-01-modeling-a-simple-list-id-line-pattern-1",
+    "id": "01-02-modeling-a-simple-list-id-line-pattern-1",
     "originalQuery": "SELECT \n    PAT_ENC_CSN_ID,\n    LINE,\n    DX_ID,\n    PRIMARY_DX_YN,\n    ANNOTATION\nFROM PAT_ENC_DX\nWHERE PAT_ENC_CSN_ID = 991225117\nORDER BY LINE;",
     "description": "Examine the (ID, LINE) pattern in encounter diagnoses",
-    "chapterId": "01-01-modeling-a-simple-list-id-line-pattern",
+    "chapterId": "01-02-modeling-a-simple-list-id-line-pattern",
     "index": 1
   },
   {
-    "id": "01-01-modeling-a-simple-list-id-line-pattern-2",
+    "id": "01-02-modeling-a-simple-list-id-line-pattern-2",
     "originalQuery": "SELECT \n    PAT_ENC_CSN_ID,\n    LINE,\n    DX_ID,\n    PRIMARY_DX_YN,\n    CASE \n        WHEN PRIMARY_DX_YN = 'Y' AND LINE > 1 \n        THEN '⚠️ Primary diagnosis not in LINE 1!'\n        ELSE 'Normal'\n    END as note\nFROM PAT_ENC_DX\nWHERE PRIMARY_DX_YN = 'Y' \n  AND LINE > 1\nLIMIT 5;",
     "description": "Proof that LINE does not indicate priority",
-    "chapterId": "01-01-modeling-a-simple-list-id-line-pattern",
+    "chapterId": "01-02-modeling-a-simple-list-id-line-pattern",
     "index": 2
   },
   {
-    "id": "01-01-modeling-a-simple-list-id-line-pattern-3",
+    "id": "01-02-modeling-a-simple-list-id-line-pattern-3",
     "originalQuery": "WITH line_analysis AS (\n    SELECT \n        table_name,\n        MIN(line) as min_line,\n        MAX(line) as max_line,\n        COUNT(DISTINCT line) as distinct_lines\n    FROM (\n        SELECT 'PAT_ENC_DX' as table_name, PAT_ENC_CSN_ID as id, LINE \n        FROM PAT_ENC_DX\n        UNION ALL\n        SELECT 'ALLERGY_REACTIONS', ALLERGY_ID, LINE \n        FROM ALLERGY_REACTIONS\n        UNION ALL\n        SELECT 'PAT_ADDRESS', PAT_ID, LINE \n        FROM PAT_ADDRESS\n    )\n    GROUP BY table_name, id\n)\nSELECT \n    table_name,\n    MIN(min_line) as always_starts_at,\n    MAX(max_line) as can_go_up_to,\n    COUNT(*) as parent_records\nFROM line_analysis\nGROUP BY table_name;",
     "description": "Verify LINE numbering always starts at 1",
-    "chapterId": "01-01-modeling-a-simple-list-id-line-pattern",
+    "chapterId": "01-02-modeling-a-simple-list-id-line-pattern",
     "index": 3
   },
   {
-    "id": "01-01-modeling-a-simple-list-id-line-pattern-4",
+    "id": "01-02-modeling-a-simple-list-id-line-pattern-4",
     "originalQuery": "SELECT \n    table_name,\n    SUBSTR(documentation, 1, 100) || '...' as table_purpose\nFROM _metadata\nWHERE column_name IS NULL\n  AND table_name IN (\n    SELECT DISTINCT table_name \n    FROM _metadata \n    WHERE column_name = 'LINE'\n  )\nORDER BY table_name\nLIMIT 10;",
     "description": "See the variety of data using the (ID, LINE) pattern",
-    "chapterId": "01-01-modeling-a-simple-list-id-line-pattern",
+    "chapterId": "01-02-modeling-a-simple-list-id-line-pattern",
     "index": 4
   },
   {
-    "id": "01-01-modeling-a-simple-list-id-line-pattern-5",
+    "id": "01-02-modeling-a-simple-list-id-line-pattern-5",
     "originalQuery": "SELECT \n    PAT_ENC_CSN_ID,\n    COUNT(*) as diagnosis_count,\n    MAX(LINE) as max_line_number,\n    COUNT(CASE WHEN PRIMARY_DX_YN = 'Y' THEN 1 END) as primary_dx_count\nFROM PAT_ENC_DX\nGROUP BY PAT_ENC_CSN_ID\nHAVING COUNT(*) > 2\nLIMIT 5;",
     "description": "Count items per parent correctly",
-    "chapterId": "01-01-modeling-a-simple-list-id-line-pattern",
+    "chapterId": "01-02-modeling-a-simple-list-id-line-pattern",
     "index": 5
   },
   {
-    "id": "01-02-modeling-a-grouped-list-id-group-line-value-line-pattern-0",
+    "id": "01-03-modeling-a-grouped-list-id-group-line-value-line-pattern-0",
     "originalQuery": "SELECT \n    table_name,\n    COUNT(*) as column_count\nFROM _metadata\nWHERE column_name IN ('GROUP_LINE', 'VALUE_LINE')\nGROUP BY table_name\nHAVING COUNT(*) = 2\nORDER BY table_name;",
     "description": "Discover tables using the grouped list pattern",
-    "chapterId": "01-02-modeling-a-grouped-list-id-group-line-value-line-pattern",
+    "chapterId": "01-03-modeling-a-grouped-list-id-group-line-value-line-pattern",
     "index": 0
   },
   {
-    "id": "01-02-modeling-a-grouped-list-id-group-line-value-line-pattern-1",
-    "originalQuery": "SELECT \n    ORDER_ID,\n    GROUP_LINE,\n    VALUE_LINE,\n    SIG_TEXT_ as signature_text\nFROM ORDER_RPTD_SIG_TEXT\nORDER BY ORDER_ID, GROUP_LINE, VALUE_LINE;",
+    "id": "01-03-modeling-a-grouped-list-id-group-line-value-line-pattern-1",
+    "originalQuery": "-- During an encounter, providers review different aspects of patient history\n-- Each review session (GROUP_LINE) covers multiple history types (VALUE_LINE)\nSELECT \n    tp.GROUP_LINE as review_session,\n    tp.VALUE_LINE as item_number,\n    tp.HX_REVIEWED_HEADER as review_location,\n    ty.HX_REVIEWED_TYPE_C_NAME as history_type\nFROM PAT_HX_REV_TOPIC tp\nJOIN PAT_HX_REV_TYPE ty \n    ON tp.PAT_ENC_CSN_ID = ty.PAT_ENC_CSN_ID \n    AND tp.GROUP_LINE = ty.GROUP_LINE \n    AND tp.VALUE_LINE = ty.VALUE_LINE\nWHERE tp.PAT_ENC_CSN_ID = 724623985 \n    AND tp.GROUP_LINE IN (6,7)\nORDER BY tp.GROUP_LINE, tp.VALUE_LINE;",
     "description": "See the grouped list pattern in action",
-    "chapterId": "01-02-modeling-a-grouped-list-id-group-line-value-line-pattern",
+    "chapterId": "01-03-modeling-a-grouped-list-id-group-line-value-line-pattern",
     "index": 1
   },
   {
-    "id": "01-02-modeling-a-grouped-list-id-group-line-value-line-pattern-2",
-    "originalQuery": "SELECT \n    name as column_name,\n    CASE \n        WHEN name LIKE '%_ID' THEN 'Parent identifier'\n        WHEN name = 'GROUP_LINE' THEN 'Group sequence number'\n        WHEN name = 'VALUE_LINE' THEN 'Item sequence within group'\n        ELSE 'Data column'\n    END as column_role\nFROM pragma_table_info('ORDER_RPTD_SIG_TEXT')\nORDER BY cid;",
+    "id": "01-03-modeling-a-grouped-list-id-group-line-value-line-pattern-2",
+    "originalQuery": "SELECT \n    name as column_name,\n    CASE \n        WHEN name LIKE '%_ID' THEN 'Parent identifier'\n        WHEN name = 'GROUP_LINE' THEN 'Group sequence number'\n        WHEN name = 'VALUE_LINE' THEN 'Item sequence within group'\n        ELSE 'Data column'\n    END as column_role\nFROM pragma_table_info('PAT_HX_REV_TOPIC')\nORDER BY cid;",
     "description": "Examine the structure of a grouped list table",
-    "chapterId": "01-02-modeling-a-grouped-list-id-group-line-value-line-pattern",
+    "chapterId": "01-03-modeling-a-grouped-list-id-group-line-value-line-pattern",
     "index": 2
   },
   {
-    "id": "01-02-modeling-a-grouped-list-id-group-line-value-line-pattern-3",
+    "id": "01-03-modeling-a-grouped-list-id-group-line-value-line-pattern-3",
     "originalQuery": "SELECT DISTINCT\n    m1.table_name,\n    SUBSTR(m1.documentation, 1, 80) || '...' as table_purpose\nFROM _metadata m1\nWHERE m1.column_name IS NULL\n  AND m1.table_name IN (\n    SELECT table_name\n    FROM _metadata\n    WHERE column_name IN ('GROUP_LINE', 'VALUE_LINE')\n    GROUP BY table_name\n    HAVING COUNT(*) = 2\n  )\nLIMIT 5;",
     "description": "Understand the variety of grouped list applications",
-    "chapterId": "01-02-modeling-a-grouped-list-id-group-line-value-line-pattern",
+    "chapterId": "01-03-modeling-a-grouped-list-id-group-line-value-line-pattern",
     "index": 3
   },
   {
-    "id": "01-02-modeling-a-grouped-list-id-group-line-value-line-pattern-4",
-    "originalQuery": "-- See how immunization groups are structured\nSELECT \n    DOCUMENT_ID,\n    GROUP_LINE,\n    COUNT(*) as items_in_group,\n    GROUP_CONCAT(IMM_GROUPS_ID_NAME, '; ') as group_contents\nFROM IMM_ADMIN_GROUPS\nGROUP BY DOCUMENT_ID, GROUP_LINE\nORDER BY DOCUMENT_ID, GROUP_LINE;",
+    "id": "01-03-modeling-a-grouped-list-id-group-line-value-line-pattern-4",
+    "originalQuery": "-- Count history types reviewed in each session\nSELECT \n    PAT_ENC_CSN_ID,\n    GROUP_LINE as review_session,\n    COUNT(*) as history_types_reviewed,\n    GROUP_CONCAT(HX_REVIEWED_TYPE_C_NAME, ', ') as types_reviewed\nFROM PAT_HX_REV_TYPE\nWHERE PAT_ENC_CSN_ID = 724623985\nGROUP BY PAT_ENC_CSN_ID, GROUP_LINE\nHAVING COUNT(*) > 1\nORDER BY GROUP_LINE;",
     "description": "Aggregate values within groups",
-    "chapterId": "01-02-modeling-a-grouped-list-id-group-line-value-line-pattern",
+    "chapterId": "01-03-modeling-a-grouped-list-id-group-line-value-line-pattern",
     "index": 4
   },
   {
-    "id": "01-02-modeling-a-grouped-list-id-group-line-value-line-pattern-5",
+    "id": "01-03-modeling-a-grouped-list-id-group-line-value-line-pattern-5",
     "originalQuery": "WITH line_rules AS (\n    SELECT \n        'ORDER_RPTD_SIG_TEXT' as table_name,\n        MIN(GROUP_LINE) as min_group,\n        MAX(GROUP_LINE) as max_group,\n        MIN(VALUE_LINE) as min_value,\n        MAX(VALUE_LINE) as max_value\n    FROM ORDER_RPTD_SIG_TEXT\n    \n    UNION ALL\n    \n    SELECT \n        'IMM_ADMIN_GROUPS',\n        MIN(GROUP_LINE),\n        MAX(GROUP_LINE),\n        MIN(VALUE_LINE),\n        MAX(VALUE_LINE)\n    FROM IMM_ADMIN_GROUPS\n)\nSELECT * FROM line_rules;",
     "description": "Verify the numbering rules for grouped lists",
-    "chapterId": "01-02-modeling-a-grouped-list-id-group-line-value-line-pattern",
+    "chapterId": "01-03-modeling-a-grouped-list-id-group-line-value-line-pattern",
     "index": 5
   },
   {
-    "id": "01-03-modeling-history-and-change-hx-pattern-0",
+    "id": "01-04-modeling-history-and-change-hx-pattern-0",
     "originalQuery": "SELECT \n    COUNT(*) as history_tables,\n    GROUP_CONCAT(REPLACE(name, '_HX', ''), ', ') as tracked_entities\nFROM sqlite_master \nWHERE type = 'table' \n  AND name LIKE '%_HX'\nORDER BY name;",
     "description": "Discover the scope of history tracking",
-    "chapterId": "01-03-modeling-history-and-change-hx-pattern",
+    "chapterId": "01-04-modeling-history-and-change-hx-pattern",
     "index": 0
   },
   {
-    "id": "01-03-modeling-history-and-change-hx-pattern-1",
-    "originalQuery": "-- First, see a current address\nSELECT \n    PAT_ID,\n    LINE,\n    ADDRESS_\nFROM PAT_ADDRESS\nWHERE PAT_ID = 'Z7004242';",
+    "id": "01-04-modeling-history-and-change-hx-pattern-1",
+    "originalQuery": "-- First, see a current address\nSELECT \n    PAT_ID,\n    LINE,\n    ADDRESS\nFROM PAT_ADDRESS\nWHERE PAT_ID = 'Z7004242';",
     "description": "Compare a regular table to its history counterpart",
-    "chapterId": "01-03-modeling-history-and-change-hx-pattern",
+    "chapterId": "01-04-modeling-history-and-change-hx-pattern",
     "index": 1
   },
   {
-    "id": "01-03-modeling-history-and-change-hx-pattern-2",
+    "id": "01-04-modeling-history-and-change-hx-pattern-2",
     "originalQuery": "-- Then see the address history with full details\nSELECT \n    PAT_ID,\n    LINE,\n    EFF_START_DATE,\n    EFF_END_DATE,\n    ADDR_HX_LINE1,\n    CITY_HX,\n    ZIP_HX\nFROM PAT_ADDR_CHNG_HX\nWHERE PAT_ID = 'Z7004242'\nORDER BY EFF_START_DATE;",
     "description": "See the address change history",
-    "chapterId": "01-03-modeling-history-and-change-hx-pattern",
+    "chapterId": "01-04-modeling-history-and-change-hx-pattern",
     "index": 2
   },
   {
-    "id": "01-03-modeling-history-and-change-hx-pattern-3",
+    "id": "01-04-modeling-history-and-change-hx-pattern-3",
     "originalQuery": "SELECT \n    PAT_ID,\n    LINE,\n    EFF_START_DATE,\n    EFF_END_DATE,\n    CASE \n        WHEN EFF_END_DATE IS NULL OR EFF_END_DATE = '' \n        THEN '✓ Currently Active'\n        ELSE 'Historical'\n    END as record_status\nFROM PAT_ADDR_CHNG_HX\nORDER BY PAT_ID, EFF_START_DATE;",
     "description": "Understand the active record pattern",
-    "chapterId": "01-03-modeling-history-and-change-hx-pattern",
+    "chapterId": "01-04-modeling-history-and-change-hx-pattern",
     "index": 3
   },
   {
-    "id": "01-03-modeling-history-and-change-hx-pattern-4",
+    "id": "01-04-modeling-history-and-change-hx-pattern-4",
     "originalQuery": "-- What was the patient's address on August 1, 2018?\nSELECT \n    PAT_ID,\n    ADDR_HX_LINE1,\n    CITY_HX,\n    ZIP_HX,\n    EFF_START_DATE,\n    EFF_END_DATE,\n    'Note: Sample data may not contain historical addresses' as note\nFROM PAT_ADDR_CHNG_HX\nLIMIT 5;",
     "description": "Find a patient's address on a specific date",
-    "chapterId": "01-03-modeling-history-and-change-hx-pattern",
+    "chapterId": "01-04-modeling-history-and-change-hx-pattern",
     "index": 4
   },
   {
-    "id": "01-03-modeling-history-and-change-hx-pattern-5",
+    "id": "01-04-modeling-history-and-change-hx-pattern-5",
     "originalQuery": "SELECT \n    table_name,\n    COUNT(*) as column_count,\n    GROUP_CONCAT(column_name, ', ') as example_columns\nFROM _metadata\nWHERE table_name LIKE '%_HX'\n   OR table_name LIKE '%_HX_%'\n   OR table_name LIKE '%HIST%'\n   OR table_name LIKE '%CHNG%'\nGROUP BY table_name\nORDER BY table_name\nLIMIT 10;",
     "description": "Examine different types of historical data",
-    "chapterId": "01-03-modeling-history-and-change-hx-pattern",
+    "chapterId": "01-04-modeling-history-and-change-hx-pattern",
     "index": 5
   },
   {
-    "id": "01-03-modeling-history-and-change-hx-pattern-6",
+    "id": "01-04-modeling-history-and-change-hx-pattern-6",
     "originalQuery": "SELECT \n    column_name,\n    COUNT(DISTINCT table_name) as table_count\nFROM _metadata\nWHERE column_name LIKE '%_INST%'\n   OR column_name LIKE '%_DTTM'\n   OR column_name LIKE '%_USER%'\nGROUP BY column_name\nORDER BY table_count DESC\nLIMIT 10;",
     "description": "Identify audit tracking columns",
-    "chapterId": "01-03-modeling-history-and-change-hx-pattern",
+    "chapterId": "01-04-modeling-history-and-change-hx-pattern",
     "index": 6
   },
   {
-    "id": "01-03-modeling-history-and-change-hx-pattern-7",
+    "id": "01-04-modeling-history-and-change-hx-pattern-7",
     "originalQuery": "WITH hx_patterns AS (\n    SELECT \n        table_name,\n        CASE \n            WHEN column_name = 'LINE' THEN 'Has LINE'\n            WHEN column_name LIKE '%EFF_START%' THEN 'Has EFF_START'\n            WHEN column_name LIKE '%EFF_END%' THEN 'Has EFF_END'\n            WHEN column_name LIKE '%UPDATE%USER%' THEN 'Has UPDATE_USER'\n            ELSE NULL\n        END as pattern\n    FROM _metadata\n    WHERE table_name LIKE '%_HX'\n)\nSELECT \n    pattern,\n    COUNT(DISTINCT table_name) as table_count,\n    GROUP_CONCAT(DISTINCT table_name) as example_tables\nFROM hx_patterns\nWHERE pattern IS NOT NULL\nGROUP BY pattern\nORDER BY table_count DESC;",
     "description": "Analyze history table structures",
-    "chapterId": "01-03-modeling-history-and-change-hx-pattern",
+    "chapterId": "01-04-modeling-history-and-change-hx-pattern",
     "index": 7
   },
   {
-    "id": "01-03-modeling-history-and-change-hx-pattern-8",
+    "id": "01-04-modeling-history-and-change-hx-pattern-8",
     "originalQuery": "WITH all_tables AS (\n    SELECT \n        name as table_name,\n        CASE \n            WHEN name LIKE '%_HX' THEN 'History Table'\n            WHEN EXISTS (\n                SELECT 1 FROM sqlite_master sm2\n                WHERE sm2.name = sm.name || '_HX'\n            ) THEN 'Has History Table'\n            ELSE 'No History Tracking'\n        END as history_status\n    FROM sqlite_master sm\n    WHERE type = 'table' AND name != '_metadata'\n)\nSELECT \n    history_status,\n    COUNT(*) as table_count\nFROM all_tables\nGROUP BY history_status\nORDER BY table_count DESC;",
     "description": "Compare tables with and without history tracking",
-    "chapterId": "01-03-modeling-history-and-change-hx-pattern",
+    "chapterId": "01-04-modeling-history-and-change-hx-pattern",
     "index": 8
   },
   {
-    "id": "01-04-modeling-categories-c-name-pattern-0",
+    "id": "01-05-modeling-categories-c-name-pattern-0",
     "originalQuery": "-- Traditional Epic systems use ZC_ tables for lookups\nSELECT \n    COUNT(*) as zc_tables_found,\n    CASE \n        WHEN COUNT(*) = 0 THEN '❌ No ZC_ lookup tables in EHI export!'\n        ELSE 'Found lookup tables'\n    END as finding\nFROM sqlite_master \nWHERE type = 'table' \n  AND name LIKE 'ZC_%';",
     "description": "Prove that ZC_ lookup tables don't exist",
-    "chapterId": "01-04-modeling-categories-c-name-pattern",
+    "chapterId": "01-05-modeling-categories-c-name-pattern",
     "index": 0
   },
   {
-    "id": "01-04-modeling-categories-c-name-pattern-1",
+    "id": "01-05-modeling-categories-c-name-pattern-1",
     "originalQuery": "SELECT \n    COUNT(DISTINCT column_name) as category_columns,\n    COUNT(DISTINCT table_name) as tables_with_categories\nFROM _metadata\nWHERE column_name LIKE '%_C_NAME%';",
     "description": "Discover the prevalence of the _C_NAME pattern",
-    "chapterId": "01-04-modeling-categories-c-name-pattern",
+    "chapterId": "01-05-modeling-categories-c-name-pattern",
     "index": 1
   },
   {
-    "id": "01-04-modeling-categories-c-name-pattern-2",
+    "id": "01-05-modeling-categories-c-name-pattern-2",
     "originalQuery": "-- First, see the distinct values\nSELECT \n    APPT_STATUS_C_NAME as status,\n    COUNT(*) as encounter_count\nFROM pat_enc \nWHERE APPT_STATUS_C_NAME IS NOT NULL\nGROUP BY APPT_STATUS_C_NAME\nORDER BY encounter_count DESC;",
     "description": "See category values in practice",
-    "chapterId": "01-04-modeling-categories-c-name-pattern",
+    "chapterId": "01-05-modeling-categories-c-name-pattern",
     "index": 2
   },
   {
-    "id": "01-04-modeling-categories-c-name-pattern-3",
+    "id": "01-05-modeling-categories-c-name-pattern-3",
     "originalQuery": "SELECT \n    table_name,\n    column_name,\n    SUBSTR(documentation, 1, 100) || '...' as shows_numeric_codes\nFROM _metadata\nWHERE column_name LIKE '%_C_NAME'\n  AND documentation LIKE '%1 -%'\nLIMIT 5;",
     "description": "Find columns where documentation reveals numeric codes",
-    "chapterId": "01-04-modeling-categories-c-name-pattern",
+    "chapterId": "01-05-modeling-categories-c-name-pattern",
     "index": 3
   },
   {
-    "id": "01-04-modeling-categories-c-name-pattern-4",
+    "id": "01-05-modeling-categories-c-name-pattern-4",
     "originalQuery": "-- Are category values consistent?\nSELECT \n    APPT_STATUS_C_NAME,\n    UPPER(APPT_STATUS_C_NAME) as uppercase,\n    LOWER(APPT_STATUS_C_NAME) as lowercase,\n    COUNT(*) as occurrences\nFROM pat_enc\nWHERE APPT_STATUS_C_NAME IS NOT NULL\nGROUP BY APPT_STATUS_C_NAME\nORDER BY APPT_STATUS_C_NAME;",
     "description": "Check for case variations in category values",
-    "chapterId": "01-04-modeling-categories-c-name-pattern",
+    "chapterId": "01-05-modeling-categories-c-name-pattern",
     "index": 4
   },
   {
-    "id": "01-04-modeling-categories-c-name-pattern-5",
+    "id": "01-05-modeling-categories-c-name-pattern-5",
     "originalQuery": "-- Find all unique statuses across different status columns\nWITH all_statuses AS (\n    SELECT DISTINCT 'APPT_STATUS' as status_type, APPT_STATUS_C_NAME as status_value \n    FROM pat_enc WHERE APPT_STATUS_C_NAME IS NOT NULL\n    \n    UNION\n    \n    SELECT DISTINCT 'PROBLEM_STATUS', PROBLEM_STATUS_C_NAME \n    FROM PROBLEM_LIST WHERE PROBLEM_STATUS_C_NAME IS NOT NULL\n)\nSELECT * FROM all_statuses\nORDER BY status_type, status_value;",
     "description": "Demonstrate lack of referential constraints",
-    "chapterId": "01-04-modeling-categories-c-name-pattern",
+    "chapterId": "01-05-modeling-categories-c-name-pattern",
     "index": 5
   },
   {
-    "id": "01-04-modeling-categories-c-name-pattern-6",
+    "id": "01-05-modeling-categories-c-name-pattern-6",
     "originalQuery": "WITH category_types AS (\n    SELECT \n        SUBSTR(column_name, 1, INSTR(column_name, '_C_NAME') - 1) as base_name,\n        column_name,\n        table_name\n    FROM _metadata\n    WHERE column_name LIKE '%_C_NAME%'\n)\nSELECT \n    base_name,\n    COUNT(DISTINCT table_name) as table_count,\n    GROUP_CONCAT(DISTINCT table_name) as appears_in_tables\nFROM category_types\nGROUP BY base_name\nHAVING COUNT(DISTINCT table_name) > 3\nORDER BY table_count DESC\nLIMIT 10;",
     "description": "Analyze category naming patterns",
-    "chapterId": "01-04-modeling-categories-c-name-pattern",
+    "chapterId": "01-05-modeling-categories-c-name-pattern",
     "index": 6
   },
   {
-    "id": "01-04-modeling-categories-c-name-pattern-7",
+    "id": "01-05-modeling-categories-c-name-pattern-7",
     "originalQuery": "SELECT \n    column_name,\n    table_name,\n    documentation\nFROM _metadata\nWHERE column_name LIKE '%_C'\n  AND column_name NOT IN (\n      SELECT REPLACE(column_name, '_NAME', '') \n      FROM _metadata \n      WHERE column_name LIKE '%_C_NAME%'\n  )\nLIMIT 10;",
     "description": "Investigate _C columns without _NAME",
-    "chapterId": "01-04-modeling-categories-c-name-pattern",
+    "chapterId": "01-05-modeling-categories-c-name-pattern",
     "index": 7
   },
   {
-    "id": "01-04-modeling-categories-c-name-pattern-8",
+    "id": "01-05-modeling-categories-c-name-pattern-8",
     "originalQuery": "-- Build a reference of all appointment statuses\nSELECT DISTINCT \n    APPT_STATUS_C_NAME as status_name,\n    COUNT(*) as usage_count\nFROM PAT_ENC\nWHERE APPT_STATUS_C_NAME IS NOT NULL\nGROUP BY APPT_STATUS_C_NAME\nORDER BY usage_count DESC;",
     "description": "Create a reference list of valid values",
-    "chapterId": "01-04-modeling-categories-c-name-pattern",
+    "chapterId": "01-05-modeling-categories-c-name-pattern",
     "index": 8
   },
   {
-    "id": "01-05-modeling-time-real-date-pattern-0",
+    "id": "01-06-modeling-time-real-date-pattern-0",
     "originalQuery": "-- Multiple encounters on the same day\nSELECT \n    PAT_ENC_CSN_ID,\n    CONTACT_DATE,\n    PAT_ENC_DATE_REAL\nFROM pat_enc\nWHERE CONTACT_DATE LIKE '8/9/2018%'\nORDER BY PAT_ENC_DATE_REAL;",
     "description": "See why standard dates aren't enough",
-    "chapterId": "01-05-modeling-time-real-date-pattern",
+    "chapterId": "01-06-modeling-time-real-date-pattern",
     "index": 0
   },
   {
-    "id": "01-05-modeling-time-real-date-pattern-1",
+    "id": "01-06-modeling-time-real-date-pattern-1",
     "originalQuery": "-- Calculate dates from _REAL values\nSELECT \n    PAT_ENC_DATE_REAL,\n    DATE('1840-12-31', '+' || CAST(PAT_ENC_DATE_REAL AS INT) || ' days') as calculated_date,\n    SUBSTR(CONTACT_DATE, 1, 10) as actual_date,\n    CASE \n        WHEN DATE('1840-12-31', '+' || CAST(PAT_ENC_DATE_REAL AS INT) || ' days') \n             = DATE(SUBSTR(CONTACT_DATE, 7, 4) || '-' || \n                    PRINTF('%02d', CAST(SUBSTR(CONTACT_DATE, 1, INSTR(CONTACT_DATE, '/') - 1) AS INT)) || '-' ||\n                    PRINTF('%02d', CAST(SUBSTR(CONTACT_DATE, INSTR(CONTACT_DATE, '/') + 1, 2) AS INT)))\n        THEN '✓ Match!'\n        ELSE '✗ Mismatch'\n    END as verification\nFROM pat_enc\nWHERE PAT_ENC_DATE_REAL IS NOT NULL\nLIMIT 5;",
     "description": "Verify the Epic epoch date",
-    "chapterId": "01-05-modeling-time-real-date-pattern",
+    "chapterId": "01-06-modeling-time-real-date-pattern",
     "index": 1
   },
   {
-    "id": "01-05-modeling-time-real-date-pattern-2",
+    "id": "01-06-modeling-time-real-date-pattern-2",
     "originalQuery": "WITH real_analysis AS (\n    SELECT \n        PAT_ID,\n        CONTACT_DATE,\n        PAT_ENC_CSN_ID,\n        PAT_ENC_DATE_REAL,\n        CAST(PAT_ENC_DATE_REAL AS INT) as date_part,\n        ROUND((PAT_ENC_DATE_REAL - CAST(PAT_ENC_DATE_REAL AS INT)) * 100, 0) as sequence_part\n    FROM pat_enc\n    WHERE CONTACT_DATE LIKE '8/9/2018%'\n)\nSELECT \n    *,\n    'Encounter #' || (sequence_part + 1) as encounter_order\nFROM real_analysis\nORDER BY PAT_ENC_DATE_REAL;",
     "description": "Analyze decimal sequencing patterns",
-    "chapterId": "01-05-modeling-time-real-date-pattern",
+    "chapterId": "01-06-modeling-time-real-date-pattern",
     "index": 2
   },
   {
-    "id": "01-05-modeling-time-real-date-pattern-3",
+    "id": "01-06-modeling-time-real-date-pattern-3",
     "originalQuery": "SELECT \n    column_name,\n    COUNT(DISTINCT table_name) as table_count,\n    GROUP_CONCAT(DISTINCT table_name) as appears_in_tables\nFROM _metadata\nWHERE column_name LIKE '%_REAL'\nGROUP BY column_name\nORDER BY table_count DESC",
     "description": "Discover all _REAL date columns",
-    "chapterId": "01-05-modeling-time-real-date-pattern",
+    "chapterId": "01-06-modeling-time-real-date-pattern",
     "index": 3
   },
   {
-    "id": "01-05-modeling-time-real-date-pattern-4",
+    "id": "01-06-modeling-time-real-date-pattern-4",
     "originalQuery": "-- Create a scenario showing the problem\nWITH sorting_comparison AS (\n    SELECT \n        PAT_ENC_CSN_ID,\n        CONTACT_DATE,\n        PAT_ENC_DATE_REAL,\n        -- Different sorting approaches\n        ROW_NUMBER() OVER (ORDER BY CONTACT_DATE, PAT_ENC_CSN_ID) as sort_by_date_and_id,\n        ROW_NUMBER() OVER (ORDER BY PAT_ENC_DATE_REAL) as sort_by_real,\n        -- Check if they match\n        CASE \n            WHEN ROW_NUMBER() OVER (ORDER BY CONTACT_DATE, PAT_ENC_CSN_ID) = \n                 ROW_NUMBER() OVER (ORDER BY PAT_ENC_DATE_REAL)\n            THEN 'Same'\n            ELSE 'Different!'\n        END as sort_order_match\n    FROM pat_enc\n    WHERE CONTACT_DATE LIKE '8/9/2018%'\n)\nSELECT * FROM sorting_comparison;",
     "description": "Demonstrate why _REAL sorting is essential",
-    "chapterId": "01-05-modeling-time-real-date-pattern",
+    "chapterId": "01-06-modeling-time-real-date-pattern",
     "index": 4
   },
   {
-    "id": "01-05-modeling-time-real-date-pattern-5",
+    "id": "01-06-modeling-time-real-date-pattern-5",
     "originalQuery": "-- Check for any duplicate _REAL values\nWITH duplicate_check AS (\n    SELECT \n        PAT_ID,\n        PAT_ENC_DATE_REAL,\n        COUNT(*) as occurrence_count\n    FROM pat_enc\n    WHERE PAT_ENC_DATE_REAL IS NOT NULL\n    GROUP BY PAT_ID, PAT_ENC_DATE_REAL\n    HAVING COUNT(*) > 1\n)\nSELECT \n    CASE \n        WHEN COUNT(*) = 0 THEN '✓ All _REAL values are unique per patient'\n        ELSE '✗ Found ' || COUNT(*) || ' duplicates'\n    END as uniqueness_check\nFROM duplicate_check;",
     "description": "Verify _REAL values are unique per patient",
-    "chapterId": "01-05-modeling-time-real-date-pattern",
+    "chapterId": "01-06-modeling-time-real-date-pattern",
     "index": 5
   },
   {
-    "id": "01-05-modeling-time-real-date-pattern-6",
+    "id": "01-06-modeling-time-real-date-pattern-6",
     "originalQuery": "SELECT \n    column_name,\n    SUBSTR(documentation, 1, 150) as description\nFROM _metadata\nWHERE column_name LIKE '%_REAL'\nORDER BY column_name\nLIMIT 5;",
     "description": "Prove decimals aren't timestamps",
-    "chapterId": "01-05-modeling-time-real-date-pattern",
+    "chapterId": "01-06-modeling-time-real-date-pattern",
     "index": 6
   },
   {
-    "id": "01-06-other-common-patterns-0",
+    "id": "01-07-other-common-patterns-0",
     "originalQuery": "WITH pattern_analysis AS (\n    SELECT \n        CASE\n            WHEN column_name LIKE '%_YN' THEN '_YN (Yes/No)'\n            WHEN column_name LIKE '%_ID_%NAME' THEN '_ID/_NAME pairs'\n            WHEN column_name LIKE '%_AMT' THEN '_AMT (Amounts)'\n            WHEN column_name LIKE '%_DTTM' THEN '_DTTM (DateTime)'\n            WHEN column_name LIKE '%_DT' THEN '_DT (Date)'\n            WHEN column_name LIKE '%_NUM' THEN '_NUM (Number)'\n            WHEN column_name LIKE '%_CSN' THEN '_CSN (Contact Serial)'\n            ELSE 'Other'\n        END as pattern_type,\n        column_name\n    FROM _metadata\n    WHERE column_name IS NOT NULL\n)\nSELECT \n    pattern_type,\n    COUNT(*) as occurrence_count\nFROM pattern_analysis\nWHERE pattern_type != 'Other'\nGROUP BY pattern_type\nORDER BY occurrence_count DESC",
     "description": "Discover the most common column patterns",
-    "chapterId": "01-06-other-common-patterns",
+    "chapterId": "01-07-other-common-patterns",
     "index": 0
   },
   {
-    "id": "01-06-other-common-patterns-1",
+    "id": "01-07-other-common-patterns-1",
     "originalQuery": "-- Check valid values\nSELECT DISTINCT \n    PRIMARY_DX_YN as yn_value,\n    COUNT(*) as occurrences\nFROM PAT_ENC_DX\nGROUP BY PRIMARY_DX_YN\nORDER BY yn_value;\n\n-- See variety of boolean fields\nSELECT \n    column_name,\n    REPLACE(column_name, '_YN', '') as what_it_tracks\nFROM _metadata\nWHERE column_name LIKE '%_YN'\n  AND table_name = 'PATIENT'\nORDER BY column_name\nLIMIT 10",
     "description": "Understand the _YN boolean pattern",
-    "chapterId": "01-06-other-common-patterns",
+    "chapterId": "01-07-other-common-patterns",
     "index": 1
   },
   {
-    "id": "01-06-other-common-patterns-2",
+    "id": "01-07-other-common-patterns-2",
     "originalQuery": "-- Find examples of paired columns\nSELECT \n    REPLACE(column_name, '_NAME', '') as base_column,\n    GROUP_CONCAT(column_name, ' + ') as paired_columns\nFROM _metadata\nWHERE table_name = 'PROBLEM_LIST'\n  AND (column_name LIKE '%USER_ID' OR column_name LIKE '%USER_ID_NAME')\nGROUP BY REPLACE(column_name, '_NAME', '')\nORDER BY base_column",
     "description": "Explore ID/NAME pairs",
-    "chapterId": "01-06-other-common-patterns",
+    "chapterId": "01-07-other-common-patterns",
     "index": 2
   },
   {
-    "id": "01-06-other-common-patterns-3",
+    "id": "01-07-other-common-patterns-3",
     "originalQuery": "SELECT \n    PROBLEM_LIST_ID,\n    ENTRY_USER_ID,\n    ENTRY_USER_ID_NAME,\n    DESCRIPTION\nFROM PROBLEM_LIST\nWHERE ENTRY_USER_ID IS NOT NULL\nLIMIT 5;",
     "description": "See ID/NAME pairs in action",
-    "chapterId": "01-06-other-common-patterns",
+    "chapterId": "01-07-other-common-patterns",
     "index": 3
   },
   {
-    "id": "01-06-other-common-patterns-4",
+    "id": "01-07-other-common-patterns-4",
     "originalQuery": "SELECT \n    SUBSTR(name, 1, LENGTH(name) - 2) as base_table,\n    GROUP_CONCAT(name, ', ') as all_parts,\n    COUNT(*) as table_count\nFROM sqlite_master\nWHERE type = 'table'\n  AND (name LIKE '%\\_2' ESCAPE '\\' \n       OR name LIKE '%\\_3' ESCAPE '\\' \n       OR name LIKE '%\\_4' ESCAPE '\\')\nGROUP BY base_table\nHAVING table_count >= 1\nORDER BY table_count DESC\nLIMIT 10;",
     "description": "Discover continuation tables",
-    "chapterId": "01-06-other-common-patterns",
+    "chapterId": "01-07-other-common-patterns",
     "index": 4
   },
   {
-    "id": "01-06-other-common-patterns-5",
+    "id": "01-07-other-common-patterns-5",
     "originalQuery": "WITH date_patterns AS (\n    SELECT \n        CASE\n            WHEN column_name LIKE '%_DTTM' THEN 'DateTime (_DTTM)'\n            WHEN column_name LIKE '%_DT' AND column_name NOT LIKE '%_DTTM' THEN 'Date only (_DT)'\n            WHEN column_name LIKE '%_DATE' THEN 'Date (spelled out)'\n            WHEN column_name LIKE '%_TIME' THEN 'Time only (_TIME)'\n            WHEN column_name LIKE '%_TM' AND column_name NOT LIKE '%_DTTM' THEN 'Time (_TM)'\n        END as pattern,\n        column_name,\n        table_name\n    FROM _metadata\n    WHERE column_name LIKE '%_DT%' \n       OR column_name LIKE '%_DATE%'\n       OR column_name LIKE '%_TIME%'\n       OR column_name LIKE '%_TM'\n)\nSELECT \n    pattern,\n    COUNT(*) as column_count,\n    SUBSTR(GROUP_CONCAT(DISTINCT column_name), 1, 100) as examples\nFROM date_patterns\nWHERE pattern IS NOT NULL\nGROUP BY pattern\nORDER BY column_count DESC\nLIMIT 5",
     "description": "Analyze temporal column patterns",
-    "chapterId": "01-06-other-common-patterns",
+    "chapterId": "01-07-other-common-patterns",
     "index": 5
   },
   {
-    "id": "01-06-other-common-patterns-6",
+    "id": "01-07-other-common-patterns-6",
     "originalQuery": "SELECT \n    table_name,\n    column_name,\n    SUBSTR(documentation, 1, 100) || '...' as description\nFROM _metadata\nWHERE column_name LIKE '%_AMT'\n  AND documentation LIKE '%dollar%' OR documentation LIKE '%amount%'\nORDER BY RANDOM()\nLIMIT 5",
     "description": "Explore financial amount columns",
-    "chapterId": "01-06-other-common-patterns",
+    "chapterId": "01-07-other-common-patterns",
     "index": 6
   },
   {
-    "id": "01-06-other-common-patterns-7",
+    "id": "01-07-other-common-patterns-7",
     "originalQuery": "SELECT \n    column_name,\n    COUNT(DISTINCT table_name) as used_in_tables\nFROM _metadata\nWHERE column_name LIKE '%_CSN%'\nGROUP BY column_name\nORDER BY used_in_tables DESC\nLIMIT 10",
     "description": "Understand CSN usage",
-    "chapterId": "01-06-other-common-patterns",
+    "chapterId": "01-07-other-common-patterns",
     "index": 7
   },
   {
-    "id": "01-06-other-common-patterns-8",
+    "id": "01-07-other-common-patterns-8",
     "originalQuery": "SELECT \n    -- ID/NAME pair\n    ENTRY_USER_ID,\n    ENTRY_USER_ID_NAME,\n    \n    -- _YN boolean\n    CHRONIC_YN,\n    \n    -- _C_NAME category\n    PROBLEM_STATUS_C_NAME,\n    \n    -- Standard date\n    DATE_OF_ENTRY,\n    \n    -- The actual problem\n    DESCRIPTION\n    \nFROM PROBLEM_LIST\nWHERE PROBLEM_LIST_ID IS NOT NULL\nLIMIT 5;",
     "description": "See all patterns working together",
-    "chapterId": "01-06-other-common-patterns",
+    "chapterId": "01-07-other-common-patterns",
     "index": 8
   },
   {
     "id": "02-01-patient-identity-and-demographics-0",
-    "originalQuery": "SELECT \n    PAT_ID,\n    PAT_MRN_ID,\n    PAT_NAME,\n    BIRTH_DATE,\n    SEX_C_NAME_\nFROM PATIENT;",
+    "originalQuery": "SELECT \n    PAT_ID,\n    PAT_MRN_ID,\n    PAT_NAME,\n    BIRTH_DATE,\n    SEX_C_NAME\nFROM PATIENT;",
     "description": "Explore the core patient record",
     "chapterId": "02-01-patient-identity-and-demographics",
     "index": 0
@@ -505,14 +505,14 @@
   },
   {
     "id": "02-01-patient-identity-and-demographics-5",
-    "originalQuery": "SELECT \n    p.PAT_NAME as primary_name,\n    a.LINE,\n    a.ALIAS_ as alternative_name\nFROM PATIENT p\nLEFT JOIN PATIENT_ALIAS a ON p.PAT_ID = a.PAT_ID\nORDER BY a.LINE;",
+    "originalQuery": "SELECT \n    p.PAT_NAME as primary_name,\n    a.LINE,\n    a.ALIAS as alternative_name\nFROM PATIENT p\nLEFT JOIN PATIENT_ALIAS a ON p.PAT_ID = a.PAT_ID\nORDER BY a.LINE;",
     "description": "Explore patient aliases and alternative names",
     "chapterId": "02-01-patient-identity-and-demographics",
     "index": 5
   },
   {
     "id": "02-01-patient-identity-and-demographics-6",
-    "originalQuery": "-- Race: Stored in separate table (supports multiple selections)\nSELECT \n    'Race' as data_type,\n    pr.LINE,\n    pr.PATIENT_RACE_C_NAME_ as value\nFROM PATIENT_RACE pr\nWHERE pr.PAT_ID = 'Z7004242'\n\nUNION ALL\n\n-- Ethnicity: Stored directly in PATIENT table (single selection)\nSELECT \n    'Ethnicity' as data_type,\n    1 as line,\n    p.ETHNIC_GROUP_C_NAME as value\nFROM PATIENT p\nWHERE p.PAT_ID = 'Z7004242'\nORDER BY data_type, line;",
+    "originalQuery": "-- Race: Stored in separate table (supports multiple selections)\nSELECT \n    'Race' as data_type,\n    pr.LINE,\n    pr.PATIENT_RACE_C_NAME as value\nFROM PATIENT_RACE pr\nWHERE pr.PAT_ID = 'Z7004242'\n\nUNION ALL\n\n-- Ethnicity: Stored directly in PATIENT table (single selection)\nSELECT \n    'Ethnicity' as data_type,\n    1 as line,\n    p.ETHNIC_GROUP_C_NAME as value\nFROM PATIENT p\nWHERE p.PAT_ID = 'Z7004242'\nORDER BY data_type, line;",
     "description": "Compare race and ethnicity storage patterns",
     "chapterId": "02-01-patient-identity-and-demographics",
     "index": 6
@@ -526,7 +526,7 @@
   },
   {
     "id": "02-01-patient-identity-and-demographics-8",
-    "originalQuery": "SELECT \n    p.CITY,\n    p.STATE_C_NAME,\n    p.ZIP,\n    pa.LINE,\n    pa.ADDRESS_ as street_line\nFROM PATIENT p\nLEFT JOIN PAT_ADDRESS pa ON p.PAT_ID = pa.PAT_ID\nORDER BY pa.LINE;",
+    "originalQuery": "SELECT \n    p.CITY,\n    p.STATE_C_NAME,\n    p.ZIP,\n    pa.LINE,\n    pa.ADDRESS as street_line\nFROM PATIENT p\nLEFT JOIN PAT_ADDRESS pa ON p.PAT_ID = pa.PAT_ID\nORDER BY pa.LINE;",
     "description": "Get complete address with street lines",
     "chapterId": "02-01-patient-identity-and-demographics",
     "index": 8
@@ -582,7 +582,7 @@
   },
   {
     "id": "02-01-patient-identity-and-demographics-16",
-    "originalQuery": "WITH patient_summary AS (\n    SELECT \n        p.PAT_ID,\n        p.PAT_MRN_ID,\n        p.PAT_NAME,\n        p.BIRTH_DATE,\n        -- Calculate age\n        CAST((julianday('now') - julianday(SUBSTR(p.BIRTH_DATE, 7, 4) || '-' || \n             PRINTF('%02d', CAST(SUBSTR(p.BIRTH_DATE, 1, INSTR(p.BIRTH_DATE, '/') - 1) AS INT)) || '-' ||\n             PRINTF('%02d', CAST(SUBSTR(p.BIRTH_DATE, INSTR(p.BIRTH_DATE, '/') + 1, 2) AS INT)))) / 365.25 AS INT) as age,\n        p.SEX_C_NAME_,\n        p.ETHNIC_GROUP_C_NAME,\n        p.LANGUAGE_C_NAME,\n        p.CUR_PCP_PROV_ID\n    FROM PATIENT p\n)\nSELECT \n    ps.*,\n    -- Add race (concatenated if multiple)\n    GROUP_CONCAT(pr.PATIENT_RACE_C_NAME_) as races,\n    -- Add address\n    pa.ADDRESS_ as street_address,\n    p.CITY || ', ' || p.STATE_C_NAME || ' ' || p.ZIP as city_state_zip\nFROM patient_summary ps\nJOIN PATIENT p ON ps.PAT_ID = p.PAT_ID\nLEFT JOIN PATIENT_RACE pr ON ps.PAT_ID = pr.PAT_ID\nLEFT JOIN PAT_ADDRESS pa ON ps.PAT_ID = pa.PAT_ID AND pa.LINE = 1\nGROUP BY ps.PAT_ID;",
+    "originalQuery": "WITH patient_summary AS (\n    SELECT \n        p.PAT_ID,\n        p.PAT_MRN_ID,\n        p.PAT_NAME,\n        p.BIRTH_DATE,\n        -- Calculate age\n        CAST((julianday('now') - julianday(SUBSTR(p.BIRTH_DATE, 7, 4) || '-' || \n             PRINTF('%02d', CAST(SUBSTR(p.BIRTH_DATE, 1, INSTR(p.BIRTH_DATE, '/') - 1) AS INT)) || '-' ||\n             PRINTF('%02d', CAST(SUBSTR(p.BIRTH_DATE, INSTR(p.BIRTH_DATE, '/') + 1, 2) AS INT)))) / 365.25 AS INT) as age,\n        p.SEX_C_NAME,\n        p.ETHNIC_GROUP_C_NAME,\n        p.LANGUAGE_C_NAME,\n        p.CUR_PCP_PROV_ID\n    FROM PATIENT p\n)\nSELECT \n    ps.*,\n    -- Add race (concatenated if multiple)\n    GROUP_CONCAT(pr.PATIENT_RACE_C_NAME) as races,\n    -- Add address\n    pa.ADDRESS as street_address,\n    p.CITY || ', ' || p.STATE_C_NAME || ' ' || p.ZIP as city_state_zip\nFROM patient_summary ps\nJOIN PATIENT p ON ps.PAT_ID = p.PAT_ID\nLEFT JOIN PATIENT_RACE pr ON ps.PAT_ID = pr.PAT_ID\nLEFT JOIN PAT_ADDRESS pa ON ps.PAT_ID = pa.PAT_ID AND pa.LINE = 1\nGROUP BY ps.PAT_ID;",
     "description": "Create a complete patient demographic summary",
     "chapterId": "02-01-patient-identity-and-demographics",
     "index": 16
@@ -855,14 +855,14 @@
   },
   {
     "id": "02-04-orders-and-results-6",
-    "originalQuery": "SELECT \n    om.ORDER_MED_ID,\n    om.PAT_ENC_CSN_ID,\n    om.MEDICATION_ID,\n    cm.GENERIC_NAME_,\n    om.ORDER_STATUS_C_NAME,\n    om.ORDERING_MODE_C_NAME\nFROM ORDER_MED om\nJOIN CLARITY_MEDICATION cm ON om.MEDICATION_ID = cm.MEDICATION_ID\nORDER BY om.ORDERING_DATE DESC;",
+    "originalQuery": "SELECT \n    om.ORDER_MED_ID,\n    om.PAT_ENC_CSN_ID,\n    om.MEDICATION_ID,\n    cm.GENERIC_NAME,\n    om.ORDER_STATUS_C_NAME,\n    om.ORDERING_MODE_C_NAME\nFROM ORDER_MED om\nJOIN CLARITY_MEDICATION cm ON om.MEDICATION_ID = cm.MEDICATION_ID\nORDER BY om.ORDERING_DATE DESC;",
     "description": "Explore medication order structure",
     "chapterId": "02-04-orders-and-results",
     "index": 6
   },
   {
     "id": "02-04-orders-and-results-7",
-    "originalQuery": "SELECT \n    MEDICATION_ID,\n    GENERIC_NAME_,\n    -- Count how many times each medication was ordered\n    (SELECT COUNT(*) FROM ORDER_MED om WHERE om.MEDICATION_ID = cm.MEDICATION_ID) as times_ordered\nFROM CLARITY_MEDICATION cm\nWHERE MEDICATION_ID IN (SELECT DISTINCT MEDICATION_ID FROM ORDER_MED)\nORDER BY times_ordered DESC;",
+    "originalQuery": "SELECT \n    MEDICATION_ID,\n    GENERIC_NAME,\n    -- Count how many times each medication was ordered\n    (SELECT COUNT(*) FROM ORDER_MED om WHERE om.MEDICATION_ID = cm.MEDICATION_ID) as times_ordered\nFROM CLARITY_MEDICATION cm\nWHERE MEDICATION_ID IN (SELECT DISTINCT MEDICATION_ID FROM ORDER_MED)\nORDER BY times_ordered DESC;",
     "description": "Explore the medication formulary",
     "chapterId": "02-04-orders-and-results",
     "index": 7
@@ -918,7 +918,7 @@
   },
   {
     "id": "02-05-medications-allergies-and-immunizations-1",
-    "originalQuery": "SELECT \n    om.ORDER_MED_ID,\n    cm.GENERIC_NAME_,\n    om.ORDERING_DATE,\n    om.ORDER_END_TIME,\n    om.DISCON_TIME,\n    -- Calculate if discontinued early\n    CASE \n        WHEN om.DISCON_TIME IS NOT NULL \n         AND om.DISCON_TIME < om.ORDER_END_TIME\n        THEN 'Discontinued Early'\n        WHEN om.DISCON_TIME IS NOT NULL\n        THEN 'Completed as Ordered'\n        ELSE 'Active/Unknown'\n    END as medication_status\nFROM ORDER_MED om\nJOIN CLARITY_MEDICATION cm ON om.MEDICATION_ID = cm.MEDICATION_ID\nORDER BY om.ORDERING_DATE;",
+    "originalQuery": "SELECT \n    om.ORDER_MED_ID,\n    cm.GENERIC_NAME,\n    om.ORDERING_DATE,\n    om.ORDER_END_TIME,\n    om.DISCON_TIME,\n    -- Calculate if discontinued early\n    CASE \n        WHEN om.DISCON_TIME IS NOT NULL \n         AND om.DISCON_TIME < om.ORDER_END_TIME\n        THEN 'Discontinued Early'\n        WHEN om.DISCON_TIME IS NOT NULL\n        THEN 'Completed as Ordered'\n        ELSE 'Active/Unknown'\n    END as medication_status\nFROM ORDER_MED om\nJOIN CLARITY_MEDICATION cm ON om.MEDICATION_ID = cm.MEDICATION_ID\nORDER BY om.ORDERING_DATE;",
     "description": "Analyze medication lifecycle with discontinuation",
     "chapterId": "02-05-medications-allergies-and-immunizations",
     "index": 1
@@ -932,14 +932,14 @@
   },
   {
     "id": "02-05-medications-allergies-and-immunizations-3",
-    "originalQuery": "-- Patient-to-allergy linking\nSELECT \n    pa.PAT_ID,\n    pa.LINE,\n    pa.ALLERGY_RECORD_ID_,\n    a.ALLERGEN_ID_ALLERGEN_NAME,\n    a.SEVERITY_C_NAME,\n    a.ALRGY_STATUS_C_NAME\nFROM PAT_ALLERGIES pa\nJOIN ALLERGY a ON a.ALLERGY_ID = pa.ALLERGY_RECORD_ID_\nWHERE pa.PAT_ID = 'Z7004242'\nORDER BY pa.LINE;",
+    "originalQuery": "-- Patient-to-allergy linking\nSELECT \n    pa.PAT_ID,\n    pa.LINE,\n    pa.ALLERGY_RECORD_ID,\n    a.ALLERGEN_ID_ALLERGEN_NAME,\n    a.SEVERITY_C_NAME,\n    a.ALRGY_STATUS_C_NAME\nFROM PAT_ALLERGIES pa\nJOIN ALLERGY a ON a.ALLERGY_ID = pa.ALLERGY_RECORD_ID\nWHERE pa.PAT_ID = 'Z7004242'\nORDER BY pa.LINE;",
     "description": "Explore the allergy data model",
     "chapterId": "02-05-medications-allergies-and-immunizations",
     "index": 3
   },
   {
     "id": "02-05-medications-allergies-and-immunizations-4",
-    "originalQuery": "SELECT \n    a.ALLERGEN_ID_ALLERGEN_NAME as allergen,\n    a.SEVERITY_C_NAME as severity,\n    ar.LINE,\n    ar.REACTION_C_NAME_\nFROM ALLERGY a\nJOIN ALLERGY_REACTIONS ar ON a.ALLERGY_ID = ar.ALLERGY_ID\nWHERE a.ALLERGY_ID IN (\n    SELECT ALLERGY_RECORD_ID_ \n    FROM PAT_ALLERGIES \n    WHERE PAT_ID = 'Z7004242'\n)\nORDER BY a.ALLERGY_ID, ar.LINE;",
+    "originalQuery": "SELECT \n    a.ALLERGEN_ID_ALLERGEN_NAME as allergen,\n    a.SEVERITY_C_NAME as severity,\n    ar.LINE,\n    ar.REACTION_C_NAME\nFROM ALLERGY a\nJOIN ALLERGY_REACTIONS ar ON a.ALLERGY_ID = ar.ALLERGY_ID\nWHERE a.ALLERGY_ID IN (\n    SELECT ALLERGY_RECORD_ID \n    FROM PAT_ALLERGIES \n    WHERE PAT_ID = 'Z7004242'\n)\nORDER BY a.ALLERGY_ID, ar.LINE;",
     "description": "View allergy reactions detail",
     "chapterId": "02-05-medications-allergies-and-immunizations",
     "index": 4
@@ -960,7 +960,7 @@
   },
   {
     "id": "02-05-medications-allergies-and-immunizations-7",
-    "originalQuery": "SELECT \n    pi.PAT_ID,\n    pi.LINE,\n    i.IMMUNZATN_ID_NAME,\n    i.IMMUNE_DATE,\n    i.DOSE,\n    i.ROUTE_C_NAME,\n    i.IMMNZTN_STATUS_C_NAME\nFROM PAT_IMMUNIZATIONS pi\nJOIN IMMUNE i ON pi.IMMUNE_ID_ = i.IMMUNE_ID\nWHERE pi.PAT_ID = 'Z7004242'\nORDER BY i.IMMUNE_DATE DESC;",
+    "originalQuery": "SELECT \n    pi.PAT_ID,\n    pi.LINE,\n    i.IMMUNZATN_ID_NAME,\n    i.IMMUNE_DATE,\n    i.DOSE,\n    i.ROUTE_C_NAME,\n    i.IMMNZTN_STATUS_C_NAME\nFROM PAT_IMMUNIZATIONS pi\nJOIN IMMUNE i ON pi.IMMUNE_ID = i.IMMUNE_ID\nWHERE pi.PAT_ID = 'Z7004242'\nORDER BY i.IMMUNE_DATE DESC;",
     "description": "Explore immunization records",
     "chapterId": "02-05-medications-allergies-and-immunizations",
     "index": 7
@@ -981,7 +981,7 @@
   },
   {
     "id": "02-05-medications-allergies-and-immunizations-10",
-    "originalQuery": "-- Find patients with medication orders who have allergies\n-- (In production, you'd check for specific drug-allergy interactions)\nWITH patient_allergies AS (\n    SELECT DISTINCT \n        pa.PAT_ID,\n        COUNT(DISTINCT a.ALLERGEN_ID) as allergy_count\n    FROM PAT_ALLERGIES pa\n    JOIN ALLERGY a ON pa.ALLERGY_RECORD_ID_ = a.ALLERGY_ID\n    WHERE a.ALRGY_STATUS_C_NAME = 'Active'\n    GROUP BY pa.PAT_ID\n),\npatient_meds AS (\n    SELECT DISTINCT\n        om.PAT_ID,\n        COUNT(DISTINCT om.MEDICATION_ID) as med_count\n    FROM ORDER_MED om\n    WHERE om.ORDER_STATUS_C_NAME = 'Sent'\n    GROUP BY om.PAT_ID\n)\nSELECT \n    pm.PAT_ID,\n    pm.med_count as active_medications,\n    COALESCE(pa.allergy_count, 0) as active_allergies\nFROM patient_meds pm\nLEFT JOIN patient_allergies pa ON pm.PAT_ID = pa.PAT_ID;",
+    "originalQuery": "-- Find patients with medication orders who have allergies\n-- (In production, you'd check for specific drug-allergy interactions)\nWITH patient_allergies AS (\n    SELECT DISTINCT \n        pa.PAT_ID,\n        COUNT(DISTINCT a.ALLERGEN_ID) as allergy_count\n    FROM PAT_ALLERGIES pa\n    JOIN ALLERGY a ON pa.ALLERGY_RECORD_ID = a.ALLERGY_ID\n    WHERE a.ALRGY_STATUS_C_NAME = 'Active'\n    GROUP BY pa.PAT_ID\n),\npatient_meds AS (\n    SELECT DISTINCT\n        om.PAT_ID,\n        COUNT(DISTINCT om.MEDICATION_ID) as med_count\n    FROM ORDER_MED om\n    WHERE om.ORDER_STATUS_C_NAME = 'Sent'\n    GROUP BY om.PAT_ID\n)\nSELECT \n    pm.PAT_ID,\n    pm.med_count as active_medications,\n    COALESCE(pa.allergy_count, 0) as active_allergies\nFROM patient_meds pm\nLEFT JOIN patient_allergies pa ON pm.PAT_ID = pa.PAT_ID;",
     "description": "Check for potential medication-allergy conflicts",
     "chapterId": "02-05-medications-allergies-and-immunizations",
     "index": 10
@@ -995,14 +995,14 @@
   },
   {
     "id": "02-05-medications-allergies-and-immunizations-12",
-    "originalQuery": "-- Combine medications and allergy updates in chronological order\nSELECT \n    'Medication Started' as event_type,\n    ORDERING_DATE as event_date,\n    GENERIC_NAME_ as description\nFROM ORDER_MED om\nJOIN CLARITY_MEDICATION cm ON om.MEDICATION_ID = cm.MEDICATION_ID\nWHERE om.PAT_ID = 'Z7004242'\n\nUNION ALL\n\nSELECT \n    'Allergy Noted' as event_type,\n    a.DATE_NOTED as event_date,\n    a.ALLERGEN_ID_ALLERGEN_NAME as description\nFROM ALLERGY a\nJOIN PAT_ALLERGIES pa ON a.ALLERGY_ID = pa.ALLERGY_RECORD_ID_\nWHERE pa.PAT_ID = 'Z7004242'\n\nORDER BY event_date DESC;",
+    "originalQuery": "-- Combine medications and allergy updates in chronological order\nSELECT \n    'Medication Started' as event_type,\n    ORDERING_DATE as event_date,\n    GENERIC_NAME as description\nFROM ORDER_MED om\nJOIN CLARITY_MEDICATION cm ON om.MEDICATION_ID = cm.MEDICATION_ID\nWHERE om.PAT_ID = 'Z7004242'\n\nUNION ALL\n\nSELECT \n    'Allergy Noted' as event_type,\n    a.DATE_NOTED as event_date,\n    a.ALLERGEN_ID_ALLERGEN_NAME as description\nFROM ALLERGY a\nJOIN PAT_ALLERGIES pa ON a.ALLERGY_ID = pa.ALLERGY_RECORD_ID\nWHERE pa.PAT_ID = 'Z7004242'\n\nORDER BY event_date DESC;",
     "description": "Create a patient safety timeline",
     "chapterId": "02-05-medications-allergies-and-immunizations",
     "index": 12
   },
   {
     "id": "02-05-medications-allergies-and-immunizations-13",
-    "originalQuery": "WITH safety_summary AS (\n    SELECT \n        p.PAT_ID,\n        p.PAT_NAME,\n        -- Count active medications\n        (SELECT COUNT(*) FROM ORDER_MED om \n         WHERE om.PAT_ID = p.PAT_ID \n           AND om.ORDER_STATUS_C_NAME = 'Sent'\n           AND om.DISCON_TIME IS NULL) as active_meds,\n        -- Count active allergies\n        (SELECT COUNT(DISTINCT pa.ALLERGY_RECORD_ID_) \n         FROM PAT_ALLERGIES pa\n         JOIN ALLERGY a ON pa.ALLERGY_RECORD_ID_ = a.ALLERGY_ID\n         WHERE pa.PAT_ID = p.PAT_ID\n           AND a.ALRGY_STATUS_C_NAME = 'Active') as active_allergies,\n        -- Count immunizations\n        (SELECT COUNT(*) FROM PAT_IMMUNIZATIONS pi\n         WHERE pi.PAT_ID = p.PAT_ID) as total_immunizations\n    FROM PATIENT p\n)\nSELECT * FROM safety_summary;",
+    "originalQuery": "WITH safety_summary AS (\n    SELECT \n        p.PAT_ID,\n        p.PAT_NAME,\n        -- Count active medications\n        (SELECT COUNT(*) FROM ORDER_MED om \n         WHERE om.PAT_ID = p.PAT_ID \n           AND om.ORDER_STATUS_C_NAME = 'Sent'\n           AND om.DISCON_TIME IS NULL) as active_meds,\n        -- Count active allergies\n        (SELECT COUNT(DISTINCT pa.ALLERGY_RECORD_ID) \n         FROM PAT_ALLERGIES pa\n         JOIN ALLERGY a ON pa.ALLERGY_RECORD_ID = a.ALLERGY_ID\n         WHERE pa.PAT_ID = p.PAT_ID\n           AND a.ALRGY_STATUS_C_NAME = 'Active') as active_allergies,\n        -- Count immunizations\n        (SELECT COUNT(*) FROM PAT_IMMUNIZATIONS pi\n         WHERE pi.PAT_ID = p.PAT_ID) as total_immunizations\n    FROM PATIENT p\n)\nSELECT * FROM safety_summary;",
     "description": "Create a comprehensive patient safety summary",
     "chapterId": "02-05-medications-allergies-and-immunizations",
     "index": 13
@@ -1072,7 +1072,7 @@
   },
   {
     "id": "03-01-financial-accounts-and-coverage-9",
-    "originalQuery": "SELECT \n    BENEFIT_PLAN_ID,\n    BENEFIT_PLAN_NAME_\nFROM CLARITY_EPP\nLIMIT 5;",
+    "originalQuery": "SELECT \n    BENEFIT_PLAN_ID,\n    BENEFIT_PLAN_NAME\nFROM CLARITY_EPP\nLIMIT 5;",
     "description": "Explore benefit plan information",
     "chapterId": "03-01-financial-accounts-and-coverage",
     "index": 9
@@ -1100,7 +1100,7 @@
   },
   {
     "id": "03-02-charges-transactions-and-claims-1",
-    "originalQuery": "SELECT \n    t.TX_ID,\n    t.SERVICE_DATE,\n    t.TX_TYPE_C_NAME,\n    t.AMOUNT,\n    t.PROC_ID,\n    e.PROC_NAME_,\n    t.MODIFIER_ONE\nFROM ARPB_TRANSACTIONS t\nLEFT JOIN CLARITY_EAP e ON t.PROC_ID = e.PROC_ID\nWHERE t.TX_TYPE_C_NAME = 'Charge'\nORDER BY t.SERVICE_DATE DESC\nLIMIT 5;",
+    "originalQuery": "SELECT \n    t.TX_ID,\n    t.SERVICE_DATE,\n    t.TX_TYPE_C_NAME,\n    t.AMOUNT,\n    t.PROC_ID,\n    e.PROC_NAME,\n    t.MODIFIER_ONE\nFROM ARPB_TRANSACTIONS t\nLEFT JOIN CLARITY_EAP e ON t.PROC_ID = e.PROC_ID\nWHERE t.TX_TYPE_C_NAME = 'Charge'\nORDER BY t.SERVICE_DATE DESC\nLIMIT 5;",
     "description": "Examine professional billing charges",
     "chapterId": "03-02-charges-transactions-and-claims",
     "index": 1
@@ -1135,14 +1135,14 @@
   },
   {
     "id": "03-02-charges-transactions-and-claims-6",
-    "originalQuery": "SELECT \n    t.TX_ID,\n    t.SERVICE_DATE,\n    t.AMOUNT,\n    e.PROC_NAME_,\n    pe.DEPARTMENT_ID,\n    dx.DX_NAME as primary_diagnosis\nFROM ARPB_TRANSACTIONS t\nJOIN CLARITY_EAP e ON t.PROC_ID = e.PROC_ID\nJOIN PAT_ENC pe ON pe.PAT_ENC_CSN_ID = pe.PAT_ENC_CSN_ID\nLEFT JOIN PAT_ENC_DX ped ON pe.PAT_ENC_CSN_ID = ped.PAT_ENC_CSN_ID \n    AND ped.PRIMARY_DX_YN = 'Y'\nLEFT JOIN CLARITY_EDG dx ON ped.DX_ID = dx.DX_ID\nWHERE t.TX_TYPE_C_NAME = 'Charge'\nLIMIT 5;",
+    "originalQuery": "SELECT \n    t.TX_ID,\n    t.SERVICE_DATE,\n    t.AMOUNT,\n    e.PROC_NAME,\n    pe.DEPARTMENT_ID,\n    dx.DX_NAME as primary_diagnosis\nFROM ARPB_TRANSACTIONS t\nJOIN CLARITY_EAP e ON t.PROC_ID = e.PROC_ID\nJOIN PAT_ENC pe ON pe.PAT_ENC_CSN_ID = pe.PAT_ENC_CSN_ID\nLEFT JOIN PAT_ENC_DX ped ON pe.PAT_ENC_CSN_ID = ped.PAT_ENC_CSN_ID \n    AND ped.PRIMARY_DX_YN = 'Y'\nLEFT JOIN CLARITY_EDG dx ON ped.DX_ID = dx.DX_ID\nWHERE t.TX_TYPE_C_NAME = 'Charge'\nLIMIT 5;",
     "description": "Connect charges to encounters and diagnoses",
     "chapterId": "03-02-charges-transactions-and-claims",
     "index": 6
   },
   {
     "id": "03-02-charges-transactions-and-claims-7",
-    "originalQuery": "SELECT \n    t.DFLT_UB_REV_CD_ID,\n    t.DFLT_UB_REV_CD_ID_REVENUE_CODE_NAME,\n    r.REVENUE_CODE_NAME_,\n    COUNT(*) as usage_count,\n    SUM(t.TX_AMOUNT) as total_charges\nFROM HSP_TRANSACTIONS t\nLEFT JOIN CL_UB_REV_CODE r ON t.DFLT_UB_REV_CD_ID = r.UB_REV_CODE_ID\nWHERE t.TX_TYPE_HA_C_NAME = 'Charge'\nGROUP BY t.DFLT_UB_REV_CD_ID\nORDER BY usage_count DESC;",
+    "originalQuery": "SELECT \n    t.DFLT_UB_REV_CD_ID,\n    t.DFLT_UB_REV_CD_ID_REVENUE_CODE_NAME,\n    r.REVENUE_CODE_NAME,\n    COUNT(*) as usage_count,\n    SUM(t.TX_AMOUNT) as total_charges\nFROM HSP_TRANSACTIONS t\nLEFT JOIN CL_UB_REV_CODE r ON t.DFLT_UB_REV_CD_ID = r.UB_REV_CODE_ID\nWHERE t.TX_TYPE_HA_C_NAME = 'Charge'\nGROUP BY t.DFLT_UB_REV_CD_ID\nORDER BY usage_count DESC;",
     "description": "Explore revenue code usage",
     "chapterId": "03-02-charges-transactions-and-claims",
     "index": 7
@@ -1275,14 +1275,14 @@
   },
   {
     "id": "04-01-specialized-and-patient-generated-data-2",
-    "originalQuery": "SELECT \n    m.MESSAGE_ID,\n    m.CREATED_TIME,\n    m.TOFROM_PAT_C_NAME as direction,\n    -- Check if message has RTF content\n    CASE \n        WHEN rt.MESSAGE_ID IS NOT NULL THEN 'Has RTF content'\n        ELSE 'No RTF content'\n    END as content_status,\n    -- Sample first few characters (being mindful of privacy)\n    SUBSTR(rt.RTF_TXT_, 1, 50) || '...' as content_preview\nFROM MYC_MESG m\nLEFT JOIN MYC_MESG_RTF_TEXT rt ON m.MESSAGE_ID = rt.MESSAGE_ID AND rt.LINE = 1\nWHERE m.TOFROM_PAT_C_NAME = 'From Patient'\nLIMIT 5;",
+    "originalQuery": "SELECT \n    m.MESSAGE_ID,\n    m.CREATED_TIME,\n    m.TOFROM_PAT_C_NAME as direction,\n    -- Check if message has RTF content\n    CASE \n        WHEN rt.MESSAGE_ID IS NOT NULL THEN 'Has RTF content'\n        ELSE 'No RTF content'\n    END as content_status,\n    -- Sample first few characters (being mindful of privacy)\n    SUBSTR(rt.RTF_TXT, 1, 50) || '...' as content_preview\nFROM MYC_MESG m\nLEFT JOIN MYC_MESG_RTF_TEXT rt ON m.MESSAGE_ID = rt.MESSAGE_ID AND rt.LINE = 1\nWHERE m.TOFROM_PAT_C_NAME = 'From Patient'\nLIMIT 5;",
     "description": "Examine message content storage",
     "chapterId": "04-01-specialized-and-patient-generated-data",
     "index": 2
   },
   {
     "id": "04-01-specialized-and-patient-generated-data-3",
-    "originalQuery": "SELECT \n    q.PAT_ENC_CSN_ID,\n    q.CONTACT_DATE,\n    q.MYC_APPT_QUESR_ID_FORM_NAME as questionnaire_name,\n    q.PAT_APPT_QNR_STAT_C_NAME_ as completion_status,\n    -- Link to actual appointment\n    e.DEPARTMENT_ID,\n    e.VISIT_PROV_ID\nFROM MYC_APPT_QNR_DATA q\nJOIN PAT_ENC e ON q.PAT_ENC_CSN_ID = e.PAT_ENC_CSN_ID\nWHERE q.MYC_APPT_QUESR_ID_FORM_NAME IS NOT NULL\nORDER BY q.CONTACT_DATE DESC\nLIMIT 5;",
+    "originalQuery": "SELECT \n    q.PAT_ENC_CSN_ID,\n    q.CONTACT_DATE,\n    q.MYC_APPT_QUESR_ID_FORM_NAME as questionnaire_name,\n    q.PAT_APPT_QNR_STAT_C_NAME as completion_status,\n    -- Link to actual appointment\n    e.DEPARTMENT_ID,\n    e.VISIT_PROV_ID\nFROM MYC_APPT_QNR_DATA q\nJOIN PAT_ENC e ON q.PAT_ENC_CSN_ID = e.PAT_ENC_CSN_ID\nWHERE q.MYC_APPT_QUESR_ID_FORM_NAME IS NOT NULL\nORDER BY q.CONTACT_DATE DESC\nLIMIT 5;",
     "description": "Track questionnaire assignments to appointments",
     "chapterId": "04-01-specialized-and-patient-generated-data",
     "index": 3
@@ -1373,7 +1373,7 @@
   },
   {
     "id": "04-02-data-integrity-and-validation-6",
-    "originalQuery": "-- Since we have one patient, we'll simulate duplicates to demonstrate the technique\nWITH real_patient AS (\n    SELECT * FROM PATIENT WHERE PAT_ID = 'Z7004242'\n),\nsimulated_patients AS (\n    -- Original patient\n    SELECT PAT_ID, PAT_MRN_ID, PAT_NAME, BIRTH_DATE, SEX_C_NAME_ \n    FROM real_patient\n    \n    UNION ALL\n    -- Simulated typo in last name\n    SELECT 'DUP001', PAT_MRN_ID || '1', \n           REPLACE(PAT_NAME, 'MANDEL', 'MANDAL'), BIRTH_DATE, SEX_C_NAME_\n    FROM real_patient\n    \n    UNION ALL\n    -- Simulated transposed birth date (MM/DD swapped)\n    SELECT 'DUP002', PAT_MRN_ID || '2', PAT_NAME,\n           REPLACE(BIRTH_DATE, '10/26', '26/10'), SEX_C_NAME_\n    FROM real_patient\n),\nduplicate_check AS (\n    SELECT \n        p1.PAT_ID as id1,\n        p2.PAT_ID as id2,\n        p1.PAT_NAME as name1,\n        p2.PAT_NAME as name2,\n        -- Name similarity checks\n        CASE WHEN UPPER(p1.PAT_NAME) = UPPER(p2.PAT_NAME) THEN 100\n             WHEN SUBSTR(UPPER(p1.PAT_NAME), 1, 10) = SUBSTR(UPPER(p2.PAT_NAME), 1, 10) THEN 80\n             WHEN SUBSTR(UPPER(p1.PAT_NAME), 1, 5) = SUBSTR(UPPER(p2.PAT_NAME), 1, 5) THEN 60\n             ELSE 0 END as name_match_score,\n        -- DOB checks\n        CASE WHEN p1.BIRTH_DATE = p2.BIRTH_DATE THEN 100\n             WHEN SUBSTR(p1.BIRTH_DATE, 7, 4) = SUBSTR(p2.BIRTH_DATE, 7, 4) THEN 50\n             ELSE 0 END as dob_match_score\n    FROM simulated_patients p1\n    JOIN simulated_patients p2 ON p1.PAT_ID < p2.PAT_ID\n)\nSELECT \n    id1, id2,\n    name1, name2,\n    name_match_score,\n    dob_match_score,\n    (name_match_score + dob_match_score) / 2 as overall_match_score,\n    CASE \n        WHEN (name_match_score + dob_match_score) / 2 >= 90 THEN 'High probability duplicate'\n        WHEN (name_match_score + dob_match_score) / 2 >= 70 THEN 'Possible duplicate'\n        ELSE 'Unlikely duplicate'\n    END as duplicate_assessment\nFROM duplicate_check\nORDER BY overall_match_score DESC;",
+    "originalQuery": "-- Since we have one patient, we'll simulate duplicates to demonstrate the technique\nWITH real_patient AS (\n    SELECT * FROM PATIENT WHERE PAT_ID = 'Z7004242'\n),\nsimulated_patients AS (\n    -- Original patient\n    SELECT PAT_ID, PAT_MRN_ID, PAT_NAME, BIRTH_DATE, SEX_C_NAME \n    FROM real_patient\n    \n    UNION ALL\n    -- Simulated typo in last name\n    SELECT 'DUP001', PAT_MRN_ID || '1', \n           REPLACE(PAT_NAME, 'MANDEL', 'MANDAL'), BIRTH_DATE, SEX_C_NAME\n    FROM real_patient\n    \n    UNION ALL\n    -- Simulated transposed birth date (MM/DD swapped)\n    SELECT 'DUP002', PAT_MRN_ID || '2', PAT_NAME,\n           REPLACE(BIRTH_DATE, '10/26', '26/10'), SEX_C_NAME\n    FROM real_patient\n),\nduplicate_check AS (\n    SELECT \n        p1.PAT_ID as id1,\n        p2.PAT_ID as id2,\n        p1.PAT_NAME as name1,\n        p2.PAT_NAME as name2,\n        -- Name similarity checks\n        CASE WHEN UPPER(p1.PAT_NAME) = UPPER(p2.PAT_NAME) THEN 100\n             WHEN SUBSTR(UPPER(p1.PAT_NAME), 1, 10) = SUBSTR(UPPER(p2.PAT_NAME), 1, 10) THEN 80\n             WHEN SUBSTR(UPPER(p1.PAT_NAME), 1, 5) = SUBSTR(UPPER(p2.PAT_NAME), 1, 5) THEN 60\n             ELSE 0 END as name_match_score,\n        -- DOB checks\n        CASE WHEN p1.BIRTH_DATE = p2.BIRTH_DATE THEN 100\n             WHEN SUBSTR(p1.BIRTH_DATE, 7, 4) = SUBSTR(p2.BIRTH_DATE, 7, 4) THEN 50\n             ELSE 0 END as dob_match_score\n    FROM simulated_patients p1\n    JOIN simulated_patients p2 ON p1.PAT_ID < p2.PAT_ID\n)\nSELECT \n    id1, id2,\n    name1, name2,\n    name_match_score,\n    dob_match_score,\n    (name_match_score + dob_match_score) / 2 as overall_match_score,\n    CASE \n        WHEN (name_match_score + dob_match_score) / 2 >= 90 THEN 'High probability duplicate'\n        WHEN (name_match_score + dob_match_score) / 2 >= 70 THEN 'Possible duplicate'\n        ELSE 'Unlikely duplicate'\n    END as duplicate_assessment\nFROM duplicate_check\nORDER BY overall_match_score DESC;",
     "description": "Simulate duplicate patient detection",
     "chapterId": "04-02-data-integrity-and-validation",
     "index": 6
@@ -1401,7 +1401,7 @@
   },
   {
     "id": "04-03-cross-domain-analysis-1",
-    "originalQuery": "-- Select a specific charge and show all related transactions\nWITH charge_detail AS (\n    -- The original charge\n    SELECT \n        t.TX_ID,\n        t.POST_DATE,\n        t.SERVICE_DATE,\n        'CHARGE' as transaction_category,\n        t.TX_TYPE_C_NAME as transaction_type,\n        t.AMOUNT,\n        0 as running_balance,\n        t.PROC_ID,\n        p.PROC_NAME_\n    FROM ARPB_TRANSACTIONS t\n    LEFT JOIN CLARITY_EAP p ON t.PROC_ID = p.PROC_ID\n    WHERE t.TX_ID = 129124216  -- Using a charge we know has activity\n),\npayment_detail AS (\n    -- All payments and adjustments applied to this charge\n    SELECT \n        p.TX_ID,\n        p.POST_DATE,\n        p.SERVICE_DATE,\n        CASE \n            WHEN p.TX_TYPE_C_NAME = 'Payment' THEN 'PAYMENT'\n            ELSE 'ADJUSTMENT'\n        END as transaction_category,\n        p.TX_TYPE_C_NAME as transaction_type,\n        m.MTCH_TX_HX_AMT as AMOUNT,\n        0 as running_balance,\n        p.PROC_ID,\n        '' as PROC_NAME_\n    FROM ARPB_TX_MATCH_HX m\n    JOIN ARPB_TRANSACTIONS p ON m.TX_ID = p.TX_ID\n    WHERE m.MTCH_TX_HX_ID = 129124216\n      AND m.MTCH_TX_HX_UN_DT IS NULL  -- Active matches only\n)\n-- Combine and calculate running balance\nSELECT \n    POST_DATE,\n    transaction_category,\n    transaction_type,\n    AMOUNT,\n    SUM(AMOUNT) OVER (ORDER BY POST_DATE, transaction_category) as running_balance,\n    PROC_NAME_ as procedure_name\nFROM (\n    SELECT * FROM charge_detail\n    UNION ALL\n    SELECT * FROM payment_detail\n)\nORDER BY POST_DATE, \n         CASE transaction_category \n            WHEN 'CHARGE' THEN 1 \n            WHEN 'ADJUSTMENT' THEN 2 \n            WHEN 'PAYMENT' THEN 3 \n         END;",
+    "originalQuery": "-- Select a specific charge and show all related transactions\nWITH charge_detail AS (\n    -- The original charge\n    SELECT \n        t.TX_ID,\n        t.POST_DATE,\n        t.SERVICE_DATE,\n        'CHARGE' as transaction_category,\n        t.TX_TYPE_C_NAME as transaction_type,\n        t.AMOUNT,\n        0 as running_balance,\n        t.PROC_ID,\n        p.PROC_NAME\n    FROM ARPB_TRANSACTIONS t\n    LEFT JOIN CLARITY_EAP p ON t.PROC_ID = p.PROC_ID\n    WHERE t.TX_ID = 129124216  -- Using a charge we know has activity\n),\npayment_detail AS (\n    -- All payments and adjustments applied to this charge\n    SELECT \n        p.TX_ID,\n        p.POST_DATE,\n        p.SERVICE_DATE,\n        CASE \n            WHEN p.TX_TYPE_C_NAME = 'Payment' THEN 'PAYMENT'\n            ELSE 'ADJUSTMENT'\n        END as transaction_category,\n        p.TX_TYPE_C_NAME as transaction_type,\n        m.MTCH_TX_HX_AMT as AMOUNT,\n        0 as running_balance,\n        p.PROC_ID,\n        '' as PROC_NAME\n    FROM ARPB_TX_MATCH_HX m\n    JOIN ARPB_TRANSACTIONS p ON m.TX_ID = p.TX_ID\n    WHERE m.MTCH_TX_HX_ID = 129124216\n      AND m.MTCH_TX_HX_UN_DT IS NULL  -- Active matches only\n)\n-- Combine and calculate running balance\nSELECT \n    POST_DATE,\n    transaction_category,\n    transaction_type,\n    AMOUNT,\n    SUM(AMOUNT) OVER (ORDER BY POST_DATE, transaction_category) as running_balance,\n    PROC_NAME as procedure_name\nFROM (\n    SELECT * FROM charge_detail\n    UNION ALL\n    SELECT * FROM payment_detail\n)\nORDER BY POST_DATE, \n         CASE transaction_category \n            WHEN 'CHARGE' THEN 1 \n            WHEN 'ADJUSTMENT' THEN 2 \n            WHEN 'PAYMENT' THEN 3 \n         END;",
     "description": "Build complete transaction ledger for a charge",
     "chapterId": "04-03-cross-domain-analysis",
     "index": 1
@@ -1422,7 +1422,7 @@
   },
   {
     "id": "04-03-cross-domain-analysis-4",
-    "originalQuery": "-- Demonstrate quality gap analysis pattern\nWITH chronic_patients AS (\n    -- Find all patients with active chronic conditions\n    SELECT DISTINCT\n        ppl.PAT_ID,\n        pl.PROBLEM_LIST_ID,\n        pl.DESCRIPTION,\n        pl.DATE_OF_ENTRY,\n        pl.PROBLEM_STATUS_C_NAME\n    FROM PROBLEM_LIST pl\n    JOIN PAT_PROBLEM_LIST ppl ON pl.PROBLEM_LIST_ID = ppl.PROBLEM_LIST_ID_\n    WHERE pl.PROBLEM_STATUS_C_NAME = 'Active'\n),\nrecent_encounters AS (\n    -- Find patients' most recent encounters\n    SELECT \n        e.PAT_ID,\n        MAX(e.CONTACT_DATE) as last_visit_date,\n        COUNT(*) as visit_count_last_year\n    FROM PAT_ENC e\n    WHERE julianday('now') - julianday(e.CONTACT_DATE) <= 365\n    GROUP BY e.PAT_ID\n),\nquality_analysis AS (\n    SELECT \n        cp.PAT_ID,\n        p.PAT_NAME,\n        cp.DESCRIPTION as chronic_condition,\n        cp.DATE_OF_ENTRY as condition_added,\n        re.last_visit_date,\n        re.visit_count_last_year,\n        CASE \n            WHEN re.last_visit_date IS NULL THEN 'No visits recorded'\n            WHEN julianday('now') - julianday(re.last_visit_date) > 365 THEN 'No recent visits (>1 year)'\n            WHEN re.visit_count_last_year < 2 THEN 'Infrequent visits (<2/year)'\n            ELSE 'Regular follow-up'\n        END as followup_status\n    FROM chronic_patients cp\n    JOIN PATIENT p ON cp.PAT_ID = p.PAT_ID\n    LEFT JOIN recent_encounters re ON cp.PAT_ID = re.PAT_ID\n)\nSELECT \n    followup_status,\n    COUNT(*) as patient_count,\n    ROUND(100.0 * COUNT(*) / SUM(COUNT(*)) OVER (), 1) as percentage\nFROM quality_analysis\nGROUP BY followup_status\nORDER BY patient_count DESC;",
+    "originalQuery": "-- Demonstrate quality gap analysis pattern\nWITH chronic_patients AS (\n    -- Find all patients with active chronic conditions\n    SELECT DISTINCT\n        ppl.PAT_ID,\n        pl.PROBLEM_LIST_ID,\n        pl.DESCRIPTION,\n        pl.DATE_OF_ENTRY,\n        pl.PROBLEM_STATUS_C_NAME\n    FROM PROBLEM_LIST pl\n    JOIN PAT_PROBLEM_LIST ppl ON pl.PROBLEM_LIST_ID = ppl.PROBLEM_LIST_ID\n    WHERE pl.PROBLEM_STATUS_C_NAME = 'Active'\n),\nrecent_encounters AS (\n    -- Find patients' most recent encounters\n    SELECT \n        e.PAT_ID,\n        MAX(e.CONTACT_DATE) as last_visit_date,\n        COUNT(*) as visit_count_last_year\n    FROM PAT_ENC e\n    WHERE julianday('now') - julianday(e.CONTACT_DATE) <= 365\n    GROUP BY e.PAT_ID\n),\nquality_analysis AS (\n    SELECT \n        cp.PAT_ID,\n        p.PAT_NAME,\n        cp.DESCRIPTION as chronic_condition,\n        cp.DATE_OF_ENTRY as condition_added,\n        re.last_visit_date,\n        re.visit_count_last_year,\n        CASE \n            WHEN re.last_visit_date IS NULL THEN 'No visits recorded'\n            WHEN julianday('now') - julianday(re.last_visit_date) > 365 THEN 'No recent visits (>1 year)'\n            WHEN re.visit_count_last_year < 2 THEN 'Infrequent visits (<2/year)'\n            ELSE 'Regular follow-up'\n        END as followup_status\n    FROM chronic_patients cp\n    JOIN PATIENT p ON cp.PAT_ID = p.PAT_ID\n    LEFT JOIN recent_encounters re ON cp.PAT_ID = re.PAT_ID\n)\nSELECT \n    followup_status,\n    COUNT(*) as patient_count,\n    ROUND(100.0 * COUNT(*) / SUM(COUNT(*)) OVER (), 1) as percentage\nFROM quality_analysis\nGROUP BY followup_status\nORDER BY patient_count DESC;",
     "description": "Identify hypertensive patients missing BP checks",
     "chapterId": "04-03-cross-domain-analysis",
     "index": 4

@@ -51,7 +51,7 @@ WITH charge_detail AS (
         t.AMOUNT,
         0 as running_balance,
         t.PROC_ID,
-        p.PROC_NAME_
+        p.PROC_NAME
     FROM ARPB_TRANSACTIONS t
     LEFT JOIN CLARITY_EAP p ON t.PROC_ID = p.PROC_ID
     WHERE t.TX_ID = 129124216  -- Using a charge we know has activity
@@ -70,7 +70,7 @@ payment_detail AS (
         m.MTCH_TX_HX_AMT as AMOUNT,
         0 as running_balance,
         p.PROC_ID,
-        '' as PROC_NAME_
+        '' as PROC_NAME
     FROM ARPB_TX_MATCH_HX m
     JOIN ARPB_TRANSACTIONS p ON m.TX_ID = p.TX_ID
     WHERE m.MTCH_TX_HX_ID = 129124216
@@ -83,7 +83,7 @@ SELECT
     transaction_type,
     AMOUNT,
     SUM(AMOUNT) OVER (ORDER BY POST_DATE, transaction_category) as running_balance,
-    PROC_NAME_ as procedure_name
+    PROC_NAME as procedure_name
 FROM (
     SELECT * FROM charge_detail
     UNION ALL
@@ -209,7 +209,7 @@ WITH chronic_patients AS (
         pl.DATE_OF_ENTRY,
         pl.PROBLEM_STATUS_C_NAME
     FROM PROBLEM_LIST pl
-    JOIN PAT_PROBLEM_LIST ppl ON pl.PROBLEM_LIST_ID = ppl.PROBLEM_LIST_ID_
+    JOIN PAT_PROBLEM_LIST ppl ON pl.PROBLEM_LIST_ID = ppl.PROBLEM_LIST_ID
     WHERE pl.PROBLEM_STATUS_C_NAME = 'Active'
 ),
 recent_encounters AS (

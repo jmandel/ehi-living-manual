@@ -13,7 +13,7 @@ SELECT
     PAT_MRN_ID,
     PAT_NAME,
     BIRTH_DATE,
-    SEX_C_NAME_
+    SEX_C_NAME
 FROM PATIENT;
 </example-query>
 
@@ -92,7 +92,7 @@ The system maintains:
 SELECT 
     p.PAT_NAME as primary_name,
     a.LINE,
-    a.ALIAS_ as alternative_name
+    a.ALIAS as alternative_name
 FROM PATIENT p
 LEFT JOIN PATIENT_ALIAS a ON p.PAT_ID = a.PAT_ID
 ORDER BY a.LINE;
@@ -107,7 +107,7 @@ Epic models race and ethnicity differently, reflecting federal reporting require
 SELECT 
     'Race' as data_type,
     pr.LINE,
-    pr.PATIENT_RACE_C_NAME_ as value
+    pr.PATIENT_RACE_C_NAME as value
 FROM PATIENT_RACE pr
 WHERE pr.PAT_ID = 'Z7004242'
 
@@ -164,7 +164,7 @@ SELECT
     p.STATE_C_NAME,
     p.ZIP,
     pa.LINE,
-    pa.ADDRESS_ as street_line
+    pa.ADDRESS as street_line
 FROM PATIENT p
 LEFT JOIN PAT_ADDRESS pa ON p.PAT_ID = pa.PAT_ID
 ORDER BY pa.LINE;
@@ -286,7 +286,7 @@ WITH patient_summary AS (
         CAST((julianday('now') - julianday(SUBSTR(p.BIRTH_DATE, 7, 4) || '-' || 
              PRINTF('%02d', CAST(SUBSTR(p.BIRTH_DATE, 1, INSTR(p.BIRTH_DATE, '/') - 1) AS INT)) || '-' ||
              PRINTF('%02d', CAST(SUBSTR(p.BIRTH_DATE, INSTR(p.BIRTH_DATE, '/') + 1, 2) AS INT)))) / 365.25 AS INT) as age,
-        p.SEX_C_NAME_,
+        p.SEX_C_NAME,
         p.ETHNIC_GROUP_C_NAME,
         p.LANGUAGE_C_NAME,
         p.CUR_PCP_PROV_ID
@@ -295,9 +295,9 @@ WITH patient_summary AS (
 SELECT 
     ps.*,
     -- Add race (concatenated if multiple)
-    GROUP_CONCAT(pr.PATIENT_RACE_C_NAME_) as races,
+    GROUP_CONCAT(pr.PATIENT_RACE_C_NAME) as races,
     -- Add address
-    pa.ADDRESS_ as street_address,
+    pa.ADDRESS as street_address,
     p.CITY || ', ' || p.STATE_C_NAME || ' ' || p.ZIP as city_state_zip
 FROM patient_summary ps
 JOIN PATIENT p ON ps.PAT_ID = p.PAT_ID

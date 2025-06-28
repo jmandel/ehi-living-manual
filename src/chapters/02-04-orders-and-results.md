@@ -153,7 +153,7 @@ SELECT
     om.ORDER_MED_ID,
     om.PAT_ENC_CSN_ID,
     om.MEDICATION_ID,
-    cm.GENERIC_NAME_,
+    cm.GENERIC_NAME,
     om.ORDER_STATUS_C_NAME,
     om.ORDERING_MODE_C_NAME
 FROM ORDER_MED om
@@ -173,7 +173,7 @@ Key differences from procedural orders:
 <example-query description="Explore the medication formulary">
 SELECT 
     MEDICATION_ID,
-    GENERIC_NAME_,
+    GENERIC_NAME,
     -- Count how many times each medication was ordered
     (SELECT COUNT(*) FROM ORDER_MED om WHERE om.MEDICATION_ID = cm.MEDICATION_ID) as times_ordered
 FROM CLARITY_MEDICATION cm

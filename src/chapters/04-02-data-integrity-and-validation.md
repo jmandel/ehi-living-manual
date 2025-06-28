@@ -224,19 +224,19 @@ WITH real_patient AS (
 ),
 simulated_patients AS (
     -- Original patient
-    SELECT PAT_ID, PAT_MRN_ID, PAT_NAME, BIRTH_DATE, SEX_C_NAME_ 
+    SELECT PAT_ID, PAT_MRN_ID, PAT_NAME, BIRTH_DATE, SEX_C_NAME 
     FROM real_patient
     
     UNION ALL
     -- Simulated typo in last name
     SELECT 'DUP001', PAT_MRN_ID || '1', 
-           REPLACE(PAT_NAME, 'MANDEL', 'MANDAL'), BIRTH_DATE, SEX_C_NAME_
+           REPLACE(PAT_NAME, 'MANDEL', 'MANDAL'), BIRTH_DATE, SEX_C_NAME
     FROM real_patient
     
     UNION ALL
     -- Simulated transposed birth date (MM/DD swapped)
     SELECT 'DUP002', PAT_MRN_ID || '2', PAT_NAME,
-           REPLACE(BIRTH_DATE, '10/26', '26/10'), SEX_C_NAME_
+           REPLACE(BIRTH_DATE, '10/26', '26/10'), SEX_C_NAME
     FROM real_patient
 ),
 duplicate_check AS (

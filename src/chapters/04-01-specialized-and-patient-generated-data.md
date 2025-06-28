@@ -65,7 +65,7 @@ SELECT
         ELSE 'No RTF content'
     END as content_status,
     -- Sample first few characters (being mindful of privacy)
-    SUBSTR(rt.RTF_TXT_, 1, 50) || '...' as content_preview
+    SUBSTR(rt.RTF_TXT, 1, 50) || '...' as content_preview
 FROM MYC_MESG m
 LEFT JOIN MYC_MESG_RTF_TEXT rt ON m.MESSAGE_ID = rt.MESSAGE_ID AND rt.LINE = 1
 WHERE m.TOFROM_PAT_C_NAME = 'From Patient'
@@ -83,7 +83,7 @@ SELECT
     q.PAT_ENC_CSN_ID,
     q.CONTACT_DATE,
     q.MYC_APPT_QUESR_ID_FORM_NAME as questionnaire_name,
-    q.PAT_APPT_QNR_STAT_C_NAME_ as completion_status,
+    q.PAT_APPT_QNR_STAT_C_NAME as completion_status,
     -- Link to actual appointment
     e.DEPARTMENT_ID,
     e.VISIT_PROV_ID

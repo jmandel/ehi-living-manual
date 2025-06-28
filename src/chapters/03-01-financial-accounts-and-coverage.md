@@ -202,7 +202,7 @@ The **CLARITY_EPP** table contains benefit plan details:
 <example-query description="Explore benefit plan information">
 SELECT 
     BENEFIT_PLAN_ID,
-    BENEFIT_PLAN_NAME_
+    BENEFIT_PLAN_NAME
 FROM CLARITY_EPP
 LIMIT 5;
 </example-query>

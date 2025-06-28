@@ -31,8 +31,8 @@ Let's examine a real example with patient history review:
 SELECT 
     tp.GROUP_LINE as review_session,
     tp.VALUE_LINE as item_number,
-    tp.HX_REVIEWED_HEADER_ as review_location,
-    ty.HX_REVIEWED_TYPE_C_NAME_ as history_type
+    tp.HX_REVIEWED_HEADER as review_location,
+    ty.HX_REVIEWED_TYPE_C_NAME as history_type
 FROM PAT_HX_REV_TOPIC tp
 JOIN PAT_HX_REV_TYPE ty 
     ON tp.PAT_ENC_CSN_ID = ty.PAT_ENC_CSN_ID 
@@ -106,7 +106,7 @@ SELECT
     PAT_ENC_CSN_ID,
     GROUP_LINE as review_session,
     COUNT(*) as history_types_reviewed,
-    GROUP_CONCAT(HX_REVIEWED_TYPE_C_NAME_, ', ') as types_reviewed
+    GROUP_CONCAT(HX_REVIEWED_TYPE_C_NAME, ', ') as types_reviewed
 FROM PAT_HX_REV_TYPE
 WHERE PAT_ENC_CSN_ID = 724623985
 GROUP BY PAT_ENC_CSN_ID, GROUP_LINE

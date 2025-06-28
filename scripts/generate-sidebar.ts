@@ -66,8 +66,13 @@ export async function generateSidebar() {
     const grouped = new Map<string, SidebarItem[]>();
     
     for (const file of mdFiles) {
-      // Match both "00-01-title" and "00-intro" patterns
-      const match = file.match(/^(\d{2})(-\d{2}|-intro)/);
+      // Skip intro files
+      if (file.includes('-intro')) {
+        continue;
+      }
+      
+      // Match "00-01-title" patterns
+      const match = file.match(/^(\d{2})-\d{2}/);
       if (match) {
         const group = match[1];
         const slug = file.replace(/\.mdx?$/, '');
@@ -89,18 +94,9 @@ export async function generateSidebar() {
     // Convert to sidebar structure
     for (const [group, items] of grouped) {
       if (chapterGroups[group]) {
-        // Sort items so intro comes first
-        const sortedItems = items.sort((a, b) => {
-          // If one is intro and the other isn't, intro comes first
-          if (a.link.includes('-intro/') && !b.link.includes('-intro/')) return -1;
-          if (!a.link.includes('-intro/') && b.link.includes('-intro/')) return 1;
-          // Otherwise sort by the link (which includes the number)
-          return a.link.localeCompare(b.link);
-        });
-        
         sidebar.push({
           label: chapterGroups[group],
-          items: sortedItems
+          items: items
         });
       }
     }
