@@ -284,31 +284,38 @@ DRG assignment:
 To understand a service's full financial impact:
 
 <example-query description="Create comprehensive charge analysis">
-WITH charge_summary AS (
+WITH professional_charges AS (
+    -- Calculate professional charges separately to avoid cross-join
     SELECT 
         pe.PAT_ENC_CSN_ID,
         pe.CONTACT_DATE,
         pe.DEPARTMENT_ID,
-        -- Professional charges
-        SUM(CASE WHEN at.TX_TYPE_C_NAME = 'Charge' 
-                 THEN at.AMOUNT ELSE 0 END) as prof_charges,
-        -- Hospital charges  
-        SUM(CASE WHEN ht.TX_TYPE_HA_C_NAME = 'Charge' 
-                 THEN ht.TX_AMOUNT ELSE 0 END) as hosp_charges
+        COALESCE(SUM(CASE WHEN at.TX_TYPE_C_NAME = 'Charge' 
+                          THEN at.AMOUNT ELSE 0 END), 0) as prof_charges
     FROM PAT_ENC pe
-    LEFT JOIN ARPB_TRANSACTIONS at ON pe.PAT_ENC_CSN_ID = pe.PAT_ENC_CSN_ID
+    LEFT JOIN ARPB_TRANSACTIONS at ON pe.PAT_ENC_CSN_ID = at.PAT_ENC_CSN_ID
+    GROUP BY pe.PAT_ENC_CSN_ID, pe.CONTACT_DATE, pe.DEPARTMENT_ID
+),
+hospital_charges AS (
+    -- Calculate hospital charges separately to avoid cross-join
+    SELECT 
+        pe.PAT_ENC_CSN_ID,
+        COALESCE(SUM(CASE WHEN ht.TX_TYPE_HA_C_NAME = 'Charge' 
+                          THEN ht.TX_AMOUNT ELSE 0 END), 0) as hosp_charges
+    FROM PAT_ENC pe
     LEFT JOIN HSP_TRANSACTIONS ht ON pe.HSP_ACCOUNT_ID = ht.HSP_ACCOUNT_ID
     GROUP BY pe.PAT_ENC_CSN_ID
 )
 SELECT 
-    PAT_ENC_CSN_ID,
-    CONTACT_DATE,
-    DEPARTMENT_ID,
-    prof_charges,
-    hosp_charges,
-    prof_charges + hosp_charges as total_charges
-FROM charge_summary
-WHERE prof_charges > 0 OR hosp_charges > 0
+    pc.PAT_ENC_CSN_ID,
+    pc.CONTACT_DATE,
+    pc.DEPARTMENT_ID,
+    pc.prof_charges,
+    COALESCE(hc.hosp_charges, 0) as hosp_charges,
+    pc.prof_charges + COALESCE(hc.hosp_charges, 0) as total_charges
+FROM professional_charges pc
+LEFT JOIN hospital_charges hc ON pc.PAT_ENC_CSN_ID = hc.PAT_ENC_CSN_ID
+WHERE pc.prof_charges > 0 OR COALESCE(hc.hosp_charges, 0) > 0
 ORDER BY total_charges DESC
 LIMIT 5;
 </example-query>
