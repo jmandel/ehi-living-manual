@@ -281,43 +281,108 @@ DRG assignment:
 
 ### Building a Complete Charge Picture
 
-To understand a service's full financial impact:
+Understanding charge attribution requires careful attention to how transactions link to encounters. The relationship differs fundamentally between professional and hospital billing systems.
 
-<example-query description="Create comprehensive charge analysis">
-WITH professional_charges AS (
-    -- Calculate professional charges separately to avoid cross-join
+#### Hospital Charges: Direct Encounter Linkage
+
+Hospital transactions can link directly to specific encounters through `PAT_ENC_CSN_ID`:
+
+<example-query description="Analyze hospital charges by encounter">
+SELECT 
+    pe.PAT_ENC_CSN_ID,
+    pe.CONTACT_DATE,
+    pe.DEPARTMENT_ID,
+    SUM(CASE WHEN ht.TX_TYPE_HA_C_NAME = 'Charge' 
+             THEN ht.TX_AMOUNT ELSE 0 END) as hospital_charges,
+    COUNT(CASE WHEN ht.TX_TYPE_HA_C_NAME = 'Charge' 
+               THEN 1 END) as charge_line_count
+FROM PAT_ENC pe
+INNER JOIN HSP_TRANSACTIONS ht ON pe.PAT_ENC_CSN_ID = ht.PAT_ENC_CSN_ID
+WHERE ht.TX_TYPE_HA_C_NAME = 'Charge'
+GROUP BY pe.PAT_ENC_CSN_ID, pe.CONTACT_DATE, pe.DEPARTMENT_ID
+ORDER BY hospital_charges DESC;
+</example-query>
+
+This direct linkage works because `HSP_TRANSACTIONS.PAT_ENC_CSN_ID` identifies the specific encounter that generated each hospital charge.
+
+#### Professional Charges: Complex Relationship Patterns
+
+Professional billing follows a more complex pattern. ARPB_TRANSACTIONS lacks direct encounter linkage, requiring navigation through the professional billing visit structure:
+
+<example-query description="Explore professional billing relationships">
+-- First, understand the ARPB_VISITS structure
+SELECT 
+    av.PB_VISIT_ID,
+    av.PRIM_ENC_CSN_ID,
+    av.GUARANTOR_ID,
+    pe.CONTACT_DATE as encounter_date,
+    COUNT(at.TX_ID) as transaction_count,
+    SUM(CASE WHEN at.TX_TYPE_C_NAME = 'Charge' 
+             THEN at.AMOUNT ELSE 0 END) as visit_charges
+FROM ARPB_VISITS av
+LEFT JOIN PAT_ENC pe ON av.PRIM_ENC_CSN_ID = pe.PAT_ENC_CSN_ID
+LEFT JOIN ARPB_TRANSACTIONS at ON av.GUARANTOR_ID = at.ACCOUNT_ID 
+    AND at.TX_TYPE_C_NAME = 'Charge'
+GROUP BY av.PB_VISIT_ID, av.PRIM_ENC_CSN_ID, av.GUARANTOR_ID, pe.CONTACT_DATE
+HAVING visit_charges > 0
+ORDER BY visit_charges DESC;
+</example-query>
+
+#### The Attribution Challenge
+
+Professional billing accounts (GUARANTOR_ID) often span multiple encounters for the same patient, making direct encounter attribution complex:
+
+<example-query description="Demonstrate the attribution complexity">
+-- Show how one account links to multiple encounters
+SELECT 
+    at.ACCOUNT_ID as guarantor_id,
+    COUNT(DISTINCT av.PRIM_ENC_CSN_ID) as linked_encounters,
+    COUNT(DISTINCT at.SERVICE_DATE) as distinct_service_dates,
+    SUM(CASE WHEN at.TX_TYPE_C_NAME = 'Charge' 
+             THEN at.AMOUNT ELSE 0 END) as total_charges
+FROM ARPB_TRANSACTIONS at
+LEFT JOIN ARPB_VISITS av ON at.ACCOUNT_ID = av.GUARANTOR_ID
+WHERE at.TX_TYPE_C_NAME = 'Charge'
+GROUP BY at.ACCOUNT_ID
+HAVING linked_encounters > 1
+ORDER BY total_charges DESC;
+</example-query>
+
+#### A Methodical Approach
+
+Rather than force incorrect joins, analyze each billing system separately and understand their inherent limitations:
+
+<example-query description="Separate analysis approach">
+-- Hospital charges with direct encounter attribution
+WITH hospital_by_encounter AS (
     SELECT 
         pe.PAT_ENC_CSN_ID,
         pe.CONTACT_DATE,
-        pe.DEPARTMENT_ID,
-        COALESCE(SUM(CASE WHEN at.TX_TYPE_C_NAME = 'Charge' 
-                          THEN at.AMOUNT ELSE 0 END), 0) as prof_charges
+        'Hospital' as billing_system,
+        SUM(ht.TX_AMOUNT) as charges,
+        'Direct CSN linkage' as attribution_method
     FROM PAT_ENC pe
-    LEFT JOIN ARPB_TRANSACTIONS at ON pe.PAT_ENC_CSN_ID = at.PAT_ENC_CSN_ID
-    GROUP BY pe.PAT_ENC_CSN_ID, pe.CONTACT_DATE, pe.DEPARTMENT_ID
+    INNER JOIN HSP_TRANSACTIONS ht ON pe.PAT_ENC_CSN_ID = ht.PAT_ENC_CSN_ID
+    WHERE ht.TX_TYPE_HA_C_NAME = 'Charge'
+    GROUP BY pe.PAT_ENC_CSN_ID, pe.CONTACT_DATE
 ),
-hospital_charges AS (
-    -- Calculate hospital charges separately to avoid cross-join
+-- Professional charges with account-level attribution
+professional_by_account AS (
     SELECT 
-        pe.PAT_ENC_CSN_ID,
-        COALESCE(SUM(CASE WHEN ht.TX_TYPE_HA_C_NAME = 'Charge' 
-                          THEN ht.TX_AMOUNT ELSE 0 END), 0) as hosp_charges
-    FROM PAT_ENC pe
-    LEFT JOIN HSP_TRANSACTIONS ht ON pe.HSP_ACCOUNT_ID = ht.HSP_ACCOUNT_ID
-    GROUP BY pe.PAT_ENC_CSN_ID
+        NULL as PAT_ENC_CSN_ID,  -- Cannot reliably attribute to specific encounter
+        at.SERVICE_DATE as CONTACT_DATE,
+        'Professional' as billing_system,
+        SUM(at.AMOUNT) as charges,
+        'Account-level aggregation' as attribution_method
+    FROM ARPB_TRANSACTIONS at
+    WHERE at.TX_TYPE_C_NAME = 'Charge'
+    GROUP BY at.SERVICE_DATE
 )
-SELECT 
-    pc.PAT_ENC_CSN_ID,
-    pc.CONTACT_DATE,
-    pc.DEPARTMENT_ID,
-    pc.prof_charges,
-    COALESCE(hc.hosp_charges, 0) as hosp_charges,
-    pc.prof_charges + COALESCE(hc.hosp_charges, 0) as total_charges
-FROM professional_charges pc
-LEFT JOIN hospital_charges hc ON pc.PAT_ENC_CSN_ID = hc.PAT_ENC_CSN_ID
-WHERE pc.prof_charges > 0 OR COALESCE(hc.hosp_charges, 0) > 0
-ORDER BY total_charges DESC
-LIMIT 5;
+-- Present results separately to avoid misleading totals
+SELECT * FROM hospital_by_encounter
+UNION ALL
+SELECT * FROM professional_by_account
+ORDER BY billing_system, charges DESC;
 </example-query>
 
 ---
@@ -329,10 +394,12 @@ LIMIT 5;
 - CPT codes live at the transaction level, not in procedure masters—enabling billing flexibility
 - Professional billing supports four modifiers per charge for precise billing scenarios
 - Revenue codes (in CL_UB_REV_CODE) categorize hospital services for UB-04 claims
-- Transactions link to clinical context through encounter and diagnosis relationships
+- **Hospital charges** link directly to encounters via `HSP_TRANSACTIONS.PAT_ENC_CSN_ID`
+- **Professional charges** require careful navigation through ARPB_VISITS for encounter attribution
+- Professional billing accounts often span multiple encounters, complicating encounter-level analysis
 - Claims aggregate related transactions for insurance submission
 - Voided transactions maintain audit trails—nothing is ever truly deleted
 - DRGs drive hospital reimbursement independent of actual charges
-- Complete financial pictures require joining both billing systems
+- **Attribution complexity**: Avoid cross-joins by analyzing billing systems separately when encounter-level precision is required
 
 ---
