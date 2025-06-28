@@ -75,9 +75,8 @@
   gap: 0.375rem;
 }
 
-.sql-run-button,
-.sql-reset-button {
-  padding: 0.25rem 0.75rem;
+.sql-editor-actions button {
+  padding: 0.375rem 0.75rem;
   margin: 0;
   font-size: var(--sl-text-xs);
   font-weight: 500;
@@ -86,7 +85,24 @@
   cursor: pointer;
   transition: all 0.2s ease;
   line-height: 1.5;
-  height: 28px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sql-run-button,
+.sql-reset-button {
+  padding: 0.375rem 0.75rem;
+  margin: 0;
+  font-size: var(--sl-text-xs);
+  font-weight: 500;
+  border: none;
+  border-radius: var(--sl-border-radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1.5;
+  height: 32px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
