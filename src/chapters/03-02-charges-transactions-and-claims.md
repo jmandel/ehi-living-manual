@@ -292,11 +292,15 @@ Understanding charge attribution requires recognizing the difference between whe
 
 For accurate encounter attribution, you must look at the charge origination level, not the aggregated transaction level.
 
-#### Professional Charges: Encounter-Level Attribution via ORDER_PROC
+#### Professional Charges: Multiple Sources of Encounter-Level Attribution
 
-Professional charges originate from procedure orders placed during clinical encounters. The ORDER_PROC table maintains direct encounter linkage:
+Professional charges originate from various clinical activities, not just procedure orders. A systematic approach requires identifying all sources of billable professional services:
 
-<example-query description="Professional charges by encounter via procedure orders">
+**1. Procedure Orders (ORDER_PROC)**
+
+The most obvious source - procedures ordered and performed:
+
+<example-query description="Procedure-based professional charges">
 SELECT 
     pe.PAT_ENC_CSN_ID,
     pe.CONTACT_DATE,
@@ -313,7 +317,144 @@ WHERE op.CHRG_DROPPED_TIME IS NOT NULL  -- Only procedures that generated charge
 ORDER BY pe.CONTACT_DATE DESC;
 </example-query>
 
-This approach captures the true encounter-to-charge relationship before charges get aggregated into account-level transactions.
+**2. Systematic Discovery of All Professional Charge Sources**
+
+To find all sources of professional charges, systematically examine the metadata:
+
+<example-query description="Find all tables that could generate professional charges">
+-- Search metadata for professional billing-related tables
+SELECT DISTINCT 
+    table_name,
+    documentation
+FROM _metadata
+WHERE column_name IS NULL  -- Table-level documentation
+  AND (LOWER(documentation) LIKE '%professional%' 
+       OR LOWER(documentation) LIKE '%billing%'
+       OR LOWER(documentation) LIKE '%charge%'
+       OR LOWER(documentation) LIKE '%procedure%'
+       OR LOWER(documentation) LIKE '%service%')
+ORDER BY table_name;
+</example-query>
+
+**3. Common Professional Charge Sources to Investigate**
+
+Beyond ORDER_PROC, examine these potential sources:
+
+<example-query description="Investigation methodology for professional charge sources">
+-- Look for order tables that might generate charges
+SELECT name as table_name
+FROM sqlite_master 
+WHERE type = 'table' 
+  AND name LIKE 'ORDER_%'
+ORDER BY name;
+
+-- Check for encounter-level billing elements
+SELECT name as table_name
+FROM sqlite_master 
+WHERE type = 'table' 
+  AND (name LIKE '%BILLING%' OR name LIKE '%PROF%' OR name LIKE '%CHARGE%')
+ORDER BY name;
+
+-- Look for provider service tables
+SELECT name as table_name
+FROM sqlite_master 
+WHERE type = 'table' 
+  AND (name LIKE '%PROV%' OR name LIKE '%PHYSICIAN%' OR name LIKE '%DOCTOR%')
+ORDER BY name;
+</example-query>
+
+**4. Potential Professional Charge Sources**
+
+Based on typical Epic implementations, investigate these areas:
+
+- **Evaluation & Management**: Encounter-level professional services (PAT_ENC billing components)
+- **Interpretations**: Radiology reads, pathology interpretations (ORDER_RESULTS, ORDER_IMAGING)
+- **Consultations**: Specialist consultations (may be in encounter or order tables)
+- **Therapy Services**: Professional therapy when billed separately (ORDER_THERAPY)
+- **Anesthesia**: Professional anesthesia services (ORDER_ANESTHESIA or similar)
+- **Time-based Services**: Care coordination, prolonged services
+- **Professional Hospital Services**: ER physicians, hospitalists, etc.
+
+**6. Required: Systematic Metadata Review Process**
+
+Before implementing any professional charge analysis, follow this systematic approach:
+
+<example-query description="Step-by-step professional charge source discovery">
+-- Step 1: Find all billing-related tables
+SELECT DISTINCT table_name, 
+       SUBSTR(documentation, 1, 100) as purpose
+FROM _metadata
+WHERE column_name IS NULL
+  AND (LOWER(documentation) LIKE '%professional%' 
+       OR LOWER(documentation) LIKE '%billing%'
+       OR LOWER(documentation) LIKE '%charge%'
+       OR LOWER(documentation) LIKE '%procedure%'
+       OR LOWER(documentation) LIKE '%order%'
+       OR LOWER(documentation) LIKE '%service%')
+ORDER BY table_name;
+
+-- Step 2: Check all ORDER_* tables for charge generation capabilities
+SELECT table_name,
+       (SELECT documentation FROM _metadata 
+        WHERE table_name = t.table_name AND column_name IS NULL) as table_purpose
+FROM (SELECT DISTINCT table_name FROM _metadata WHERE table_name LIKE 'ORDER_%') t
+ORDER BY table_name;
+
+-- Step 3: Look for PAT_ENC_CSN_ID linkage in potential charge sources
+SELECT table_name,
+       column_name,
+       documentation
+FROM _metadata
+WHERE column_name = 'PAT_ENC_CSN_ID'
+  AND table_name NOT IN ('PAT_ENC', 'HSP_TRANSACTIONS')  -- Exclude already known
+ORDER BY table_name;
+
+-- Step 4: Examine any table with billing-related columns
+SELECT DISTINCT table_name
+FROM _metadata
+WHERE column_name LIKE '%BILLING%' 
+   OR column_name LIKE '%CHARGE%'
+   OR column_name LIKE '%PROF%'
+   OR column_name LIKE '%FEE%'
+ORDER BY table_name;
+</example-query>
+
+**7. Validation Approach**
+
+For each potential source discovered in the metadata review, validate with these queries:
+
+<example-query description="Template for validating professional charge sources">
+-- Replace 'TABLE_NAME' with each candidate table
+-- Check if table links to encounters and has billing indicators
+SELECT 
+    COUNT(*) as total_records,
+    COUNT(DISTINCT PAT_ENC_CSN_ID) as linked_encounters,
+    COUNT(CASE WHEN [billing_indicator_column] IS NOT NULL THEN 1 END) as billing_records,
+    -- Look for actual charge-dropped or billing-related indicators
+    MIN([date_column]) as earliest_service,
+    MAX([date_column]) as latest_service
+FROM TABLE_NAME
+WHERE PAT_ENC_CSN_ID IS NOT NULL;
+
+-- Then examine a sample to understand the billing patterns
+SELECT TOP 5 * FROM TABLE_NAME 
+WHERE PAT_ENC_CSN_ID IS NOT NULL 
+  AND [billing_indicator_column] IS NOT NULL;
+</example-query>
+
+**Example Applied to ORDER_PROC:**
+
+<example-query description="ORDER_PROC validation results">
+SELECT 
+    COUNT(*) as total_orders,
+    COUNT(DISTINCT PAT_ENC_CSN_ID) as encounters_with_orders,
+    COUNT(CASE WHEN CHRG_DROPPED_TIME IS NOT NULL THEN 1 END) as charge_generating_orders,
+    ROUND(100.0 * COUNT(CASE WHEN CHRG_DROPPED_TIME IS NOT NULL THEN 1 END) / COUNT(*), 1) as charge_percentage
+FROM ORDER_PROC
+WHERE PAT_ENC_CSN_ID IS NOT NULL;
+</example-query>
+
+Only after completing this systematic review can you confidently build encounter-level professional charge attribution.
 
 #### Hospital Charges: Direct Encounter Linkage via HSP_TRANSACTIONS
 
@@ -357,17 +498,44 @@ ORDER BY encounters_in_visit DESC;
 
 #### Accurate Encounter-Level Financial Summary
 
-Combining both billing systems at the encounter level:
+For complete encounter attribution, systematically identify all professional charge sources:
 
-<example-query description="Complete encounter financial picture">
-WITH professional_charges AS (
+<example-query description="Comprehensive encounter financial analysis methodology">
+-- Step 1: Identify all professional charge sources (not just ORDER_PROC)
+-- This is a template - replace with actual discovered sources
+
+WITH all_professional_sources AS (
+    -- Source 1: Procedure orders
     SELECT 
         pe.PAT_ENC_CSN_ID,
-        COUNT(op.ORDER_PROC_ID) as prof_procedure_count,
-        COUNT(CASE WHEN op.CHRG_DROPPED_TIME IS NOT NULL THEN 1 END) as prof_charged_procedures
+        'ORDER_PROC' as source_type,
+        COUNT(*) as charge_count
     FROM PAT_ENC pe
-    LEFT JOIN ORDER_PROC op ON pe.PAT_ENC_CSN_ID = op.PAT_ENC_CSN_ID
+    INNER JOIN ORDER_PROC op ON pe.PAT_ENC_CSN_ID = op.PAT_ENC_CSN_ID
+    WHERE op.CHRG_DROPPED_TIME IS NOT NULL
     GROUP BY pe.PAT_ENC_CSN_ID
+    
+    UNION ALL
+    
+    -- Source 2: Add other discovered professional charge sources
+    -- Example: ORDER_THERAPY, ORDER_RESULTS, encounter-level billing, etc.
+    -- SELECT pe.PAT_ENC_CSN_ID, 'OTHER_SOURCE', COUNT(*)
+    -- FROM PAT_ENC pe
+    -- INNER JOIN [OTHER_TABLE] ON pe.PAT_ENC_CSN_ID = [OTHER_TABLE].PAT_ENC_CSN_ID
+    -- WHERE [billing_condition]
+    -- GROUP BY pe.PAT_ENC_CSN_ID
+    
+    SELECT pe.PAT_ENC_CSN_ID, 'PLACEHOLDER' as source_type, 0 as charge_count
+    FROM PAT_ENC pe WHERE 1=0  -- Placeholder for additional sources
+),
+professional_summary AS (
+    SELECT 
+        PAT_ENC_CSN_ID,
+        SUM(charge_count) as total_prof_charges,
+        COUNT(DISTINCT source_type) as prof_source_types,
+        GROUP_CONCAT(DISTINCT source_type) as prof_sources
+    FROM all_professional_sources
+    GROUP BY PAT_ENC_CSN_ID
 ),
 hospital_charges AS (
     SELECT 
@@ -382,20 +550,20 @@ SELECT
     pe.PAT_ENC_CSN_ID,
     pe.CONTACT_DATE,
     pe.DEPARTMENT_ID,
-    pc.prof_procedure_count,
-    pc.prof_charged_procedures,
+    COALESCE(ps.total_prof_charges, 0) as professional_charge_activities,
+    ps.prof_sources as professional_sources,
     hc.hospital_charges,
     CASE 
-        WHEN pc.prof_charged_procedures > 0 AND hc.hospital_charges > 0 
+        WHEN ps.total_prof_charges > 0 AND hc.hospital_charges > 0 
         THEN 'Both Professional and Hospital'
-        WHEN pc.prof_charged_procedures > 0 
+        WHEN ps.total_prof_charges > 0 
         THEN 'Professional Only'
         WHEN hc.hospital_charges > 0 
         THEN 'Hospital Only'
         ELSE 'No Charges'
     END as billing_type
 FROM PAT_ENC pe
-LEFT JOIN professional_charges pc ON pe.PAT_ENC_CSN_ID = pc.PAT_ENC_CSN_ID
+LEFT JOIN professional_summary ps ON pe.PAT_ENC_CSN_ID = ps.PAT_ENC_CSN_ID
 LEFT JOIN hospital_charges hc ON pe.PAT_ENC_CSN_ID = hc.PAT_ENC_CSN_ID
 WHERE pe.CONTACT_DATE >= '2020-01-01'
 ORDER BY pe.CONTACT_DATE DESC;
@@ -411,12 +579,19 @@ ORDER BY pe.CONTACT_DATE DESC;
 - Professional billing supports four modifiers per charge for precise billing scenarios
 - Revenue codes (in CL_UB_REV_CODE) categorize hospital services for UB-04 claims
 - **Hospital charges** link directly to encounters via `HSP_TRANSACTIONS.PAT_ENC_CSN_ID = PAT_ENC.PAT_ENC_CSN_ID`
-- **Professional charges** originate from procedure orders with direct encounter linkage via `ORDER_PROC.PAT_ENC_CSN_ID = PAT_ENC.PAT_ENC_CSN_ID`
+- **Professional charges** originate from MULTIPLE sources beyond just ORDER_PROC:
+  - Procedure orders (ORDER_PROC)
+  - Professional interpretations (ORDER_RESULTS, ORDER_IMAGING)
+  - Therapy services (ORDER_THERAPY)
+  - Evaluation & management at encounter level
+  - Time-based services and consultations
+  - Other billable professional activities
+- **Critical methodology**: Systematically examine _metadata to identify ALL professional charge sources for complete encounter attribution
 - Professional billing transactions (ARPB_TRANSACTIONS) represent aggregated charges at the account level, which can span multiple encounters
-- For accurate encounter attribution, use ORDER_PROC for professional charges and HSP_TRANSACTIONS for hospital charges
+- For accurate encounter attribution, identify and query ALL professional charge sources at the encounter level
 - Claims aggregate related transactions for insurance submission
 - Voided transactions maintain audit trails—nothing is ever truly deleted
 - DRGs drive hospital reimbursement independent of actual charges
-- **Critical**: Use ORDER_PROC (not ARPB_TRANSACTIONS) for professional charge encounter attribution to avoid cross-encounter aggregation
+- **Essential approach**: Use systematic metadata review to discover all charge origination points before assuming any single table provides complete professional billing coverage
 
 ---
