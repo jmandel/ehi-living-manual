@@ -1,5 +1,5 @@
 ---
-# Chapter 2.1: Patient Identity and Demographics
+# Patient Identity and Demographics
 
 *Purpose: To master Epic's comprehensive model for capturing who patients are—from unique identifiers to demographics, addresses, and provider relationships.*
 

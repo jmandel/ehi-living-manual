@@ -1,4 +1,4 @@
-# Chapter 1.4: Modeling Categories: The `_C_NAME` Pattern
+# Modeling Categories: The `_C_NAME` Pattern
 
 *Purpose: To understand Epic's denormalized approach to categorical data in the EHI export.*
 

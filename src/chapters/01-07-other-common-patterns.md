@@ -1,4 +1,4 @@
-# Chapter 1.6: Other Common Patterns
+# Other Common Patterns
 
 *Purpose: To complete your pattern recognition toolkit with additional conventions found throughout Epic's database.*
 

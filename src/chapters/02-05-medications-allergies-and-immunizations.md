@@ -1,5 +1,5 @@
 ---
-# Chapter 2.5: Medications, Allergies, and Immunizations
+# Medications, Allergies, and Immunizations
 
 *Purpose: To master Epic's approach to three safety-critical datasets—medications, allergies, and immunizations—that together prevent adverse events and ensure patient safety.*
 

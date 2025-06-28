@@ -1,5 +1,5 @@
 ---
-# Chapter 4.2: Data Integrity and Validation
+# Data Integrity and Validation
 
 *Purpose: To transform you from a data consumer into a data critic, equipped with SQL techniques to identify and quantify quality issues.*
 

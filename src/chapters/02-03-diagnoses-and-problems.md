@@ -1,5 +1,5 @@
 ---
-# Chapter 2.3: Diagnoses and Problems
+# Diagnoses and Problems
 
 *Purpose: To explain the critical distinction between episodic diagnoses and longitudinal problems, teaching you to query both types of conditions correctly.*
 

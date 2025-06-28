@@ -1,5 +1,5 @@
 ---
-# Chapter 4.1: Specialized and Patient-Generated Data
+# Specialized and Patient-Generated Data
 
 *Purpose: To explore the rich datasets beyond standard encounters—where patients become active participants in their health record.*
 

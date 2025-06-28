@@ -1,5 +1,5 @@
 ---
-# Chapter 3.2: Charges, Transactions, and Claims - The Financial Ledger
+# Charges, Transactions, and Claims - The Financial Ledger
 
 *Purpose: To dissect the core financial ledger—how clinical services become charges, accumulate into claims, and carry the codes that determine reimbursement.*
 

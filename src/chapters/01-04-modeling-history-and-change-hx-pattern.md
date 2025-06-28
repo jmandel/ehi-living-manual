@@ -1,4 +1,4 @@
-# Chapter 1.3: Modeling History and Change: The `_HX` Pattern
+# Modeling History and Change: The `_HX` Pattern
 
 *Purpose: To understand Epic's comprehensive approach to tracking data changes over time.*
 

@@ -1,4 +1,4 @@
-# Chapter 1.5: Modeling Time: The `_REAL` Date Pattern
+# Modeling Time: The `_REAL` Date Pattern
 
 *Purpose: To understand Epic's ingenious solution for perfect chronological sorting.*
 

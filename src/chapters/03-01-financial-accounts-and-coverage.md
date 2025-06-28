@@ -1,5 +1,5 @@
 ---
-# Chapter 3.1: Financial Accounts and Coverage - Who Pays the Bill?
+# Financial Accounts and Coverage - Who Pays the Bill?
 
 *Purpose: To explain the foundational entities of healthcare finance—the accounts that hold debt and the insurance coverage that mitigates it.*
 

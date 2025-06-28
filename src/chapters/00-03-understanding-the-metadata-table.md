@@ -1,12 +1,12 @@
-# Chapter 0.3: The Golden Key: The `_metadata` Table
+# Chapter 0.3: Understanding the `_metadata` Table
 
-*Purpose: To master the single most powerful tool for navigating Epic's 551-table database independently.*
+*Purpose: To master Epic's built-in documentation system that makes the 551-table database navigable and understandable.*
 
-### Your Rosetta Stone for Epic Data
+### Epic's Built-In Documentation
 
-Imagine trying to explore a vast library where every book is written in a different language. That's what Epic's EHI export can feel like with its 551 tables and thousands of columns. Fortunately, Epic provides a Rosetta Stone: the **`_metadata`** table.
+Every Epic EHI export includes comprehensive documentation for its tables and columns. Epic publishes this documentation at [https://open.epic.com/EHITables](https://open.epic.com/EHITables), and a copy is included with each patient's export. We've loaded this documentation into SQLite as the `_metadata` table, making it queryable right alongside your actual health data.
 
-This single table transforms the overwhelming into the manageable. It contains three columns that document every table and column in the database:
+This single table transforms an overwhelming database into something you can explore systematically. It contains Epic's official explanations for every table and column:
 
 <example-query description="Your first look at the _metadata table structure">
 SELECT 
@@ -19,11 +19,9 @@ WHERE table_name = 'PATIENT'
 LIMIT 1;
 </example-query>
 
-That documentation you see? It's Epic's official explanation of what `PAT_ID` means and how it's used. This pattern extends to every table and column in the database.
-
 ### How `_metadata` Works
 
-The table has just three columns, but they unlock everything:
+The table has three columns that document the entire database:
 
 <example-query description="Understanding the _metadata structure">
 SELECT 
@@ -34,16 +32,15 @@ SELECT
 FROM _metadata;
 </example-query>
 
-Here's what each column means:
 - **`table_name`**: The table being documented
 - **`column_name`**: The specific column (NULL for table-level documentation)
 - **`documentation`**: Epic's explanation of purpose and usage
 
-### The Power of Table Documentation
+### Table-Level Documentation
 
 When `column_name` is NULL, you get the table's overall purpose:
 
-<example-query description="Discover what each table does">
+<example-query description="Discover what key tables do">
 SELECT 
     table_name,
     SUBSTR(documentation, 1, 150) as table_purpose
@@ -53,11 +50,11 @@ WHERE column_name IS NULL
 ORDER BY table_name;
 </example-query>
 
-### The Rosetta Stone Query
+### The Essential Documentation Query
 
-Here's the most valuable query you'll ever write—it generates complete documentation for any table:
+This query generates complete documentation for any table by combining SQLite's schema information with Epic's documentation:
 
-<example-query description="The Rosetta Stone: Get full documentation for any table">
+<example-query description="Get full documentation for any table">
 -- Replace 'PAT_ENC' with any table name
 WITH table_info AS (
     SELECT name as column_name, cid as column_order
@@ -73,11 +70,9 @@ LEFT JOIN _metadata m
 ORDER BY ti.column_order;
 </example-query>
 
-This query combines SQLite's schema information with Epic's documentation, giving you a complete picture of any table. Bookmark this—you'll use it constantly.
+### Finding Tables by Healthcare Concept
 
-### Discovering Tables by Concept
-
-Don't know which table contains what you need? Search by keyword:
+Search documentation by keyword to discover relevant tables:
 
 <example-query description="Find all tables related to diagnoses">
 SELECT DISTINCT
@@ -91,9 +86,9 @@ ORDER BY relevant_columns DESC
 LIMIT 10;
 </example-query>
 
-Try changing `'%diagnos%'` to other medical concepts: `'%medication%'`, `'%insurance%'`, `'%allergy%'`, or `'%appointment%'`.
+Try other medical concepts: `'%medication%'`, `'%insurance%'`, `'%allergy%'`, or `'%appointment%'`.
 
-### Finding Specific Data Elements
+### Locating Specific Data Elements
 
 Need to find where a specific type of data lives? Search column documentation:
 
@@ -109,9 +104,9 @@ ORDER BY table_name, column_name
 LIMIT 10;
 </example-query>
 
-### Understanding Data Relationships
+### Discovering Data Relationships
 
-The `_metadata` table reveals how tables connect:
+The `_metadata` table reveals how tables connect through shared columns:
 
 <example-query description="Find foreign key relationships for patients">
 SELECT 
@@ -125,11 +120,11 @@ ORDER BY table_name
 LIMIT 15;
 </example-query>
 
-Every table with a `PAT_ID` column links back to the `PATIENT` table. This pattern repeats throughout Epic: shared column names indicate relationships.
+Every table with a `PAT_ID` column links back to the `PATIENT` table. This pattern—shared column names indicating relationships—is consistent throughout Epic.
 
-### Metadata Coverage Analysis
+### Documentation Coverage
 
-How complete is the documentation? Let's check:
+Epic provides remarkably complete documentation:
 
 <example-query description="Analyze metadata completeness">
 WITH all_tables AS (
@@ -159,35 +154,30 @@ SELECT
 FROM all_tables at;
 </example-query>
 
-With 99.6% coverage, you can trust that almost every table and column has documentation.
+With 99.6% coverage, nearly every table and column has official documentation.
 
-### Pro Tips for Using `_metadata`
+### Practical Documentation Strategies
 
-**1. Create Column Inventories**
+**1. Search by Column Pattern**
 
-Find all columns that store financial amounts by searching for the `_AMT` suffix pattern.
+Epic uses consistent naming conventions:
+- `_YN` for yes/no flags
+- `_C_NAME` for category names  
+- `_ID` for identifiers
+- `_REAL` for internal date format
+- `_AMT` for currency amounts
 
-**2. Understand Epic's Naming Conventions**
+**2. Combine Documentation with Data**
 
-Epic uses consistent suffixes: `_YN` for yes/no flags, `_C_NAME` for category names, `_ID` for identifiers, and `_REAL` for precise dates.
+Documentation explains intent; actual data shows implementation:
 
-**3. Build Your Own Documentation**
-
-Combine the Rosetta Stone query with your own notes to create personalized documentation for the tables you use most frequently.
-
-### When Documentation Isn't Enough
-
-Sometimes you need to see actual data to understand a column. Here's how to combine metadata with real examples:
-
-<example-query description="Combine documentation with real examples">
--- First get the documentation
+<example-query description="First, get the documentation">
 SELECT documentation 
 FROM _metadata 
 WHERE table_name = 'PAT_ENC' AND column_name = 'CONTACT_DATE';
 </example-query>
 
 <example-query description="Then see actual data patterns">
--- Then see it in practice
 SELECT 
     CONTACT_DATE,
     COUNT(*) as encounters_on_date
@@ -198,13 +188,28 @@ ORDER BY encounters_on_date DESC
 LIMIT 5;
 </example-query>
 
+**3. Build Custom Views**
+
+Create your own documentation views for frequently used tables, combining Epic's explanations with your notes about how the data appears in practice.
+
+### Working with Undocumented Elements
+
+While rare, some columns may lack documentation. When this happens:
+1. Examine the column name for patterns
+2. Look at actual data values
+3. Check related columns in the same table
+4. Search for similar columns in other tables
+
 ---
 
 ### Key Takeaways
 
-- The `_metadata` table is your guide to all 551 tables and 10,000+ columns in the Epic EHI export
-- When `column_name` is NULL, documentation describes the entire table's purpose
-- Use the "Rosetta Stone" query to generate complete documentation for any table instantly
+- The `_metadata` table contains Epic's official documentation from [open.epic.com/EHITables](https://open.epic.com/EHITables)
+- Every EHI export includes this documentation, loaded here as a queryable table
+- Use table-level documentation (where `column_name` IS NULL) to understand table purposes
 - Search documentation by keyword to discover relevant tables for any healthcare concept
-- 99.6% of tables are documented, making this an incredibly reliable resource
-- Combine metadata queries with actual data sampling for deeper understanding
+- Shared column names (like `PAT_ID`) indicate relationships between tables
+- 99.6% documentation coverage makes this an extremely reliable resource
+- Combine documentation queries with actual data sampling for complete understanding
+
+---

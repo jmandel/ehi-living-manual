@@ -1,4 +1,4 @@
-# Chapter 1.1: Modeling a Simple List: The `(ID, LINE)` Pattern
+# Modeling a Simple List: The `(ID, LINE)` Pattern
 
 *Purpose: To master Epic's most fundamental pattern for representing one-to-many relationships.*
 

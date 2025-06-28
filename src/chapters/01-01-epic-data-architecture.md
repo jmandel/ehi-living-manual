@@ -1,4 +1,4 @@
-# Chapter 0.4: Epic's Data Architecture: From Chronicles to Clarity
+# Epic's Data Architecture: From Chronicles to Clarity
 
 *Purpose: To understand why Epic's data looks the way it does by tracing its journey from hierarchical to relational.*
 

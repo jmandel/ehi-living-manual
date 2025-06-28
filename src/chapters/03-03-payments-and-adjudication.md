@@ -1,5 +1,5 @@
 ---
-# Chapter 3.3: Payments and Adjudication - Closing the Loop
+# Payments and Adjudication - Closing the Loop
 
 *Purpose: To follow the money—understanding how payments flow through the system, match to charges, and ultimately zero out balances.*
 

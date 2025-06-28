@@ -1,5 +1,5 @@
 ---
-# Chapter 4.3: Cross-Domain Analysis: From Clicks to Cash
+# Cross-Domain Analysis: From Clicks to Cash
 
 *Purpose: To synthesize everything you've learned, demonstrating how to answer complex questions that span clinical, financial, and operational domains.*
 

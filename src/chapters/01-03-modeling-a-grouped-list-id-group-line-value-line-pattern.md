@@ -1,4 +1,4 @@
-# Chapter 1.2: Modeling a Grouped List: The `(ID, GROUP_LINE, VALUE_LINE)` Pattern
+# Modeling a Grouped List: The `(ID, GROUP_LINE, VALUE_LINE)` Pattern
 
 *Purpose: To understand Epic's elegant solution for nested lists—lists within lists.*
 
@@ -23,22 +23,31 @@ Think of this pattern as a two-level hierarchy:
 - **Level 1**: Groups (identified by GROUP_LINE)
 - **Level 2**: Values within each group (identified by VALUE_LINE)
 
-Let's examine a real example with medication signature text:
+Let's examine a real example with patient history review:
 
 <example-query description="See the grouped list pattern in action">
+-- During an encounter, providers review different aspects of patient history
+-- Each review session (GROUP_LINE) covers multiple history types (VALUE_LINE)
 SELECT 
-    ORDER_ID,
-    GROUP_LINE,
-    VALUE_LINE,
-    SIG_TEXT_ as signature_text
-FROM ORDER_RPTD_SIG_TEXT
-ORDER BY ORDER_ID, GROUP_LINE, VALUE_LINE;
+    tp.GROUP_LINE as review_session,
+    tp.VALUE_LINE as item_number,
+    tp.HX_REVIEWED_HEADER_ as review_location,
+    ty.HX_REVIEWED_TYPE_C_NAME_ as history_type
+FROM PAT_HX_REV_TOPIC tp
+JOIN PAT_HX_REV_TYPE ty 
+    ON tp.PAT_ENC_CSN_ID = ty.PAT_ENC_CSN_ID 
+    AND tp.GROUP_LINE = ty.GROUP_LINE 
+    AND tp.VALUE_LINE = ty.VALUE_LINE
+WHERE tp.PAT_ENC_CSN_ID = 724623985 
+    AND tp.GROUP_LINE IN (6,7)
+ORDER BY tp.GROUP_LINE, tp.VALUE_LINE;
 </example-query>
 
-While our sample data shows simple cases, in production systems this pattern handles complex scenarios like:
-- Multiple signature versions (GROUP_LINE) each with multiple text lines (VALUE_LINE)
-- Lab results with multiple result sets, each containing multiple components
-- Insurance coverage with multiple coverage periods, each with multiple benefit details
+Notice how:
+- **Group 6** represents one review session covering Alcohol, Sexual Activity, Drug Use, and Tobacco
+- **Group 7** represents another review session covering the same topics
+- Each group has multiple VALUE_LINEs (1-4) for different history types
+- The same review location can have multiple review sessions
 
 ### The Pattern Anatomy
 
@@ -51,7 +60,7 @@ SELECT
         WHEN name = 'VALUE_LINE' THEN 'Item sequence within group'
         ELSE 'Data column'
     END as column_role
-FROM pragma_table_info('ORDER_RPTD_SIG_TEXT')
+FROM pragma_table_info('PAT_HX_REV_TOPIC')
 ORDER BY cid;
 </example-query>
 
@@ -92,15 +101,17 @@ Working with this pattern requires careful attention to the hierarchy:
 
 **1. View Complete Groups**
 <example-query description="Aggregate values within groups">
--- See how immunization groups are structured
+-- Count history types reviewed in each session
 SELECT 
-    DOCUMENT_ID,
-    GROUP_LINE,
-    COUNT(*) as items_in_group,
-    GROUP_CONCAT(IMM_GROUPS_ID_NAME, '; ') as group_contents
-FROM IMM_ADMIN_GROUPS
-GROUP BY DOCUMENT_ID, GROUP_LINE
-ORDER BY DOCUMENT_ID, GROUP_LINE;
+    PAT_ENC_CSN_ID,
+    GROUP_LINE as review_session,
+    COUNT(*) as history_types_reviewed,
+    GROUP_CONCAT(HX_REVIEWED_TYPE_C_NAME_, ', ') as types_reviewed
+FROM PAT_HX_REV_TYPE
+WHERE PAT_ENC_CSN_ID = 724623985
+GROUP BY PAT_ENC_CSN_ID, GROUP_LINE
+HAVING COUNT(*) > 1
+ORDER BY GROUP_LINE;
 </example-query>
 
 **2. Preserve Hierarchy in Results**

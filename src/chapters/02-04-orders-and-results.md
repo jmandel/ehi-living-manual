@@ -1,5 +1,5 @@
 ---
-# Chapter 2.4: Orders and Results
+# Orders and Results
 
 *Purpose: To trace the complete data trail of clinical orders—from provider request through laboratory processing to final results.*
 
