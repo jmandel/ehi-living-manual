@@ -94,13 +94,26 @@ export async function generateSidebar() {
     }
     
     // Convert to sidebar structure
+    const otherItems: SidebarItem[] = [];
+    
     for (const [group, items] of grouped) {
       if (chapterGroups[group]) {
         sidebar.push({
           label: chapterGroups[group],
           items: items
         });
+      } else {
+        // Add items from unrecognized groups to "Other" category
+        otherItems.push(...items);
       }
+    }
+    
+    // Add "Other" category if there are any items
+    if (otherItems.length > 0) {
+      sidebar.push({
+        label: 'Other',
+        items: otherItems
+      });
     }
     
     return sidebar;

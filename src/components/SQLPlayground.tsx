@@ -99,6 +99,10 @@ export default function SQLPlayground() {
     try {
       const result = await executeQuery(query);
       setResults(result);
+      // Check if the result contains an error
+      if (result.error) {
+        setError(result.error);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -216,13 +220,13 @@ export default function SQLPlayground() {
         />
       </div>
 
-      {error && (
+      {(error || (results && results.error)) && (
         <div className="sql-error">
-          <strong>Error:</strong> {error}
+          <strong>Error:</strong> {error || results.error}
         </div>
       )}
 
-      {results && results.results && (
+      {results && results.results && !results.error && (
         <div className="sql-results">
           <div className="sql-results-header">
             <span>Results ({results.results.length} rows)</span>
