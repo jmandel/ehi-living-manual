@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { executeQuery } from '../lib/sql-executor';
-import allQueries from '../data/all-queries.json';
+import allQueries from '../data/queries.json';
 
 // Match the actual return type from sql-executor
 interface QueryResult {
