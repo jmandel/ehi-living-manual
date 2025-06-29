@@ -1,6 +1,6 @@
 # Tracking Patient Conditions: Diagnoses and Problem Lists
 
-*Purpose: Learn how Epic tracks patient health conditions through two complementary systems - longitudinal problem lists and encounter-specific diagnoses - and how they work together to support clinical care and billing.*
+*Purpose: Learn how Epic tracks patient health conditions through two complementary systems - longitudinal problem lists and encounter-specific diagnoses.*
 
 ### The Two-Track System for Patient Conditions
 
@@ -12,309 +12,120 @@ Let's see how this works with real data.
 
 ### Starting Simple: The Diagnosis Master
 
-Every diagnosis in Epic starts with a master record in CLARITY_EDG. This table serves as the single source of truth for diagnosis definitions:
+All diagnoses are stored in the CLARITY_EDG table:
 
-<example-query description="Explore the diagnosis master table to see available diagnoses">
-SELECT 
-    DX_ID,
-    DX_NAME,
-    PAT_FRIENDLY_TEXT
+<example-query description="Look up common diagnoses">
+SELECT DX_ID, DX_NAME
 FROM CLARITY_EDG
-WHERE DX_NAME LIKE '%concussion%' 
-   OR DX_NAME LIKE '%reflux%'
+WHERE DX_NAME LIKE '%diabetes%' 
    OR DX_NAME LIKE '%hypertension%'
-ORDER BY DX_NAME;
+LIMIT 10;
 </example-query>
 
-Notice how each diagnosis has:
-- A unique DX_ID for internal reference
-- A clinical DX_NAME for providers
-- An optional PAT_FRIENDLY_TEXT for patient portals
+### View a Patient's Problem List
 
-### Problem Lists: The Longitudinal View
+Now let's see a patient's ongoing health issues:
 
-Problem lists track ongoing health issues that persist across multiple encounters. Let's examine how Epic structures this critical clinical data:
-
-<example-query description="View active problems with their key attributes">
+<example-query description="View a patient's active problem list">
 SELECT 
-    pl.PROBLEM_LIST_ID,
-    edg.DX_NAME,
-    pl.PROBLEM_STATUS_C_NAME as status,
-    pl.CHRONIC_YN as is_chronic,
-    pl.NOTED_DATE,
-    pl.SHOW_IN_MYC_YN as visible_to_patient
-FROM PROBLEM_LIST pl
-JOIN CLARITY_EDG edg ON pl.DX_ID = edg.DX_ID
-WHERE pl.PROBLEM_STATUS_C_NAME = 'Active';
-</example-query>
-
-The PROBLEM_LIST table captures not just what conditions a patient has, but also:
-- When each problem was first noted
-- Whether it's chronic
-- If patients can see it in their portal
-- The current status (Active, Resolved, or Deleted)
-
-### Connecting Patients to Their Problems
-
-Epic uses the PAT_PROBLEM_LIST table to efficiently link patients to their problems. This follows Epic's common ID-LINE pattern:
-
-<example-query description="See how problems are linked to a specific patient">
-SELECT 
-    p.PAT_NAME,
-    ppl.LINE as problem_number,
-    edg.DX_NAME,
-    pl.NOTED_DATE,
-    JULIANDAY('now') - JULIANDAY(pl.NOTED_DATE) as days_on_list
+    edg.DX_NAME as Problem,
+    pl.PROBLEM_STATUS_C_NAME as Status,
+    SUBSTR(pl.NOTED_DATE, 1, 10) as Date_Noted
 FROM PATIENT p
 JOIN PAT_PROBLEM_LIST ppl ON p.PAT_ID = ppl.PAT_ID
 JOIN PROBLEM_LIST pl ON ppl.PROBLEM_LIST_ID = pl.PROBLEM_LIST_ID
 JOIN CLARITY_EDG edg ON pl.DX_ID = edg.DX_ID
 WHERE p.PAT_ID = 'Z7004242'
-ORDER BY ppl.LINE;
+  AND pl.PROBLEM_STATUS_C_NAME = 'Active'
+ORDER BY pl.NOTED_DATE;
 </example-query>
 
-This patient has two problems on their list, tracked for different durations. The LINE field provides ordering but doesn't indicate priority - that's stored separately in the PROBLEM_LIST table.
+### Encounter Diagnoses
 
-### The Audit Trail: Problem List History
+Each visit records what was addressed:
 
-Healthcare requires meticulous documentation of changes. The PROBLEM_LIST_HX table captures every modification:
-
-<example-query description="View the complete history of changes to problem lists">
+<example-query description="See diagnoses for a specific encounter">
 SELECT 
-    plh.PROBLEM_LIST_ID,
-    plh.LINE as change_number,
-    plh.HX_STATUS_C_NAME as status_at_time,
-    plh.HX_ENTRY_INST as change_timestamp,
-    plh.HX_ENTRY_USER_ID_NAME as changed_by,
-    plh.HX_PROBLEM_EPT_CSN as encounter_id
-FROM PROBLEM_LIST_HX plh
-ORDER BY plh.PROBLEM_LIST_ID, plh.LINE;
-</example-query>
-
-Each row represents a snapshot of the problem at a specific point in time, showing who made changes and during which encounter.
-
-### Encounter Diagnoses: The Visit-Specific View
-
-While problem lists track ongoing conditions, PAT_ENC_DX captures diagnoses specific to each encounter:
-
-<example-query description="Examine diagnoses from a specific encounter with problem linkage">
-SELECT 
-    ped.LINE as dx_priority,
-    ped.PRIMARY_DX_YN as is_primary,
-    edg.DX_NAME,
-    CASE 
-        WHEN ped.DX_LINK_PROB_ID IS NOT NULL THEN 'Yes'
-        ELSE 'No'
-    END as linked_to_problem,
-    ped.DX_CHRONIC_YN as is_chronic
-FROM PAT_ENC_DX ped
+    ped.LINE as Priority,
+    edg.DX_NAME as Diagnosis,
+    ped.PRIMARY_DX_YN as Is_Primary
+FROM PAT_ENC pe
+JOIN PAT_ENC_DX ped ON pe.PAT_ENC_CSN_ID = ped.PAT_ENC_CSN_ID
 JOIN CLARITY_EDG edg ON ped.DX_ID = edg.DX_ID
-WHERE ped.PAT_ENC_CSN_ID = 948004323.0
-ORDER BY ped.LINE;
-</example-query>
-
-Key insights from encounter diagnoses:
-- Each encounter can have multiple diagnoses
-- One should be marked as primary (PRIMARY_DX_YN = 'Y')
-- Diagnoses can link back to problem list entries
-- The system tracks whether each diagnosis is chronic
-
-### The Power of Linked Diagnoses
-
-When encounter diagnoses link to problem lists, it creates powerful clinical intelligence:
-
-<example-query description="Find encounters where existing problems were addressed">
-SELECT 
-    pe.CONTACT_DATE,
-    edg_enc.DX_NAME as encounter_diagnosis,
-    edg_prob.DX_NAME as linked_problem,
-    pl.NOTED_DATE as problem_start_date
-FROM PAT_ENC_DX ped
-JOIN PAT_ENC pe ON ped.PAT_ENC_CSN_ID = pe.PAT_ENC_CSN_ID
-JOIN CLARITY_EDG edg_enc ON ped.DX_ID = edg_enc.DX_ID
-JOIN PROBLEM_LIST pl ON ped.DX_LINK_PROB_ID = pl.PROBLEM_LIST_ID
-JOIN CLARITY_EDG edg_prob ON pl.DX_ID = edg_prob.DX_ID
-WHERE ped.DX_LINK_PROB_ID IS NOT NULL
-  AND pe.PAT_ID = 'Z7004242'
-ORDER BY pe.CONTACT_DATE DESC
+WHERE pe.PAT_ID = 'Z7004242'
+  AND EXISTS (SELECT 1 FROM PAT_ENC_DX WHERE PAT_ENC_CSN_ID = pe.PAT_ENC_CSN_ID)
+ORDER BY pe.CONTACT_DATE DESC, ped.LINE
 LIMIT 5;
 </example-query>
 
-This linkage helps providers understand which chronic conditions are being actively managed during each visit.
+### Linking Problems to Encounters
 
-### From Clinical Documentation to Billing
+Let's see how problems connect to visits:
 
-The TX_DIAG table bridges clinical documentation to revenue cycle:
-
-<example-query description="See how diagnoses flow to billing transactions">
+<example-query description="Find when problems were addressed in encounters">
 SELECT 
-    td.TX_ID,
-    td.LINE as billing_priority,
-    edg.DX_NAME,
-    td.DX_QUALIFIER_C_NAME as status,
-    td.POST_DATE
-FROM TX_DIAG td
-JOIN CLARITY_EDG edg ON td.DX_ID = edg.DX_ID
-WHERE td.LINE = 1  -- Primary diagnoses for billing
-ORDER BY td.POST_DATE DESC
-LIMIT 5;
+    SUBSTR(pe.CONTACT_DATE, 1, 10) as Visit_Date,
+    edg.DX_NAME as Problem_Addressed
+FROM PAT_ENC pe
+JOIN PAT_ENC_DX ped ON pe.PAT_ENC_CSN_ID = ped.PAT_ENC_CSN_ID
+JOIN CLARITY_EDG edg ON ped.DX_ID = edg.DX_ID
+WHERE pe.PAT_ID = 'Z7004242'
+  AND ped.DX_LINK_PROB_ID IS NOT NULL
+ORDER BY pe.CONTACT_DATE DESC;
 </example-query>
 
-Notice how:
-- LINE determines billing priority (1 = primary)
-- Each transaction can have multiple supporting diagnoses
-- The qualifier indicates the diagnosis status
+### Analyzing Care Patterns
 
-### Hospital-Specific Diagnosis Tracking
+Finally, let's analyze how often problems are addressed:
 
-Inpatient care requires additional diagnosis tracking. The HSP_ADMIT_DIAG table captures admission diagnoses:
-
-<example-query description="View hospital admission diagnoses">
+<example-query description="Analyze active problems and care gaps">
 SELECT 
-    had.PAT_ENC_CSN_ID,
-    had.LINE,
-    edg.DX_NAME as admission_diagnosis,
-    pe.HOSP_ADMSN_TIME
-FROM HSP_ADMIT_DIAG had
-JOIN CLARITY_EDG edg ON had.DX_ID = edg.DX_ID
-JOIN PAT_ENC pe ON had.PAT_ENC_CSN_ID = pe.PAT_ENC_CSN_ID;
-</example-query>
-
-Admission diagnoses are crucial for:
-- DRG assignment
-- Medical necessity documentation
-- Quality reporting
-
-### Supporting Clinical Orders with Diagnoses
-
-Epic links diagnoses to orders to establish medical necessity:
-
-<example-query description="See diagnoses supporting procedure orders">
-SELECT 
-    odp.ORDER_PROC_ID,
-    edg.DX_NAME as supporting_diagnosis,
-    odp.DX_QUALIFIER_C_NAME,
-    op.DESCRIPTION as procedure_ordered
-FROM ORDER_DX_PROC odp
-JOIN CLARITY_EDG edg ON odp.DX_ID = edg.DX_ID
-JOIN ORDER_PROC op ON odp.ORDER_PROC_ID = op.ORDER_PROC_ID
-WHERE edg.DX_NAME LIKE '%screening%'
-LIMIT 5;
-</example-query>
-
-This linkage is essential for:
-- Insurance authorization
-- Clinical decision support
-- Appropriate use criteria
-
-### Analyzing Diagnosis Patterns
-
-Understanding diagnosis patterns helps improve care quality:
-
-<example-query description="Analyze primary diagnosis patterns across encounters">
-WITH primary_diagnoses AS (
-    SELECT 
-        ped.DX_ID,
-        COUNT(*) as encounter_count
-    FROM PAT_ENC_DX ped
-    WHERE ped.PRIMARY_DX_YN = 'Y'
-    GROUP BY ped.DX_ID
-)
-SELECT 
-    edg.DX_NAME,
-    pd.encounter_count,
-    ROUND(pd.encounter_count * 100.0 / 
-        (SELECT COUNT(DISTINCT PAT_ENC_CSN_ID) 
-         FROM PAT_ENC_DX WHERE PRIMARY_DX_YN = 'Y'), 1) as pct_of_encounters
-FROM primary_diagnoses pd
-JOIN CLARITY_EDG edg ON pd.DX_ID = edg.DX_ID
-ORDER BY pd.encounter_count DESC
-LIMIT 5;
-</example-query>
-
-This analysis reveals the most common primary diagnoses, helping identify:
-- Service line volumes
-- Population health needs
-- Documentation patterns
-
-### Identifying Care Gaps
-
-The separation of problem lists and encounter diagnoses enables powerful quality analytics:
-
-<example-query description="Analyze active problems and their last encounter dates">
-SELECT 
-    p.PAT_NAME,
-    edg.DX_NAME as problem,
-    pl.PROBLEM_STATUS_C_NAME as status,
-    SUBSTR(pl.NOTED_DATE, 1, 10) as problem_start,
-    SUBSTR(MAX(pe.CONTACT_DATE), 1, 10) as last_encounter,
-    CASE 
-        WHEN julianday(MAX(pe.CONTACT_DATE)) > julianday('now', '-30 days') THEN 'Recently seen'
-        WHEN julianday(MAX(pe.CONTACT_DATE)) > julianday('now', '-90 days') THEN 'Needs follow-up'
-        ELSE 'Overdue for care'
-    END as care_status
-FROM PATIENT p
-JOIN PAT_PROBLEM_LIST ppl ON p.PAT_ID = ppl.PAT_ID
-JOIN PROBLEM_LIST pl ON ppl.PROBLEM_LIST_ID = pl.PROBLEM_LIST_ID
+    edg.DX_NAME as Problem,
+    SUBSTR(pl.NOTED_DATE, 1, 10) as Date_Added,
+    COUNT(DISTINCT pe.PAT_ENC_CSN_ID) as Times_Addressed
+FROM PROBLEM_LIST pl
 JOIN CLARITY_EDG edg ON pl.DX_ID = edg.DX_ID
-LEFT JOIN PAT_ENC pe ON p.PAT_ID = pe.PAT_ID
-WHERE pl.PROBLEM_STATUS_C_NAME = 'Active'
-GROUP BY p.PAT_NAME, edg.DX_NAME, pl.PROBLEM_STATUS_C_NAME, pl.NOTED_DATE
-ORDER BY MAX(pe.CONTACT_DATE) ASC;
+JOIN PAT_PROBLEM_LIST ppl ON pl.PROBLEM_LIST_ID = ppl.PROBLEM_LIST_ID
+LEFT JOIN PAT_ENC_DX ped ON ped.DX_LINK_PROB_ID = pl.PROBLEM_LIST_ID
+LEFT JOIN PAT_ENC pe ON ped.PAT_ENC_CSN_ID = pe.PAT_ENC_CSN_ID
+WHERE ppl.PAT_ID = 'Z7004242'
+  AND pl.PROBLEM_STATUS_C_NAME = 'Active'
+GROUP BY edg.DX_NAME, pl.NOTED_DATE;
 </example-query>
 
-This helps identify patients who may need outreach for condition management.
+### Key Tables Summary
 
-### Best Practices for Diagnosis Data Analysis
+**Core Tables:**
+- `CLARITY_EDG` - Master diagnosis definitions
+- `PROBLEM_LIST` - Ongoing health issues
+- `PAT_PROBLEM_LIST` - Links patients to their problems
+- `PAT_ENC_DX` - Encounter-specific diagnoses
 
-**1. Always Join to CLARITY_EDG**
-```sql
--- Get human-readable diagnosis names
-SELECT 
-    any_table.DX_ID,
-    edg.DX_NAME  -- Much better than just the ID
-FROM any_diagnosis_table any_table
-JOIN CLARITY_EDG edg ON any_table.DX_ID = edg.DX_ID;
-```
+**Key Relationships:**
+- Problems can persist across many encounters
+- Each encounter can have multiple diagnoses
+- One diagnosis per encounter should be primary
+- Encounter diagnoses can link to problem list entries
 
-**2. Check for Primary Diagnosis Integrity**
-```sql
--- Ensure each encounter has exactly one primary
-SELECT 
-    PAT_ENC_CSN_ID,
-    SUM(CASE WHEN PRIMARY_DX_YN = 'Y' THEN 1 ELSE 0 END) as primary_count
-FROM PAT_ENC_DX
-GROUP BY PAT_ENC_CSN_ID
-HAVING primary_count != 1;
-```
+### Beyond the Basics
 
-**3. Use Problem-Diagnosis Links**
-```sql
--- Leverage the built-in relationships
-SELECT *
-FROM PAT_ENC_DX 
-WHERE DX_LINK_PROB_ID IS NOT NULL;  -- Linked to problem list
-```
+The diagnosis system extends to many other areas:
+- **Billing**: TX_DIAG and HSP_ACCT_DX_LIST link diagnoses to charges
+- **Admissions**: HSP_ADMIT_DIAG tracks admission diagnoses
+- **Procedures**: ORDER_DX_PROC justifies procedures with diagnoses
+- **History**: PROBLEM_LIST_HX tracks all changes over time
 
-**4. Consider Diagnosis History**
-```sql
--- Don't forget the audit trail
-SELECT *
-FROM PROBLEM_LIST_HX
-WHERE PROBLEM_LIST_ID = ?
-ORDER BY LINE;  -- Chronological order
-```
+### Common Pitfalls
+
+1. **Missing Joins**: Always join to CLARITY_EDG for readable names
+2. **Status Filtering**: Remember to filter by PROBLEM_STATUS_C_NAME
+3. **Primary Diagnosis**: Only one diagnosis per encounter should have PRIMARY_DX_YN = 'Y'
+4. **Date Formats**: Epic dates are strings, use SUBSTR for cleaner display
 
 ### Summary
 
-Epic's diagnosis domain implements a sophisticated two-track system:
-
-1. **Problem Lists** provide the longitudinal view of ongoing conditions
-2. **Encounter Diagnoses** capture visit-specific documentation
-3. **Linkages** connect the two for clinical intelligence
-4. **History Tables** maintain complete audit trails
-5. **Integration Tables** support billing and quality reporting
-
-This design enables providers to maintain comprehensive patient histories while documenting specific encounters, supporting both clinical care and administrative needs. The clear separation with optional linking provides flexibility while maintaining data integrity.
-
-Remember: effective diagnosis documentation is the foundation for quality care, accurate billing, and meaningful analytics. Understanding these data structures empowers you to extract valuable insights from Epic's clinical data.
+Epic's dual diagnosis system provides both longitudinal problem tracking and encounter-specific documentation. Understanding how these systems work together is essential for:
+- Clinical decision support
+- Quality reporting
+- Population health management
+- Revenue cycle optimization

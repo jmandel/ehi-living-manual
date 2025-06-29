@@ -34,42 +34,14 @@ The system tracks:
 
 ### Understanding the Status Lifecycle
 
-Health maintenance items flow through a sophisticated status lifecycle:
-
-<example-query description="Analyze the distribution of health maintenance statuses across all patients">
-SELECT 
-    HM_STATUS_C_NAME as Status,
-    COUNT(*) as Occurrences,
-    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM HM_HISTORICAL_STATUS WHERE HM_STATUS_C_NAME IS NOT NULL), 2) as Percentage,
-    CASE HM_STATUS_C_NAME
-        WHEN 'Overdue' THEN 'Action needed'
-        WHEN 'Due On' THEN 'Due now'
-        WHEN 'Due Soon' THEN 'Coming due'
-        WHEN 'Not Due' THEN 'Up to date'
-        WHEN 'Completed' THEN 'Done'
-        WHEN 'Hidden' THEN 'Clinical only'
-        WHEN 'Aged Out' THEN 'Too old'
-        ELSE 'Other'
-    END as Meaning
-FROM HM_HISTORICAL_STATUS
-WHERE HM_STATUS_C_NAME IS NOT NULL
-GROUP BY HM_STATUS_C_NAME
-ORDER BY 
-    CASE HM_STATUS_C_NAME
-        WHEN 'Overdue' THEN 1
-        WHEN 'Due On' THEN 2
-        WHEN 'Due Soon' THEN 3
-        WHEN 'Not Due' THEN 4
-        WHEN 'Completed' THEN 5
-        ELSE 6
-    END;
-</example-query>
-
-Key insights:
-- **34% Hidden**: Many items hidden from patient view
-- **18% Aged Out**: Patients who exceeded age eligibility
-- **16% Due On**: Currently due for service
-- **7% Overdue**: Missed prevention opportunities
+Health maintenance items flow through these key statuses:
+- **Not Due**: Up to date
+- **Due Soon**: Coming due within warning period  
+- **Due On**: Currently due
+- **Overdue**: Past due date
+- **Completed**: Service done
+- **Hidden**: Not shown to patients
+- **Aged Out**: Too old for service
 
 ### Patient-Specific Prevention Journey
 
@@ -120,29 +92,7 @@ Completion sources:
 
 ### Tracking Immunization Completions
 
-Let's see recent immunization activity for our patient:
-
-<example-query description="View recent immunization completions with timing details">
-SELECT 
-    DATE(HM_COMP_UTC_DTTM) as Completion_Date,
-    COUNT(*) as Immunizations_Given,
-    TIME(MIN(HM_COMP_UTC_DTTM)) as First_Time,
-    TIME(MAX(HM_COMP_UTC_DTTM)) as Last_Time,
-    CASE 
-        WHEN COUNT(*) > 5 THEN 'Multiple vaccines batch'
-        WHEN COUNT(*) > 1 THEN CAST(COUNT(*) AS TEXT) || ' vaccines given'
-        ELSE 'Single vaccine'
-    END as Pattern
-FROM HM_HISTORY
-WHERE PAT_ID = 'Z7004242'
-  AND HM_COMP_TYPE_C_NAME = 'Immunization'
-  AND HM_COMP_UTC_DTTM IS NOT NULL
-GROUP BY DATE(HM_COMP_UTC_DTTM)
-ORDER BY Completion_Date DESC
-LIMIT 10;
-</example-query>
-
-Shows batch immunization patterns - multiple vaccines given during single visits for efficiency.
+The system tracks when immunizations are given, often recording multiple vaccines administered during a single visit for efficiency.
 
 ### Population Health Analytics
 
@@ -182,28 +132,7 @@ This reveals organizational care gaps requiring targeted interventions.
 
 ### The Forecasting Engine
 
-Epic calculates when preventive care will be due:
-
-<example-query description="Examine forecast calculations for upcoming preventive care">
-SELECT 
-    fi.HM_FORECAST_TOPIC_ID_NAME as Topic,
-    fi.EARLIEST_VALID_DATE as Forecast_Date,
-    ps.HMT_LAST_UPDATE_DT as Last_Updated,
-    CASE 
-        WHEN fi.EARLIEST_VALID_DATE IS NULL THEN 'No forecast'
-        WHEN DATE(fi.EARLIEST_VALID_DATE) <= DATE('now') THEN 'Due now'
-        WHEN DATE(fi.EARLIEST_VALID_DATE) <= DATE('now', '+30 days') THEN 'Due within 30 days'
-        WHEN DATE(fi.EARLIEST_VALID_DATE) <= DATE('now', '+90 days') THEN 'Due within 90 days'
-        ELSE 'Due later'
-    END as Urgency
-FROM HM_FORECAST_INFO fi
-JOIN PATIENT_HMT_STATUS ps ON fi.PAT_ID = ps.PAT_ID
-WHERE fi.PAT_ID = 'Z7004242'
-  AND fi.EARLIEST_VALID_DATE IS NOT NULL
-ORDER BY fi.EARLIEST_VALID_DATE;
-</example-query>
-
-The forecast helps with:
+Epic's HM_FORECAST_INFO table calculates when services will be due, enabling:
 - Proactive scheduling
 - Reminder timing
 - Pre-visit planning
@@ -211,55 +140,14 @@ The forecast helps with:
 
 ### Age-Based Eligibility
 
-Many preventive services are age-specific:
-
-<example-query description="Analyze age-related patterns in health maintenance">
-SELECT 
-    HM_STATUS_C_NAME as Status,
-    COUNT(DISTINCT CASE 
-        WHEN HM_TOPIC_ID_NAME LIKE '%HPV%' THEN PAT_ID 
-    END) as HPV_Patients,
-    COUNT(DISTINCT CASE 
-        WHEN HM_TOPIC_ID_NAME LIKE '%Zoster%' THEN PAT_ID 
-    END) as Shingles_Patients,
-    COUNT(DISTINCT CASE 
-        WHEN HM_TOPIC_ID_NAME LIKE '%RSV%' THEN PAT_ID 
-    END) as RSV_Patients
-FROM HM_HISTORICAL_STATUS
-WHERE HM_STATUS_C_NAME IN ('Aged Out', 'Not Due', 'Due On', 'Overdue')
-GROUP BY HM_STATUS_C_NAME
-ORDER BY 
-    CASE HM_STATUS_C_NAME
-        WHEN 'Overdue' THEN 1
-        WHEN 'Due On' THEN 2
-        WHEN 'Not Due' THEN 3
-        WHEN 'Aged Out' THEN 4
-    END;
-</example-query>
-
-Shows how age eligibility affects different vaccines:
+Many preventive services are age-specific. The "Aged Out" status indicates when patients exceed eligibility:
 - HPV: Ages 9-26
 - Shingles: 50+
 - RSV: Under 20 months
 
 ### Lab Results Driving Completions
 
-Some screenings complete automatically based on lab results:
-
-<example-query description="Track how lab results satisfy screening requirements">
-SELECT 
-    DATE(HM_COMP_UTC_DTTM) as Completion_Date,
-    COUNT(*) as Lab_Completions,
-    COUNT(DISTINCT PAT_ID) as Unique_Patients
-FROM HM_HISTORY
-WHERE HM_COMP_TYPE_C_NAME = 'Result Component'
-  AND HM_COMP_UTC_DTTM IS NOT NULL
-GROUP BY DATE(HM_COMP_UTC_DTTM)
-ORDER BY Completion_Date DESC
-LIMIT 10;
-</example-query>
-
-This automation:
+Some screenings complete automatically when lab results are received. This automation:
 - Reduces manual documentation
 - Ensures accurate tracking
 - Closes care gaps automatically
@@ -267,39 +155,7 @@ This automation:
 
 ### Building Outreach Lists
 
-Identify patients needing preventive care outreach:
-
-<example-query description="Create prioritized outreach list for overdue patients">
-WITH PatientPriority AS (
-    SELECT 
-        hs.PAT_ID,
-        COUNT(DISTINCT hs.HM_TOPIC_ID) as Overdue_Items,
-        GROUP_CONCAT(
-            CASE 
-                WHEN hs.HM_TOPIC_ID_NAME LIKE '%COVID%' THEN 'COVID'
-                WHEN hs.HM_TOPIC_ID_NAME LIKE '%Influenza%' THEN 'Flu'
-                ELSE SUBSTR(hs.HM_TOPIC_ID_NAME, 1, 15)
-            END, ', '
-        ) as Overdue_Services
-    FROM HM_HISTORICAL_STATUS hs
-    WHERE hs.HM_STATUS_C_NAME = 'Overdue'
-    GROUP BY hs.PAT_ID
-)
-SELECT 
-    PAT_ID,
-    Overdue_Items,
-    Overdue_Services,
-    CASE 
-        WHEN Overdue_Items >= 5 THEN '🔴 High Priority'
-        WHEN Overdue_Items >= 3 THEN '🟠 Medium Priority'
-        ELSE '🟡 Low Priority'
-    END as Outreach_Priority
-FROM PatientPriority
-ORDER BY Overdue_Items DESC
-LIMIT 20;
-</example-query>
-
-This enables:
+Healthcare teams can query for patients with overdue preventive care to enable:
 - Targeted outreach campaigns
 - Resource allocation
 - Priority scheduling
