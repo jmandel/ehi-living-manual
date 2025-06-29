@@ -1006,5 +1006,887 @@
     "description": "Create a comprehensive patient safety summary",
     "chapterId": "02-05-medications-allergies-and-immunizations",
     "index": 13
+  },
+  {
+    "id": "10-01-tracking-patient-conditions-diagnoses-and-problems-0",
+    "originalQuery": "SELECT \n    DX_ID,\n    DX_NAME,\n    PAT_FRIENDLY_TEXT\nFROM CLARITY_EDG\nWHERE DX_NAME LIKE '%concussion%' \n   OR DX_NAME LIKE '%reflux%'\n   OR DX_NAME LIKE '%hypertension%'\nORDER BY DX_NAME;",
+    "description": "Explore the diagnosis master table to see available diagnoses",
+    "chapterId": "10-01-tracking-patient-conditions-diagnoses-and-problems",
+    "index": 0
+  },
+  {
+    "id": "10-01-tracking-patient-conditions-diagnoses-and-problems-1",
+    "originalQuery": "SELECT \n    pl.PROBLEM_LIST_ID,\n    edg.DX_NAME,\n    pl.PROBLEM_STATUS_C_NAME as status,\n    pl.CHRONIC_YN as is_chronic,\n    pl.NOTED_DATE,\n    pl.SHOW_IN_MYC_YN as visible_to_patient\nFROM PROBLEM_LIST pl\nJOIN CLARITY_EDG edg ON pl.DX_ID = edg.DX_ID\nWHERE pl.PROBLEM_STATUS_C_NAME = 'Active';",
+    "description": "View active problems with their key attributes",
+    "chapterId": "10-01-tracking-patient-conditions-diagnoses-and-problems",
+    "index": 1
+  },
+  {
+    "id": "10-01-tracking-patient-conditions-diagnoses-and-problems-2",
+    "originalQuery": "SELECT \n    p.PAT_NAME,\n    ppl.LINE as problem_number,\n    edg.DX_NAME,\n    pl.NOTED_DATE,\n    JULIANDAY('now') - JULIANDAY(pl.NOTED_DATE) as days_on_list\nFROM PATIENT p\nJOIN PAT_PROBLEM_LIST ppl ON p.PAT_ID = ppl.PAT_ID\nJOIN PROBLEM_LIST pl ON ppl.PROBLEM_LIST_ID = pl.PROBLEM_LIST_ID\nJOIN CLARITY_EDG edg ON pl.DX_ID = edg.DX_ID\nWHERE p.PAT_ID = 'Z7004242'\nORDER BY ppl.LINE;",
+    "description": "See how problems are linked to a specific patient",
+    "chapterId": "10-01-tracking-patient-conditions-diagnoses-and-problems",
+    "index": 2
+  },
+  {
+    "id": "10-01-tracking-patient-conditions-diagnoses-and-problems-3",
+    "originalQuery": "SELECT \n    plh.PROBLEM_LIST_ID,\n    plh.LINE as change_number,\n    plh.HX_STATUS_C_NAME as status_at_time,\n    plh.HX_ENTRY_INST as change_timestamp,\n    plh.HX_ENTRY_USER_ID_NAME as changed_by,\n    plh.HX_PROBLEM_EPT_CSN as encounter_id\nFROM PROBLEM_LIST_HX plh\nORDER BY plh.PROBLEM_LIST_ID, plh.LINE;",
+    "description": "View the complete history of changes to problem lists",
+    "chapterId": "10-01-tracking-patient-conditions-diagnoses-and-problems",
+    "index": 3
+  },
+  {
+    "id": "10-01-tracking-patient-conditions-diagnoses-and-problems-4",
+    "originalQuery": "SELECT \n    ped.LINE as dx_priority,\n    ped.PRIMARY_DX_YN as is_primary,\n    edg.DX_NAME,\n    CASE \n        WHEN ped.DX_LINK_PROB_ID IS NOT NULL THEN 'Yes'\n        ELSE 'No'\n    END as linked_to_problem,\n    ped.DX_CHRONIC_YN as is_chronic\nFROM PAT_ENC_DX ped\nJOIN CLARITY_EDG edg ON ped.DX_ID = edg.DX_ID\nWHERE ped.PAT_ENC_CSN_ID = 948004323.0\nORDER BY ped.LINE;",
+    "description": "Examine diagnoses from a specific encounter with problem linkage",
+    "chapterId": "10-01-tracking-patient-conditions-diagnoses-and-problems",
+    "index": 4
+  },
+  {
+    "id": "10-01-tracking-patient-conditions-diagnoses-and-problems-5",
+    "originalQuery": "SELECT \n    pe.CONTACT_DATE,\n    edg_enc.DX_NAME as encounter_diagnosis,\n    edg_prob.DX_NAME as linked_problem,\n    pl.NOTED_DATE as problem_start_date\nFROM PAT_ENC_DX ped\nJOIN PAT_ENC pe ON ped.PAT_ENC_CSN_ID = pe.PAT_ENC_CSN_ID\nJOIN CLARITY_EDG edg_enc ON ped.DX_ID = edg_enc.DX_ID\nJOIN PROBLEM_LIST pl ON ped.DX_LINK_PROB_ID = pl.PROBLEM_LIST_ID\nJOIN CLARITY_EDG edg_prob ON pl.DX_ID = edg_prob.DX_ID\nWHERE ped.DX_LINK_PROB_ID IS NOT NULL\n  AND pe.PAT_ID = 'Z7004242'\nORDER BY pe.CONTACT_DATE DESC\nLIMIT 5;",
+    "description": "Find encounters where existing problems were addressed",
+    "chapterId": "10-01-tracking-patient-conditions-diagnoses-and-problems",
+    "index": 5
+  },
+  {
+    "id": "10-01-tracking-patient-conditions-diagnoses-and-problems-6",
+    "originalQuery": "SELECT \n    td.TX_ID,\n    td.LINE as billing_priority,\n    edg.DX_NAME,\n    td.DX_QUALIFIER_C_NAME as status,\n    td.POST_DATE\nFROM TX_DIAG td\nJOIN CLARITY_EDG edg ON td.DX_ID = edg.DX_ID\nWHERE td.LINE = 1  -- Primary diagnoses for billing\nORDER BY td.POST_DATE DESC\nLIMIT 5;",
+    "description": "See how diagnoses flow to billing transactions",
+    "chapterId": "10-01-tracking-patient-conditions-diagnoses-and-problems",
+    "index": 6
+  },
+  {
+    "id": "10-01-tracking-patient-conditions-diagnoses-and-problems-7",
+    "originalQuery": "SELECT \n    had.PAT_ENC_CSN_ID,\n    had.LINE,\n    edg.DX_NAME as admission_diagnosis,\n    pe.HOSP_ADMSN_TIME\nFROM HSP_ADMIT_DIAG had\nJOIN CLARITY_EDG edg ON had.DX_ID = edg.DX_ID\nJOIN PAT_ENC pe ON had.PAT_ENC_CSN_ID = pe.PAT_ENC_CSN_ID;",
+    "description": "View hospital admission diagnoses",
+    "chapterId": "10-01-tracking-patient-conditions-diagnoses-and-problems",
+    "index": 7
+  },
+  {
+    "id": "10-01-tracking-patient-conditions-diagnoses-and-problems-8",
+    "originalQuery": "SELECT \n    odp.ORDER_PROC_ID,\n    edg.DX_NAME as supporting_diagnosis,\n    odp.DX_QUALIFIER_C_NAME,\n    op.DESCRIPTION as procedure_ordered\nFROM ORDER_DX_PROC odp\nJOIN CLARITY_EDG edg ON odp.DX_ID = edg.DX_ID\nJOIN ORDER_PROC op ON odp.ORDER_PROC_ID = op.ORDER_PROC_ID\nWHERE edg.DX_NAME LIKE '%screening%'\nLIMIT 5;",
+    "description": "See diagnoses supporting procedure orders",
+    "chapterId": "10-01-tracking-patient-conditions-diagnoses-and-problems",
+    "index": 8
+  },
+  {
+    "id": "10-01-tracking-patient-conditions-diagnoses-and-problems-9",
+    "originalQuery": "WITH primary_diagnoses AS (\n    SELECT \n        ped.DX_ID,\n        COUNT(*) as encounter_count\n    FROM PAT_ENC_DX ped\n    WHERE ped.PRIMARY_DX_YN = 'Y'\n    GROUP BY ped.DX_ID\n)\nSELECT \n    edg.DX_NAME,\n    pd.encounter_count,\n    ROUND(pd.encounter_count * 100.0 / \n        (SELECT COUNT(DISTINCT PAT_ENC_CSN_ID) \n         FROM PAT_ENC_DX WHERE PRIMARY_DX_YN = 'Y'), 1) as pct_of_encounters\nFROM primary_diagnoses pd\nJOIN CLARITY_EDG edg ON pd.DX_ID = edg.DX_ID\nORDER BY pd.encounter_count DESC\nLIMIT 5;",
+    "description": "Analyze primary diagnosis patterns across encounters",
+    "chapterId": "10-01-tracking-patient-conditions-diagnoses-and-problems",
+    "index": 9
+  },
+  {
+    "id": "10-01-tracking-patient-conditions-diagnoses-and-problems-10",
+    "originalQuery": "SELECT \n    p.PAT_NAME,\n    edg.DX_NAME as problem,\n    pl.PROBLEM_STATUS_C_NAME as status,\n    SUBSTR(pl.NOTED_DATE, 1, 10) as problem_start,\n    SUBSTR(MAX(pe.CONTACT_DATE), 1, 10) as last_encounter,\n    CASE \n        WHEN julianday(MAX(pe.CONTACT_DATE)) > julianday('now', '-30 days') THEN 'Recently seen'\n        WHEN julianday(MAX(pe.CONTACT_DATE)) > julianday('now', '-90 days') THEN 'Needs follow-up'\n        ELSE 'Overdue for care'\n    END as care_status\nFROM PATIENT p\nJOIN PAT_PROBLEM_LIST ppl ON p.PAT_ID = ppl.PAT_ID\nJOIN PROBLEM_LIST pl ON ppl.PROBLEM_LIST_ID = pl.PROBLEM_LIST_ID\nJOIN CLARITY_EDG edg ON pl.DX_ID = edg.DX_ID\nLEFT JOIN PAT_ENC pe ON p.PAT_ID = pe.PAT_ID\nWHERE pl.PROBLEM_STATUS_C_NAME = 'Active'\nGROUP BY p.PAT_NAME, edg.DX_NAME, pl.PROBLEM_STATUS_C_NAME, pl.NOTED_DATE\nORDER BY MAX(pe.CONTACT_DATE) ASC;",
+    "description": "Analyze active problems and their last encounter dates",
+    "chapterId": "10-01-tracking-patient-conditions-diagnoses-and-problems",
+    "index": 10
+  },
+  {
+    "id": "10-01-tracking-patient-safety-allergies-immunizations-0",
+    "originalQuery": "SELECT \n    CASE \n        WHEN name LIKE '%ALLERG%' OR name LIKE '%ALG%' THEN 'Allergy Tables'\n        WHEN name LIKE '%IMMUN%' OR name LIKE '%IMMUNE%' THEN 'Immunization Tables'\n    END as domain,\n    COUNT(*) as table_count,\n    GROUP_CONCAT(name, ', ') as table_names\nFROM sqlite_master \nWHERE type = 'table' \n  AND (name LIKE '%ALLERG%' OR name LIKE '%ALG%' \n       OR name LIKE '%IMMUN%' OR name LIKE '%IMMUNE%')\nGROUP BY domain\nORDER BY domain;",
+    "description": "Discover the scope of allergy and immunization tracking",
+    "chapterId": "10-01-tracking-patient-safety-allergies-immunizations",
+    "index": 0
+  },
+  {
+    "id": "10-01-tracking-patient-safety-allergies-immunizations-1",
+    "originalQuery": "SELECT \n    a.ALLERGEN_ID_ALLERGEN_NAME as Allergen,\n    a.ALLERGY_SEVERITY_C_NAME as Severity,\n    a.SEVERITY_C_NAME as Type,\n    a.DATE_NOTED,\n    ar.REACTION_C_NAME as Reaction\nFROM PAT_ALLERGIES pa\nJOIN ALLERGY a ON pa.ALLERGY_RECORD_ID = a.ALLERGY_ID\nLEFT JOIN ALLERGY_REACTIONS ar ON a.ALLERGY_ID = ar.ALLERGY_ID\nWHERE pa.PAT_ID = 'Z7004242'\n  AND a.ALRGY_STATUS_C_NAME = 'Active'\nORDER BY a.ALLERGY_SEVERITY_C_NAME DESC, a.ALLERGEN_ID_ALLERGEN_NAME;",
+    "description": "View a patient's active allergies with severity",
+    "chapterId": "10-01-tracking-patient-safety-allergies-immunizations",
+    "index": 1
+  },
+  {
+    "id": "10-01-tracking-patient-safety-allergies-immunizations-2",
+    "originalQuery": "SELECT \n    ALRG_UPDT_DATE as Review_Date,\n    ALRG_UPDT_USER_ID_NAME as Reviewed_By,\n    ALRG_HX_REV_STAT_C_NAME as Review_Status,\n    ALRG_HX_REV_REAS_C_NAME as Review_Reason,\n    ALRG_HX_REV_EPT_CSN as Encounter_ID\nFROM PATIENT_ALG_UPD_HX\nWHERE PAT_ID = 'Z7004242'\nORDER BY LINE DESC\nLIMIT 5;",
+    "description": "Track allergy review compliance",
+    "chapterId": "10-01-tracking-patient-safety-allergies-immunizations",
+    "index": 2
+  },
+  {
+    "id": "10-01-tracking-patient-safety-allergies-immunizations-3",
+    "originalQuery": "SELECT \n    a.ALLERGEN_ID_ALLERGEN_NAME as Allergen,\n    COUNT(ar.LINE) as Reaction_Count,\n    GROUP_CONCAT(ar.REACTION_C_NAME, ' + ') as All_Reactions,\n    a.ALLERGY_SEVERITY_C_NAME as Severity\nFROM ALLERGY a\nJOIN ALLERGY_REACTIONS ar ON a.ALLERGY_ID = ar.ALLERGY_ID\nWHERE a.ALRGY_STATUS_C_NAME = 'Active'\n  AND a.ALLERGY_ID IN (SELECT ALLERGY_RECORD_ID FROM PAT_ALLERGIES WHERE PAT_ID = 'Z7004242')\nGROUP BY a.ALLERGY_ID, a.ALLERGEN_ID_ALLERGEN_NAME, a.ALLERGY_SEVERITY_C_NAME\nORDER BY Reaction_Count DESC;",
+    "description": "Find allergens causing multiple reaction types",
+    "chapterId": "10-01-tracking-patient-safety-allergies-immunizations",
+    "index": 3
+  },
+  {
+    "id": "10-01-tracking-patient-safety-allergies-immunizations-4",
+    "originalQuery": "SELECT \n    i.IMMUNZATN_ID_NAME as Vaccine,\n    i.IMMUNE_DATE as Date_Given,\n    CASE \n        WHEN i.IMM_HISTORIC_ADM_YN = 'Y' THEN 'Historical'\n        ELSE 'Given Here'\n    END as Record_Type,\n    i.DOSE as Dose_Number,\n    i.ROUTE_C_NAME as Route,\n    i.SITE_C_NAME as Site,\n    i.LOT as Lot_Number,\n    i.GIVEN_BY_USER_ID_NAME as Administered_By\nFROM IMMUNE i\nJOIN PAT_IMMUNIZATIONS pi ON i.IMMUNE_ID = pi.IMMUNE_ID\nWHERE pi.PAT_ID = 'Z7004242'\nORDER BY i.IMMUNE_DATE DESC\nLIMIT 10;",
+    "description": "View comprehensive immunization history",
+    "chapterId": "10-01-tracking-patient-safety-allergies-immunizations",
+    "index": 4
+  },
+  {
+    "id": "10-01-tracking-patient-safety-allergies-immunizations-5",
+    "originalQuery": "SELECT DISTINCT\n    i.IMMUNZATN_ID_NAME as Vaccine,\n    ih.IMMNZTN_HX_STATUS_C_NAME as Historical_Status,\n    ih.IMMNZTN_HX_ENT_DATE as Entry_Date,\n    ih.IMMNZTN_HX_ENTRY_ID_NAME as Entered_By,\n    'Shows audit trail of immunization documentation' as Purpose\nFROM IMMUNE i\nJOIN IMMUNE_HISTORY ih ON i.IMMUNE_ID = ih.IMMUNE_ID\nJOIN PAT_IMMUNIZATIONS pi ON i.IMMUNE_ID = pi.IMMUNE_ID\nWHERE pi.PAT_ID = 'Z7004242'\n  AND ih.IMMNZTN_HX_STATUS_C_NAME IS NOT NULL\nORDER BY ih.IMMNZTN_HX_ENT_DATE DESC\nLIMIT 5;",
+    "description": "Examine immunization record changes",
+    "chapterId": "10-01-tracking-patient-safety-allergies-immunizations",
+    "index": 5
+  },
+  {
+    "id": "10-01-tracking-patient-safety-allergies-immunizations-6",
+    "originalQuery": "SELECT \n    a.ALLERGEN_ID_ALLERGEN_NAME as Allergen,\n    COUNT(DISTINCT pa.PAT_ID) as Patient_Count,\n    a.ALLERGY_SEVERITY_C_NAME as Common_Severity,\n    GROUP_CONCAT(DISTINCT ar.REACTION_C_NAME) as Typical_Reactions\nFROM PAT_ALLERGIES pa\nJOIN ALLERGY a ON pa.ALLERGY_RECORD_ID = a.ALLERGY_ID\nLEFT JOIN ALLERGY_REACTIONS ar ON a.ALLERGY_ID = ar.ALLERGY_ID\nWHERE a.ALRGY_STATUS_C_NAME = 'Active'\nGROUP BY a.ALLERGEN_ID_ALLERGEN_NAME, a.ALLERGY_SEVERITY_C_NAME\nHAVING Patient_Count >= 1\nORDER BY Patient_Count DESC\nLIMIT 10;",
+    "description": "Analyze allergy patterns across patients",
+    "chapterId": "10-01-tracking-patient-safety-allergies-immunizations",
+    "index": 6
+  },
+  {
+    "id": "10-01-tracking-patient-safety-allergies-immunizations-7",
+    "originalQuery": "WITH covid_doses AS (\n    SELECT \n        pi.PAT_ID,\n        i.IMMUNZATN_ID_NAME,\n        i.IMMUNE_DATE,\n        ROW_NUMBER() OVER (\n            PARTITION BY pi.PAT_ID \n            ORDER BY i.IMMUNE_DATE\n        ) as Dose_Number\n    FROM PAT_IMMUNIZATIONS pi\n    JOIN IMMUNE i ON pi.IMMUNE_ID = i.IMMUNE_ID\n    WHERE i.IMMUNZATN_ID_NAME LIKE '%COVID%'\n      AND pi.PAT_ID = 'Z7004242'\n)\nSELECT \n    Dose_Number,\n    IMMUNZATN_ID_NAME as Vaccine_Type,\n    IMMUNE_DATE,\n    JULIANDAY(IMMUNE_DATE) - JULIANDAY(LAG(IMMUNE_DATE) OVER (ORDER BY IMMUNE_DATE)) as Days_Between_Doses\nFROM covid_doses\nORDER BY Dose_Number;",
+    "description": "Track COVID vaccine series",
+    "chapterId": "10-01-tracking-patient-safety-allergies-immunizations",
+    "index": 7
+  },
+  {
+    "id": "10-01-tracking-patient-safety-allergies-immunizations-8",
+    "originalQuery": "SELECT \n    af.PAT_ID,\n    af.ALRGY_FLAG_YN as Has_Allergies_Flag,\n    COUNT(DISTINCT a.ALLERGY_ID) as Active_Allergy_Count,\n    af.ALRGY_FLAG_UPD_DTTM as Flag_Last_Updated,\n    af.ALRGY_FLG_UPD_BY_ID_NAME as Updated_By\nFROM ALLERGY_FLAG af\nLEFT JOIN PAT_ALLERGIES pa ON af.PAT_ID = pa.PAT_ID\nLEFT JOIN ALLERGY a ON pa.ALLERGY_RECORD_ID = a.ALLERGY_ID \n    AND a.ALRGY_STATUS_C_NAME = 'Active'\nWHERE af.PAT_ID = 'Z7004242'\nGROUP BY af.PAT_ID, af.ALRGY_FLAG_YN, af.ALRGY_FLAG_UPD_DTTM, af.ALRGY_FLG_UPD_BY_ID_NAME;",
+    "description": "Show allergy flag status",
+    "chapterId": "10-01-tracking-patient-safety-allergies-immunizations",
+    "index": 8
+  },
+  {
+    "id": "10-01-tracking-patient-safety-allergies-immunizations-9",
+    "originalQuery": "-- Find patients overdue for allergy review\nWITH last_review AS (\n    SELECT \n        PAT_ID,\n        MAX(ALRG_UPDT_DATE) as Last_Review_Date\n    FROM PATIENT_ALG_UPD_HX\n    GROUP BY PAT_ID\n)\nSELECT \n    p.PAT_ID,\n    p.PAT_NAME,\n    lr.Last_Review_Date,\n    CAST(JULIANDAY('now') - JULIANDAY(lr.Last_Review_Date) AS INTEGER) as Days_Since_Review,\n    CASE \n        WHEN JULIANDAY('now') - JULIANDAY(lr.Last_Review_Date) > 365 THEN 'Overdue'\n        WHEN JULIANDAY('now') - JULIANDAY(lr.Last_Review_Date) > 300 THEN 'Due Soon'\n        ELSE 'Current'\n    END as Review_Status\nFROM PATIENT p\nLEFT JOIN last_review lr ON p.PAT_ID = lr.PAT_ID\nWHERE p.PAT_ID = 'Z7004242';",
+    "description": "Identify compliance gaps",
+    "chapterId": "10-01-tracking-patient-safety-allergies-immunizations",
+    "index": 9
+  },
+  {
+    "id": "10-02-understanding-patient-identity-demographics-0",
+    "originalQuery": "SELECT \n    CASE \n        WHEN name LIKE 'PATIENT%' AND name NOT LIKE 'PATIENT_%' THEN 'Core Patient Tables'\n        WHEN name LIKE 'PAT_%' THEN 'Patient Attribute Tables'\n        WHEN name LIKE '%IDENTITY%' THEN 'Identity Tables'\n        WHEN name LIKE '%RELATIONSHIP%' THEN 'Relationship Tables'\n        ELSE 'Other Patient Tables'\n    END as table_category,\n    COUNT(*) as table_count\nFROM sqlite_master \nWHERE type = 'table' \n  AND (name LIKE '%PATIENT%' OR name LIKE '%PAT_%' OR name LIKE '%IDENTITY%')\nGROUP BY table_category\nORDER BY table_count DESC;",
+    "description": "Discover the scope of patient data management",
+    "chapterId": "10-02-understanding-patient-identity-demographics",
+    "index": 0
+  },
+  {
+    "id": "10-02-understanding-patient-identity-demographics-1",
+    "originalQuery": "SELECT\n    i.LINE,\n    t.ID_TYPE_NAME as Identifier_Type,\n    i.IDENTITY_ID as Identifier_Value,\n    CASE t.ID_TYPE\n        WHEN 0 THEN 'Epic system-wide ID'\n        WHEN 14 THEN 'Government program ID'\n        WHEN 955 THEN 'Facility-specific MRN'\n    END as Purpose\nFROM IDENTITY_ID i\nJOIN IDENTITY_ID_TYPE t ON i.IDENTITY_TYPE_ID = t.ID_TYPE\nWHERE i.PAT_ID = 'Z7004242'\nORDER BY i.LINE;",
+    "description": "View how one patient has multiple identifiers",
+    "chapterId": "10-02-understanding-patient-identity-demographics",
+    "index": 1
+  },
+  {
+    "id": "10-02-understanding-patient-identity-demographics-2",
+    "originalQuery": "SELECT \n    name as table_name,\n    (SELECT COUNT(*) FROM pragma_table_info(sm.name)) as column_count,\n    CASE \n        WHEN name = 'PATIENT' THEN 'Core demographics'\n        WHEN name = 'PATIENT_2' THEN 'Extended demographics'\n        WHEN name = 'PATIENT_3' THEN 'Clinical demographics'\n        WHEN name = 'PATIENT_4' THEN 'Identity & preferences'\n        WHEN name = 'PATIENT_5' THEN 'Additional clinical'\n        WHEN name = 'PATIENT_6' THEN 'Specialized fields'\n    END as primary_purpose\nFROM sqlite_master sm\nWHERE type = 'table' \n  AND name LIKE 'PATIENT%'\n  AND name NOT LIKE 'PATIENT_%'\nORDER BY name;",
+    "description": "Explore Epic's overflow table pattern",
+    "chapterId": "10-02-understanding-patient-identity-demographics",
+    "index": 2
+  },
+  {
+    "id": "10-02-understanding-patient-identity-demographics-3",
+    "originalQuery": "SELECT \n    p.PAT_ID,\n    p.PAT_NAME,\n    p.SEX_C_NAME as Legal_Sex,\n    p4.GENDER_IDENTITY_C_NAME as Gender_Identity,\n    p4.SEX_ASGN_AT_BIRTH_C_NAME as Sex_Assigned_at_Birth,\n    CASE \n        WHEN p.SEX_C_NAME = p4.GENDER_IDENTITY_C_NAME THEN 'Cisgender'\n        WHEN p4.GENDER_IDENTITY_C_NAME IS NULL THEN 'Not specified'\n        ELSE 'Gender diverse'\n    END as Identity_Status\nFROM PATIENT p\nLEFT JOIN PATIENT_4 p4 ON p.PAT_ID = p4.PAT_ID\nWHERE p.PAT_ID = 'Z7004242';",
+    "description": "See how Epic tracks sex and gender separately",
+    "chapterId": "10-02-understanding-patient-identity-demographics",
+    "index": 3
+  },
+  {
+    "id": "10-02-understanding-patient-identity-demographics-4",
+    "originalQuery": "SELECT \n    LINE as Version,\n    DATE(EFF_START_DATE) as Moved_In,\n    CASE \n        WHEN EFF_END_DATE IS NULL OR EFF_END_DATE = '' THEN 'Current Address'\n        ELSE DATE(EFF_END_DATE)\n    END as Moved_Out,\n    CITY_HX || ', ' || ZIP_HX as Location,\n    ADDR_CHNG_SOURCE_C_NAME as Updated_Via,\n    CASE SIGNIFICANT_CHANGE_YN \n        WHEN 'Y' THEN 'Major Move'\n        ELSE 'Minor Update'\n    END as Change_Type\nFROM PAT_ADDR_CHNG_HX\nWHERE PAT_ID = 'Z7004242'\nORDER BY EFF_START_DATE;",
+    "description": "Follow a patient's address history",
+    "chapterId": "10-02-understanding-patient-identity-demographics",
+    "index": 4
+  },
+  {
+    "id": "10-02-understanding-patient-identity-demographics-5",
+    "originalQuery": "SELECT \n    'Primary Email' as Channel,\n    p.EMAIL_ADDRESS as Contact_Info\nFROM PATIENT p\nWHERE p.PAT_ID = 'Z7004242' AND p.EMAIL_ADDRESS IS NOT NULL\nUNION ALL\nSELECT \n    'Email ' || LINE as Channel,\n    EMAIL_ADDRESS as Contact_Info\nFROM PAT_EMAILADDRESS\nWHERE PAT_ID = 'Z7004242'\nUNION ALL\nSELECT \n    'Home Phone' as Channel,\n    p.HOME_PHONE as Contact_Info\nFROM PATIENT p\nWHERE p.PAT_ID = 'Z7004242' AND p.HOME_PHONE IS NOT NULL\nUNION ALL\nSELECT \n    'Work Phone' as Channel,\n    p.WORK_PHONE as Contact_Info\nFROM PATIENT p\nWHERE p.PAT_ID = 'Z7004242' AND p.WORK_PHONE IS NOT NULL\nORDER BY Channel;",
+    "description": "View patient's communication preferences",
+    "chapterId": "10-02-understanding-patient-identity-demographics",
+    "index": 5
+  },
+  {
+    "id": "10-02-understanding-patient-identity-demographics-6",
+    "originalQuery": "SELECT \n    prl.NAME as Contact_Name,\n    pr.PAT_REL_RELATION_C_NAME as Relationship,\n    COUNT(DISTINCT prp.LINE) as Phone_Numbers,\n    CASE \n        WHEN prl.PAT_ID IS NOT NULL THEN 'Has Patient Record'\n        ELSE 'External Contact'\n    END as Contact_Type\nFROM PAT_RELATIONSHIPS pr\nJOIN PAT_RELATIONSHIP_LIST prl ON pr.PAT_REL_RLA_ID = prl.PAT_RELATIONSHIP_ID\nLEFT JOIN PAT_REL_PHONE_NUM prp ON prl.PAT_RELATIONSHIP_ID = prp.PAT_RELATIONSHIP_ID\nWHERE pr.PAT_ID = 'Z7004242'\nGROUP BY prl.PAT_RELATIONSHIP_ID, prl.NAME, pr.PAT_REL_RELATION_C_NAME, prl.PAT_ID;",
+    "description": "Explore patient relationships and contacts",
+    "chapterId": "10-02-understanding-patient-identity-demographics",
+    "index": 6
+  },
+  {
+    "id": "10-02-understanding-patient-identity-demographics-7",
+    "originalQuery": "SELECT \n    p.ETHNIC_GROUP_C_NAME as Ethnicity,\n    pr.PATIENT_RACE_C_NAME as Race,\n    p.LANGUAGE_C_NAME as Preferred_Language,\n    p.RELIGION_C_NAME as Religion,\n    'Supports multiple race selections via LINE pattern' as Note\nFROM PATIENT p\nLEFT JOIN PATIENT_RACE pr ON p.PAT_ID = pr.PAT_ID\nWHERE p.PAT_ID = 'Z7004242';",
+    "description": "Understand race and ethnicity data structure",
+    "chapterId": "10-02-understanding-patient-identity-demographics",
+    "index": 7
+  },
+  {
+    "id": "10-02-understanding-patient-identity-demographics-8",
+    "originalQuery": "SELECT \n    p.PAT_ID,\n    p.PAT_NAME,\n    CASE \n        WHEN mp.MYPT_ID IS NOT NULL THEN 'Enrolled'\n        ELSE 'Not Enrolled'\n    END as Portal_Status,\n    mp.MYPT_ID as Portal_Account_ID,\n    COUNT(DISTINCT pe.EMAIL_ADDRESS) as Email_Addresses_Available\nFROM PATIENT p\nLEFT JOIN MYC_PATIENT mp ON p.PAT_ID = mp.PAT_ID\nLEFT JOIN PAT_EMAILADDRESS pe ON p.PAT_ID = pe.PAT_ID\nWHERE p.PAT_ID = 'Z7004242'\nGROUP BY p.PAT_ID, p.PAT_NAME, mp.MYPT_ID;",
+    "description": "Check patient portal enrollment",
+    "chapterId": "10-02-understanding-patient-identity-demographics",
+    "index": 8
+  },
+  {
+    "id": "10-02-understanding-patient-identity-demographics-9",
+    "originalQuery": "SELECT \n    'Legal Name' as Name_Type,\n    p.PAT_NAME as Name_Value,\n    'PATIENT table' as Source\nFROM PATIENT p\nWHERE p.PAT_ID = 'Z7004242'\nUNION ALL\nSELECT \n    'Alias ' || LINE as Name_Type,\n    ALIAS as Name_Value,\n    'PATIENT_ALIAS table' as Source\nFROM PATIENT_ALIAS\nWHERE PAT_ID = 'Z7004242'\nORDER BY Name_Type;",
+    "description": "Track patient name variations",
+    "chapterId": "10-02-understanding-patient-identity-demographics",
+    "index": 9
+  },
+  {
+    "id": "10-02-understanding-patient-identity-demographics-10",
+    "originalQuery": "SELECT \n    'Demographics' as Category,\n    COUNT(*) as Data_Points\nFROM (\n    SELECT PAT_ID FROM PATIENT WHERE PAT_ID = 'Z7004242'\n    UNION ALL\n    SELECT PAT_ID FROM PATIENT_2 WHERE PAT_ID = 'Z7004242'\n    UNION ALL\n    SELECT PAT_ID FROM PATIENT_3 WHERE PAT_ID = 'Z7004242'\n    UNION ALL\n    SELECT PAT_ID FROM PATIENT_4 WHERE PAT_ID = 'Z7004242'\n) demographics\nUNION ALL\nSELECT \n    'Identifiers' as Category,\n    COUNT(*) as Data_Points\nFROM IDENTITY_ID WHERE PAT_ID = 'Z7004242'\nUNION ALL\nSELECT \n    'Email Addresses' as Category,\n    COUNT(*) as Data_Points\nFROM PAT_EMAILADDRESS WHERE PAT_ID = 'Z7004242'\nUNION ALL\nSELECT \n    'Relationships' as Category,\n    COUNT(*) as Data_Points\nFROM PAT_RELATIONSHIPS WHERE PAT_ID = 'Z7004242'\nUNION ALL\nSELECT \n    'Address History' as Category,\n    COUNT(*) as Data_Points\nFROM PAT_ADDR_CHNG_HX WHERE PAT_ID = 'Z7004242'\nORDER BY Data_Points DESC;",
+    "description": "Build a comprehensive patient profile",
+    "chapterId": "10-02-understanding-patient-identity-demographics",
+    "index": 10
+  },
+  {
+    "id": "10-03-exploring-medication-orders-0",
+    "originalQuery": "SELECT \n    ORDER_MED_ID,\n    DESCRIPTION,\n    ORDER_STATUS_C_NAME,\n    ORDERING_DATE\nFROM ORDER_MED\nWHERE PAT_ID = 'Z7004242'\nORDER BY ORDERING_DATE DESC;",
+    "description": "View all medication orders for a patient",
+    "chapterId": "10-03-exploring-medication-orders",
+    "index": 0
+  },
+  {
+    "id": "10-03-exploring-medication-orders-1",
+    "originalQuery": "SELECT \n    ORDER_MED_ID,\n    DESCRIPTION,\n    MEDICATION_ID,\n    DOSAGE,\n    QUANTITY,\n    REFILLS,\n    START_DATE,\n    MED_PRESC_PROV_ID,\n    PHARMACY_ID,\n    ORDER_STATUS_C_NAME\nFROM ORDER_MED\nWHERE ORDER_MED_ID = 772179261.0;",
+    "description": "Explore key ORDER_MED fields for a single prescription",
+    "chapterId": "10-03-exploring-medication-orders",
+    "index": 1
+  },
+  {
+    "id": "10-03-exploring-medication-orders-2",
+    "originalQuery": "SELECT \n    om.DESCRIPTION,\n    oms.SIG_TEXT\nFROM ORDER_MED om\nJOIN ORDER_MED_SIG oms ON om.ORDER_MED_ID = oms.ORDER_ID\nWHERE om.PAT_ID = 'Z7004242'\nORDER BY om.ORDERING_DATE DESC;",
+    "description": "Get prescription instructions (sig) for medications",
+    "chapterId": "10-03-exploring-medication-orders",
+    "index": 2
+  },
+  {
+    "id": "10-03-exploring-medication-orders-3",
+    "originalQuery": "SELECT \n    om.ORDER_MED_ID,\n    om.DESCRIPTION as ORDER_DESCRIPTION,\n    cm.GENERIC_NAME,\n    om.DOSAGE,\n    om.QUANTITY\nFROM ORDER_MED om\nLEFT JOIN CLARITY_MEDICATION cm ON om.MEDICATION_ID = cm.MEDICATION_ID\nWHERE om.PAT_ID = 'Z7004242';",
+    "description": "Join orders with the medication master to see generic names",
+    "chapterId": "10-03-exploring-medication-orders",
+    "index": 3
+  },
+  {
+    "id": "10-03-exploring-medication-orders-4",
+    "originalQuery": "SELECT \n    om.DESCRIPTION,\n    om.PHARMACY_ID_PHARMACY_NAME,\n    rxp.PHARMACY_NAME as VERIFIED_PHARMACY_NAME\nFROM ORDER_MED om\nLEFT JOIN RX_PHR rxp ON om.PHARMACY_ID = rxp.PHARMACY_ID\nWHERE om.PAT_ID = 'Z7004242'\nORDER BY om.ORDERING_DATE;",
+    "description": "See which pharmacies received each prescription",
+    "chapterId": "10-03-exploring-medication-orders",
+    "index": 4
+  },
+  {
+    "id": "10-03-exploring-medication-orders-5",
+    "originalQuery": "SELECT \n    pp.LINE,\n    pp.PREF_PHARMACY_ID_PHARMACY_NAME,\n    rxp.PHARMACY_NAME\nFROM PAT_PREF_PHARMACY pp\nLEFT JOIN RX_PHR rxp ON pp.PREF_PHARMACY_ID = rxp.PHARMACY_ID\nWHERE pp.PAT_ID = 'Z7004242';",
+    "description": "Check patient's preferred pharmacy settings",
+    "chapterId": "10-03-exploring-medication-orders",
+    "index": 5
+  },
+  {
+    "id": "10-03-exploring-medication-orders-6",
+    "originalQuery": "SELECT \n    pmh.LINE as HISTORY_ORDER,\n    om.DESCRIPTION,\n    om.ORDERING_DATE,\n    om.ORDER_STATUS_C_NAME,\n    CASE \n        WHEN om.DISCON_TIME IS NOT NULL THEN 'Discontinued'\n        WHEN om.ORDER_STATUS_C_NAME = 'Sent' THEN 'Active'\n        ELSE om.ORDER_STATUS_C_NAME\n    END as CURRENT_STATUS\nFROM PAT_MEDS_HX pmh\nJOIN ORDER_MED om ON pmh.MEDS_HX_ID = om.ORDER_MED_ID\nWHERE pmh.PAT_ID = 'Z7004242'\nORDER BY pmh.LINE;",
+    "description": "View complete medication history with timeline",
+    "chapterId": "10-03-exploring-medication-orders",
+    "index": 6
+  },
+  {
+    "id": "10-03-exploring-medication-orders-7",
+    "originalQuery": "SELECT \n    om.DESCRIPTION,\n    om2.RX_NUM_FORMATTED,\n    om2.RX_WRITTEN_DATE,\n    om2.TXT_AUTHPROV_NAME,\n    om2.TXT_AUTHPROV_DEA\nFROM ORDER_MED om\nLEFT JOIN ORDER_MED_2 om2 ON om.ORDER_MED_ID = om2.ORDER_ID\nWHERE om.PAT_ID = 'Z7004242'\n  AND om2.TXT_AUTHPROV_NAME IS NOT NULL;",
+    "description": "Access extended prescription information from ORDER_MED_2",
+    "chapterId": "10-03-exploring-medication-orders",
+    "index": 7
+  },
+  {
+    "id": "10-03-exploring-medication-orders-8",
+    "originalQuery": "SELECT \n    om.DESCRIPTION,\n    omai.LINE,\n    omai.MED_ADMIN_INSTR\nFROM ORDER_MED om\nJOIN ORD_MED_ADMININSTR omai ON om.ORDER_MED_ID = omai.ORDER_MED_ID\nWHERE om.PAT_ID = 'Z7004242'\n  AND omai.MED_ADMIN_INSTR IS NOT NULL\nORDER BY om.ORDER_MED_ID, omai.LINE;",
+    "description": "Find detailed administration instructions",
+    "chapterId": "10-03-exploring-medication-orders",
+    "index": 8
+  },
+  {
+    "id": "10-03-exploring-medication-orders-9",
+    "originalQuery": "SELECT \n    om.DESCRIPTION,\n    mci.CNCT_TYPE_C_NAME as Connection_Type,\n    mci.EPRESCRIBING_NET_ID_EXTERNAL_NAME as Network,\n    mci.CVG_PAYER_IDNT as Payer_ID\nFROM ORDER_MED om\nJOIN MED_CVG_INFO mci ON om.PAT_ID = mci.PAT_ID\nWHERE mci.PAT_ID = 'Z7004242'\nLIMIT 10;",
+    "description": "Check medication coverage details",
+    "chapterId": "10-03-exploring-medication-orders",
+    "index": 9
+  },
+  {
+    "id": "10-03-exploring-medication-orders-10",
+    "originalQuery": "SELECT \n    om.ORDER_MED_ID,\n    om.DESCRIPTION as MEDICATION,\n    cm.GENERIC_NAME,\n    om.ORDER_STATUS_C_NAME as STATUS,\n    om.ORDERING_DATE,\n    oms.SIG_TEXT as INSTRUCTIONS,\n    om.QUANTITY || ' ' || om.REFILLS as QTY_REFILLS,\n    om.PHARMACY_ID_PHARMACY_NAME as PHARMACY,\n    CASE \n        WHEN mci.ORDER_ID IS NOT NULL THEN 'Coverage Checked'\n        ELSE 'No Coverage Info'\n    END as COVERAGE_STATUS\nFROM ORDER_MED om\nLEFT JOIN CLARITY_MEDICATION cm ON om.MEDICATION_ID = cm.MEDICATION_ID\nLEFT JOIN ORDER_MED_SIG oms ON om.ORDER_MED_ID = oms.ORDER_ID\nLEFT JOIN MED_CVG_INFO mci ON om.PAT_ID = mci.PAT_ID AND om.ORDER_MED_ID = mci.ORDER_ID\nWHERE om.PAT_ID = 'Z7004242'\nORDER BY om.ORDERING_DATE DESC;",
+    "description": "Build a complete medication profile",
+    "chapterId": "10-03-exploring-medication-orders",
+    "index": 10
+  },
+  {
+    "id": "10-03-exploring-medication-orders-11",
+    "originalQuery": "SELECT \n    om.ORDER_MED_ID,\n    om.DESCRIPTION,\n    COALESCE(oms.SIG_TEXT, 'No sig recorded') as INSTRUCTIONS,\n    COALESCE(rxp.PHARMACY_NAME, om.PHARMACY_ID_PHARMACY_NAME, 'No pharmacy') as PHARMACY\nFROM ORDER_MED om\nLEFT JOIN ORDER_MED_SIG oms ON om.ORDER_MED_ID = oms.ORDER_ID\nLEFT JOIN RX_PHR rxp ON om.PHARMACY_ID = rxp.PHARMACY_ID\nWHERE om.PAT_ID = 'Z7004242';",
+    "description": "Safely join multiple medication tables",
+    "chapterId": "10-03-exploring-medication-orders",
+    "index": 11
+  },
+  {
+    "id": "10-03-exploring-medication-orders-12",
+    "originalQuery": "SELECT \n    ORDER_MED_ID,\n    DESCRIPTION,\n    PHARMACY_ID_PHARMACY_NAME,\n    ORD_CREATR_USER_ID_NAME\nFROM ORDER_MED\nWHERE PAT_ID = 'Z7004242'\n  AND ORDER_STATUS_C_NAME = 'Sent';",
+    "description": "Use denormalized fields for simple queries",
+    "chapterId": "10-03-exploring-medication-orders",
+    "index": 12
+  },
+  {
+    "id": "10-03-exploring-medication-orders-13",
+    "originalQuery": "SELECT \n    ORDER_STATUS_C_NAME,\n    COUNT(*) as COUNT\nFROM ORDER_MED\nWHERE PAT_ID = 'Z7004242'\nGROUP BY ORDER_STATUS_C_NAME;",
+    "description": "Analyze medication status distribution",
+    "chapterId": "10-03-exploring-medication-orders",
+    "index": 13
+  },
+  {
+    "id": "10-04-connecting-patients-through-portals-and-messaging-0",
+    "originalQuery": "SELECT \n    p.PAT_ID,\n    p.PAT_NAME,\n    pm.MYCHART_STATUS_C_NAME as Portal_Status,\n    pm.PAT_ACCESS_STAT_C_NAME as Access_Code_Status,\n    pm.DEM_VERIF_DT as Demographics_Verified,\n    mp.MYPT_ID as MyChart_Account_ID\nFROM PATIENT p\nLEFT JOIN PATIENT_MYC pm ON p.PAT_ID = pm.PAT_ID\nLEFT JOIN MYC_PATIENT mp ON p.PAT_ID = mp.PAT_ID\nWHERE p.PAT_ID = 'Z7004242';",
+    "description": "Check a patient's portal account status and activation details",
+    "chapterId": "10-04-connecting-patients-through-portals-and-messaging",
+    "index": 0
+  },
+  {
+    "id": "10-04-connecting-patients-through-portals-and-messaging-1",
+    "originalQuery": "SELECT \n    m.MESSAGE_ID,\n    m.CREATED_TIME,\n    m.SUBJECT,\n    m.TOFROM_PAT_C_NAME as Direction,\n    CASE \n        WHEN m.FROM_USER_ID_NAME IS NOT NULL THEN m.FROM_USER_ID_NAME\n        WHEN m.TO_USER_ID_NAME IS NOT NULL THEN m.TO_USER_ID_NAME\n        ELSE 'System'\n    END as Other_Party,\n    CASE \n        WHEN m.PARENT_MESSAGE_ID IS NOT NULL THEN 'Reply'\n        ELSE 'New Thread'\n    END as Message_Type\nFROM MYC_MESG m\nWHERE m.PAT_ID = 'Z7004242'\nORDER BY m.CREATED_TIME DESC\nLIMIT 10;",
+    "description": "View recent messages for a patient showing direction and threading",
+    "chapterId": "10-04-connecting-patients-through-portals-and-messaging",
+    "index": 1
+  },
+  {
+    "id": "10-04-connecting-patients-through-portals-and-messaging-2",
+    "originalQuery": "SELECT \n    m.SUBJECT,\n    m.TOFROM_PAT_C_NAME as Direction,\n    GROUP_CONCAT(mt.MSG_TXT, CHAR(10)) as Full_Message\nFROM MYC_MESG m\nJOIN MSG_TXT mt ON m.MESSAGE_ID = mt.MESSAGE_ID\nWHERE m.MESSAGE_ID = '27921908'\nGROUP BY m.MESSAGE_ID, m.SUBJECT, m.TOFROM_PAT_C_NAME;",
+    "description": "Read the complete text of a patient's message about wrist pain",
+    "chapterId": "10-04-connecting-patients-through-portals-and-messaging",
+    "index": 2
+  },
+  {
+    "id": "10-04-connecting-patients-through-portals-and-messaging-3",
+    "originalQuery": "SELECT \n    c.MYC_MSG_TYP_C_NAME as Conversation_Type,\n    COUNT(DISTINCT c.THREAD_ID) as Thread_Count,\n    COUNT(DISTINCT cm.MESSAGE_ID) as Total_Messages\nFROM MYC_CONVO c\nLEFT JOIN MYC_CONVO_MSGS cm ON c.THREAD_ID = cm.THREAD_ID\nWHERE c.PAT_ID = 'Z7004242'\nGROUP BY c.MYC_MSG_TYP_C_NAME\nORDER BY Thread_Count DESC;",
+    "description": "Analyze the types of conversations a patient has initiated",
+    "chapterId": "10-04-connecting-patients-through-portals-and-messaging",
+    "index": 3
+  },
+  {
+    "id": "10-04-connecting-patients-through-portals-and-messaging-4",
+    "originalQuery": "WITH MessageStats AS (\n    SELECT \n        m.PAT_ID,\n        COUNT(*) as Total_Messages,\n        SUM(CASE WHEN m.TOFROM_PAT_C_NAME = 'To Patient' THEN 1 ELSE 0 END) as To_Patient,\n        SUM(CASE WHEN m.TOFROM_PAT_C_NAME = 'From Patient' THEN 1 ELSE 0 END) as From_Patient,\n        MIN(m.CREATED_TIME) as First_Message,\n        MAX(m.CREATED_TIME) as Last_Message\n    FROM MYC_MESG m\n    WHERE m.PAT_ID = 'Z7004242'\n    GROUP BY m.PAT_ID\n)\nSELECT \n    *,\n    ROUND(CAST(From_Patient AS FLOAT) / Total_Messages * 100, 1) as Patient_Initiated_Pct\nFROM MessageStats;",
+    "description": "Analyze bidirectional message flow for a patient",
+    "chapterId": "10-04-connecting-patients-through-portals-and-messaging",
+    "index": 4
+  },
+  {
+    "id": "10-04-connecting-patients-through-portals-and-messaging-5",
+    "originalQuery": "SELECT DISTINCT\n    COMMUNICATION_CONCEPT_ID_SETTING_NAME as Preference_Type,\n    COMMUNICATION_CONCEPT_ID as Concept_ID\nFROM COMMUNICATION_PREFERENCES\nWHERE COMMUNICATION_CONCEPT_ID_SETTING_NAME LIKE '%Reminder%'\n   OR COMMUNICATION_CONCEPT_ID_SETTING_NAME LIKE '%Message%'\nORDER BY Preference_Type\nLIMIT 10;",
+    "description": "Explore available communication preference types",
+    "chapterId": "10-04-connecting-patients-through-portals-and-messaging",
+    "index": 5
+  },
+  {
+    "id": "10-04-connecting-patients-through-portals-and-messaging-6",
+    "originalQuery": "WITH PortalMetrics AS (\n    SELECT \n        p.PAT_ID,\n        p.PAT_NAME,\n        pm.MYCHART_STATUS_C_NAME as Portal_Status,\n        \n        -- Messaging metrics\n        (SELECT COUNT(*) FROM MYC_MESG m WHERE m.PAT_ID = p.PAT_ID) as Total_Messages,\n        (SELECT COUNT(DISTINCT THREAD_ID) FROM MYC_CONVO c WHERE c.PAT_ID = p.PAT_ID) as Total_Conversations,\n        \n        -- Recent activity\n        (SELECT MAX(CREATED_TIME) FROM MYC_MESG m WHERE m.PAT_ID = p.PAT_ID) as Last_Message_Date\n        \n    FROM PATIENT p\n    LEFT JOIN PATIENT_MYC pm ON p.PAT_ID = pm.PAT_ID\n    WHERE p.PAT_ID = 'Z7004242'\n)\nSELECT \n    PAT_NAME,\n    Portal_Status,\n    Total_Messages || ' messages in ' || Total_Conversations || ' conversations' as Messaging_Activity,\n    Last_Message_Date as Last_Portal_Activity\nFROM PortalMetrics;",
+    "description": "Create a complete patient portal engagement summary",
+    "chapterId": "10-04-connecting-patients-through-portals-and-messaging",
+    "index": 6
+  },
+  {
+    "id": "10-04-understanding-lab-results-0",
+    "originalQuery": "SELECT \n    ORDER_TYPE_C_NAME,\n    COUNT(*) as ORDER_COUNT\nFROM ORDER_PROC\nWHERE PAT_ID = 'Z7004242'\nGROUP BY ORDER_TYPE_C_NAME\nORDER BY ORDER_COUNT DESC;",
+    "description": "Count and categorize all diagnostic orders",
+    "chapterId": "10-04-understanding-lab-results",
+    "index": 0
+  },
+  {
+    "id": "10-04-understanding-lab-results-1",
+    "originalQuery": "SELECT \n    ORDER_PROC_ID,\n    DESCRIPTION,\n    ORDERING_DATE,\n    RESULT_TIME,\n    JULIANDAY(RESULT_TIME) - JULIANDAY(ORDERING_DATE) as TURNAROUND_DAYS\nFROM ORDER_PROC\nWHERE PAT_ID = 'Z7004242'\n  AND ORDER_TYPE_C_NAME = 'Lab'\n  AND ORDER_STATUS_C_NAME = 'Completed'\nORDER BY ORDERING_DATE DESC\nLIMIT 5;",
+    "description": "View recent completed lab orders",
+    "chapterId": "10-04-understanding-lab-results",
+    "index": 1
+  },
+  {
+    "id": "10-04-understanding-lab-results-2",
+    "originalQuery": "SELECT \n    cc.NAME as COMPONENT,\n    ore.ORD_VALUE as RESULT,\n    ore.REFERENCE_LOW || '-' || ore.REFERENCE_HIGH || ' ' || ore.REFERENCE_UNIT as NORMAL_RANGE\nFROM ORDER_RESULTS ore\nJOIN CLARITY_COMPONENT cc ON ore.COMPONENT_ID = cc.COMPONENT_ID\nWHERE ore.ORDER_PROC_ID = 772179262.0\nORDER BY ore.LINE;",
+    "description": "Examine components of a basic metabolic panel",
+    "chapterId": "10-04-understanding-lab-results",
+    "index": 2
+  },
+  {
+    "id": "10-04-understanding-lab-results-3",
+    "originalQuery": "SELECT \n    cc.NAME as TEST,\n    ore.ORD_VALUE || ' ' || ore.REFERENCE_UNIT as RESULT,\n    ore.REFERENCE_LOW || '-' || ore.REFERENCE_HIGH as NORMAL_RANGE,\n    ore.RESULT_FLAG_C_NAME as FLAG\nFROM ORDER_RESULTS ore\nJOIN CLARITY_COMPONENT cc ON ore.COMPONENT_ID = cc.COMPONENT_ID\nWHERE ore.ORDER_PROC_ID = 772179262.0\n  AND ore.RESULT_FLAG_C_NAME IS NOT NULL\nORDER BY ore.LINE;",
+    "description": "Find abnormal results with clinical context",
+    "chapterId": "10-04-understanding-lab-results",
+    "index": 3
+  },
+  {
+    "id": "10-04-understanding-lab-results-4",
+    "originalQuery": "SELECT \n    cc.NAME as COMPONENT,\n    ore.ORD_VALUE || ' ' || ore.REFERENCE_UNIT as RESULT,\n    lnc.LNC_CODE,\n    lnc.LNC_LONG_NAME\nFROM ORDER_RESULTS ore\nJOIN CLARITY_COMPONENT cc ON ore.COMPONENT_ID = cc.COMPONENT_ID\nLEFT JOIN LNC_DB_MAIN lnc ON ore.COMPON_LNC_ID = lnc.RECORD_ID\nWHERE ore.ORDER_PROC_ID = 945468371.0\n  AND ore.COMPON_LNC_ID IS NOT NULL\nORDER BY ore.LINE;",
+    "description": "View LOINC codes for lipid panel components",
+    "chapterId": "10-04-understanding-lab-results",
+    "index": 4
+  },
+  {
+    "id": "10-04-understanding-lab-results-5",
+    "originalQuery": "SELECT \n    op.ORDERING_DATE,\n    ore.ORD_VALUE as A1C_PERCENT,\n    ore.REFERENCE_HIGH as GOAL,\n    CASE \n        WHEN ore.ORD_NUM_VALUE < 5.7 THEN 'Normal'\n        WHEN ore.ORD_NUM_VALUE < 6.5 THEN 'Prediabetes'\n        ELSE 'Diabetes'\n    END as INTERPRETATION\nFROM ORDER_PROC op\nJOIN ORDER_RESULTS ore ON op.ORDER_PROC_ID = ore.ORDER_PROC_ID\nJOIN CLARITY_COMPONENT cc ON ore.COMPONENT_ID = cc.COMPONENT_ID\nWHERE op.PAT_ID = 'Z7004242'\n  AND cc.NAME = 'HEMOGLOBIN A1C'\n  AND op.ORDER_STATUS_C_NAME = 'Completed'\nORDER BY op.ORDERING_DATE;",
+    "description": "Track Hemoglobin A1C values over time",
+    "chapterId": "10-04-understanding-lab-results",
+    "index": 5
+  },
+  {
+    "id": "10-04-understanding-lab-results-6",
+    "originalQuery": "SELECT \n    cc.NAME as LIPID_COMPONENT,\n    ore.ORD_VALUE as VALUE,\n    ore.REFERENCE_UNIT as UNIT,\n    CASE \n        WHEN cc.NAME = 'CHOLESTEROL' AND ore.ORD_NUM_VALUE > 200 THEN 'Elevated - Consider treatment'\n        WHEN cc.NAME = 'LDL, CALCULATED' AND ore.ORD_NUM_VALUE > 130 THEN 'Above optimal'\n        WHEN cc.NAME = 'HDL' AND ore.ORD_NUM_VALUE < 40 THEN 'Low - Cardiovascular risk'\n        WHEN cc.NAME = 'TRIGLYCERIDES' AND ore.ORD_NUM_VALUE > 150 THEN 'Elevated'\n        ELSE 'Within normal limits'\n    END as CLINICAL_SIGNIFICANCE\nFROM ORDER_RESULTS ore\nJOIN CLARITY_COMPONENT cc ON ore.COMPONENT_ID = cc.COMPONENT_ID\nWHERE ore.ORDER_PROC_ID = 945468371.0\nORDER BY \n    CASE cc.NAME\n        WHEN 'CHOLESTEROL' THEN 1\n        WHEN 'TRIGLYCERIDES' THEN 2\n        WHEN 'HDL' THEN 3\n        WHEN 'LDL, CALCULATED' THEN 4\n        ELSE 5\n    END;",
+    "description": "Analyze complete lipid profile with risk calculations",
+    "chapterId": "10-04-understanding-lab-results",
+    "index": 6
+  },
+  {
+    "id": "10-04-understanding-lab-results-7",
+    "originalQuery": "SELECT \n    NAME,\n    COUNT(*) as TIMES_ORDERED\nFROM CLARITY_COMPONENT cc\nWHERE EXISTS (\n    SELECT 1 FROM ORDER_RESULTS ore \n    WHERE ore.COMPONENT_ID = cc.COMPONENT_ID\n)\nGROUP BY NAME\nORDER BY TIMES_ORDERED DESC\nLIMIT 15;",
+    "description": "Find common test components in the system",
+    "chapterId": "10-04-understanding-lab-results",
+    "index": 7
+  },
+  {
+    "id": "10-04-understanding-lab-results-8",
+    "originalQuery": "SELECT \n    SUBSTR(op.ORDERING_DATE, 1, 10) as ORDER_DATE,\n    op.DESCRIPTION as TEST,\n    cc.NAME as COMPONENT,\n    ore.ORD_VALUE || ' ' || ore.REFERENCE_UNIT as RESULT,\n    ore.RESULT_FLAG_C_NAME as FLAG,\n    CASE ore.RESULT_FLAG_C_NAME\n        WHEN 'High' THEN 'Above normal range'\n        WHEN 'Low' THEN 'Below normal range'\n        WHEN 'Abnormal' THEN 'Outside reference range'\n        ELSE 'Clinical review needed'\n    END as INTERPRETATION\nFROM ORDER_PROC op\nJOIN ORDER_RESULTS ore ON op.ORDER_PROC_ID = ore.ORDER_PROC_ID\nJOIN CLARITY_COMPONENT cc ON ore.COMPONENT_ID = cc.COMPONENT_ID\nWHERE op.PAT_ID = 'Z7004242'\n  AND ore.RESULT_FLAG_C_NAME IS NOT NULL\n  AND ore.RESULT_FLAG_C_NAME NOT IN ('Normal', 'No Range')\nORDER BY op.ORDERING_DATE DESC\nLIMIT 10;",
+    "description": "Identify abnormal lab results requiring attention",
+    "chapterId": "10-04-understanding-lab-results",
+    "index": 8
+  },
+  {
+    "id": "10-04-understanding-lab-results-9",
+    "originalQuery": "SELECT \n    op.ORDER_PROC_ID,\n    op.DESCRIPTION,\n    ore.RESULT_STATUS_C_NAME,\n    COUNT(DISTINCT ore.COMPONENT_ID) as COMPONENT_COUNT,\n    COUNT(DISTINCT fp.FINALIZE_PROV_ID) as FINALIZING_PROVIDERS\nFROM ORDER_PROC op\nJOIN ORDER_RESULTS ore ON op.ORDER_PROC_ID = ore.ORDER_PROC_ID\nLEFT JOIN FINALIZE_PHYSICIAN fp ON op.ORDER_PROC_ID = fp.ORDER_ID\nWHERE op.PAT_ID = 'Z7004242'\n  AND op.ORDER_TYPE_C_NAME = 'Lab'\nGROUP BY op.ORDER_PROC_ID, op.DESCRIPTION, ore.RESULT_STATUS_C_NAME\nORDER BY op.ORDERING_DATE DESC\nLIMIT 5;",
+    "description": "Check result finalization status",
+    "chapterId": "10-04-understanding-lab-results",
+    "index": 9
+  },
+  {
+    "id": "10-04-understanding-lab-results-10",
+    "originalQuery": "WITH recent_labs AS (\n    SELECT \n        op.ORDER_PROC_ID,\n        op.DESCRIPTION as TEST_NAME,\n        op.ORDERING_DATE,\n        cc.NAME as COMPONENT,\n        ore.ORD_VALUE || ' ' || ore.REFERENCE_UNIT as RESULT,\n        CASE \n            WHEN ore.RESULT_FLAG_C_NAME IS NULL THEN 'Normal'\n            ELSE ore.RESULT_FLAG_C_NAME\n        END as FLAG,\n        lnc.LNC_CODE\n    FROM ORDER_PROC op\n    JOIN ORDER_RESULTS ore ON op.ORDER_PROC_ID = ore.ORDER_PROC_ID\n    JOIN CLARITY_COMPONENT cc ON ore.COMPONENT_ID = cc.COMPONENT_ID\n    LEFT JOIN LNC_DB_MAIN lnc ON ore.COMPON_LNC_ID = lnc.RECORD_ID\n    WHERE op.PAT_ID = 'Z7004242'\n      AND op.ORDER_TYPE_C_NAME = 'Lab'\n      AND op.ORDER_STATUS_C_NAME = 'Completed'\n      AND op.ORDERING_DATE >= date('now', '-1 year')\n)\nSELECT \n    TEST_NAME,\n    ORDERING_DATE,\n    COUNT(DISTINCT COMPONENT) as COMPONENTS,\n    SUM(CASE WHEN FLAG != 'Normal' THEN 1 ELSE 0 END) as ABNORMAL_COUNT\nFROM recent_labs\nGROUP BY TEST_NAME, ORDERING_DATE\nORDER BY ORDERING_DATE DESC;",
+    "description": "Create a complete lab summary for clinical review",
+    "chapterId": "10-04-understanding-lab-results",
+    "index": 10
+  },
+  {
+    "id": "10-04-understanding-lab-results-11",
+    "originalQuery": "SELECT \n    op.ORDERING_DATE,\n    pe.FIN_CLASS_C_NAME as ENCOUNTER_TYPE,\n    op.DESCRIPTION,\n    COUNT(ore.COMPONENT_ID) as RESULT_COUNT\nFROM ORDER_PROC op\nJOIN PAT_ENC pe ON op.PAT_ENC_CSN_ID = pe.PAT_ENC_CSN_ID\nJOIN ORDER_RESULTS ore ON op.ORDER_PROC_ID = ore.ORDER_PROC_ID\nWHERE op.PAT_ID = 'Z7004242'\n  AND op.ORDER_TYPE_C_NAME = 'Lab'\nGROUP BY op.ORDER_PROC_ID, op.ORDERING_DATE, pe.FIN_CLASS_C_NAME, op.DESCRIPTION\nORDER BY op.ORDERING_DATE DESC\nLIMIT 10;",
+    "description": "Get lab results with encounter context",
+    "chapterId": "10-04-understanding-lab-results",
+    "index": 11
+  },
+  {
+    "id": "10-04-understanding-lab-results-12",
+    "originalQuery": "SELECT DISTINCT\n    lnc.LNC_CODE,\n    lnc.LNC_LONG_NAME,\n    cc.NAME as COMPONENT_NAME\nFROM LNC_DB_MAIN lnc\nJOIN ORDER_RESULTS ore ON lnc.RECORD_ID = ore.COMPON_LNC_ID\nJOIN CLARITY_COMPONENT cc ON ore.COMPONENT_ID = cc.COMPONENT_ID\nWHERE lnc.LNC_LONG_NAME LIKE '%Glucose%'\nLIMIT 10;",
+    "description": "Find all glucose-related tests using LOINC",
+    "chapterId": "10-04-understanding-lab-results",
+    "index": 12
+  },
+  {
+    "id": "10-04-understanding-lab-results-13",
+    "originalQuery": "SELECT \n    SUBSTR(op.DESCRIPTION, 1, 20) as TEST_TYPE,\n    COUNT(DISTINCT op.ORDER_PROC_ID) as ORDER_COUNT,\n    AVG(component_count) as AVG_COMPONENTS_PER_ORDER,\n    AVG(JULIANDAY(op.RESULT_TIME) - JULIANDAY(op.ORDERING_DATE)) as AVG_TAT_DAYS\nFROM ORDER_PROC op\nJOIN (\n    SELECT ORDER_PROC_ID, COUNT(*) as component_count\n    FROM ORDER_RESULTS\n    GROUP BY ORDER_PROC_ID\n) ore_counts ON op.ORDER_PROC_ID = ore_counts.ORDER_PROC_ID\nWHERE op.ORDER_TYPE_C_NAME = 'Lab'\n  AND op.ORDER_STATUS_C_NAME = 'Completed'\nGROUP BY SUBSTR(op.DESCRIPTION, 1, 20)\nORDER BY ORDER_COUNT DESC\nLIMIT 10;",
+    "description": "Analyze result patterns by test type",
+    "chapterId": "10-04-understanding-lab-results",
+    "index": 13
+  },
+  {
+    "id": "10-05-navigating-patient-encounters-across-care-settings-0",
+    "originalQuery": "SELECT \n    PAT_ENC_CSN_ID,\n    CONTACT_DATE,\n    APPT_STATUS_C_NAME as Status,\n    DEPARTMENT_ID,\n    VISIT_PROV_ID as Provider_ID,\n    ENC_CLOSED_YN as Closed\nFROM PAT_ENC\nWHERE PAT_ID = 'Z7004242'\nORDER BY CONTACT_DATE DESC\nLIMIT 10;",
+    "description": "View recent encounters showing the universal CSN_ID",
+    "chapterId": "10-05-navigating-patient-encounters-across-care-settings",
+    "index": 0
+  },
+  {
+    "id": "10-05-navigating-patient-encounters-across-care-settings-1",
+    "originalQuery": "SELECT \n    pe.PAT_ENC_CSN_ID,\n    pe.CONTACT_DATE,\n    d.DEPARTMENT_NAME,\n    CASE \n        WHEN hsp.PAT_ENC_CSN_ID IS NOT NULL THEN 'Hospital'\n        WHEN eds.PAT_ENC_CSN_ID IS NOT NULL THEN 'Emergency'\n        WHEN pe.APPT_STATUS_C_NAME IS NOT NULL THEN 'Ambulatory'\n        ELSE 'Other'\n    END as Encounter_Type,\n    pe.APPT_STATUS_C_NAME\nFROM PAT_ENC pe\nLEFT JOIN CLARITY_DEP d ON pe.DEPARTMENT_ID = d.DEPARTMENT_ID\nLEFT JOIN PAT_ENC_HSP hsp ON pe.PAT_ENC_CSN_ID = hsp.PAT_ENC_CSN_ID\nLEFT JOIN (SELECT DISTINCT PAT_ENC_CSN_ID FROM ED_PAT_STATUS) eds \n    ON pe.PAT_ENC_CSN_ID = eds.PAT_ENC_CSN_ID\nWHERE pe.PAT_ID = 'Z7004242'\n  AND pe.CONTACT_DATE >= '2023-01-01'\nORDER BY pe.CONTACT_DATE DESC;",
+    "description": "Analyze encounter types by looking for key indicators",
+    "chapterId": "10-05-navigating-patient-encounters-across-care-settings",
+    "index": 1
+  },
+  {
+    "id": "10-05-navigating-patient-encounters-across-care-settings-2",
+    "originalQuery": "SELECT \n    LINE as Step,\n    ED_PAT_STATUS_C_NAME as Status,\n    PAT_STATUS_TIME as Time,\n    PAT_STATUS_USER_ID_NAME as Staff_Member,\n    ROUND((JULIANDAY(PAT_STATUS_TIME) - \n           JULIANDAY(LAG(PAT_STATUS_TIME) OVER (ORDER BY LINE))) * 24 * 60, 1) \n        as Minutes_Since_Last_Status\nFROM ED_PAT_STATUS\nWHERE PAT_ENC_CSN_ID = 799951565.0\nORDER BY LINE;",
+    "description": "Track the progression of an ED visit through status changes",
+    "chapterId": "10-05-navigating-patient-encounters-across-care-settings",
+    "index": 2
+  },
+  {
+    "id": "10-05-navigating-patient-encounters-across-care-settings-3",
+    "originalQuery": "SELECT \n    pe.PAT_ENC_CSN_ID,\n    pe.CONTACT_DATE,\n    hsp.ADT_PAT_CLASS_C_NAME as Patient_Class,\n    hsp.HOSP_ADMSN_TIME as Admission,\n    hsp.HOSP_DISCH_TIME as Discharge,\n    ROUND((JULIANDAY(hsp.HOSP_DISCH_TIME) - \n           JULIANDAY(hsp.HOSP_ADMSN_TIME)) * 24, 1) as Length_of_Stay_Hours,\n    hsp.ADMIT_SOURCE_C_NAME as Admitted_From,\n    hsp.DISCH_DISP_C_NAME as Discharged_To\nFROM PAT_ENC pe\nJOIN PAT_ENC_HSP hsp ON pe.PAT_ENC_CSN_ID = hsp.PAT_ENC_CSN_ID\nWHERE pe.PAT_ID = 'Z7004242'\nORDER BY pe.CONTACT_DATE DESC;",
+    "description": "Examine hospital admission details including therapy sessions",
+    "chapterId": "10-05-navigating-patient-encounters-across-care-settings",
+    "index": 3
+  },
+  {
+    "id": "10-05-navigating-patient-encounters-across-care-settings-4",
+    "originalQuery": "SELECT \n    EVENT_ID,\n    EVENT_TYPE_C_NAME as Event_Type,\n    EFFECTIVE_TIME,\n    d.DEPARTMENT_NAME,\n    PAT_CLASS_C_NAME as Patient_Class,\n    FROM_BASE_CLASS_C_NAME as From_Status,\n    TO_BASE_CLASS_C_NAME as To_Status\nFROM CLARITY_ADT adt\nLEFT JOIN CLARITY_DEP d ON adt.DEPARTMENT_ID = d.DEPARTMENT_ID\nWHERE adt.PAT_ID = 'Z7004242'\nORDER BY EFFECTIVE_TIME DESC\nLIMIT 10;",
+    "description": "View ADT events showing patient movement through the hospital",
+    "chapterId": "10-05-navigating-patient-encounters-across-care-settings",
+    "index": 4
+  },
+  {
+    "id": "10-05-navigating-patient-encounters-across-care-settings-5",
+    "originalQuery": "SELECT \n    pe.PAT_ENC_CSN_ID,\n    pe.CONTACT_DATE,\n    d.DEPARTMENT_NAME,\n    dx.DX_ID,\n    dx.PRIMARY_DX_YN as Is_Primary,\n    dx.DX_CHRONIC_YN as Is_Chronic,\n    dx.DX_ED_YN as Is_ED_Diagnosis\nFROM PAT_ENC pe\nJOIN PAT_ENC_DX dx ON pe.PAT_ENC_CSN_ID = dx.PAT_ENC_CSN_ID\nLEFT JOIN CLARITY_DEP d ON pe.DEPARTMENT_ID = d.DEPARTMENT_ID\nWHERE pe.PAT_ID = 'Z7004242'\n  AND dx.PRIMARY_DX_YN = 'Y'\nORDER BY pe.CONTACT_DATE DESC\nLIMIT 10;",
+    "description": "Show how diagnoses link to encounters",
+    "chapterId": "10-05-navigating-patient-encounters-across-care-settings",
+    "index": 5
+  },
+  {
+    "id": "10-05-navigating-patient-encounters-across-care-settings-6",
+    "originalQuery": "SELECT \n    'PAT_ENC' as Table_Name,\n    COUNT(*) as Column_Count\nFROM pragma_table_info('PAT_ENC')\nUNION ALL\nSELECT \n    'PAT_ENC_2',\n    COUNT(*)\nFROM pragma_table_info('PAT_ENC_2')\nUNION ALL\nSELECT \n    'PAT_ENC_3',\n    COUNT(*)\nFROM pragma_table_info('PAT_ENC_3')\nORDER BY Table_Name;",
+    "description": "Demonstrate how encounter data spans multiple overflow tables",
+    "chapterId": "10-05-navigating-patient-encounters-across-care-settings",
+    "index": 6
+  },
+  {
+    "id": "10-05-navigating-patient-encounters-across-care-settings-7",
+    "originalQuery": "SELECT \n    pe.PAT_ENC_CSN_ID,\n    pe.CONTACT_DATE,\n    pe.APPT_STATUS_C_NAME,\n    pe2.SUP_PROV_ID as Supervising_Provider_ID, -- From PAT_ENC_2\n    pe3.ENC_BILL_AREA_ID_BILL_AREA_NAME as Billing_Area, -- From PAT_ENC_3\n    pe4.VISIT_NUMBER as Visit_Number   -- From PAT_ENC_4\nFROM PAT_ENC pe\nLEFT JOIN PAT_ENC_2 pe2 ON pe.PAT_ENC_CSN_ID = pe2.PAT_ENC_CSN_ID\nLEFT JOIN PAT_ENC_3 pe3 ON pe.PAT_ENC_CSN_ID = pe3.PAT_ENC_CSN\nLEFT JOIN PAT_ENC_4 pe4 ON pe.PAT_ENC_CSN_ID = pe4.PAT_ENC_CSN_ID\nWHERE pe.PAT_ID = 'Z7004242'\n  AND pe.CONTACT_DATE >= '2020-01-01'\nLIMIT 5;",
+    "description": "Query across overflow tables to get complete encounter data",
+    "chapterId": "10-05-navigating-patient-encounters-across-care-settings",
+    "index": 7
+  },
+  {
+    "id": "10-05-navigating-patient-encounters-across-care-settings-8",
+    "originalQuery": "WITH EncounterStats AS (\n    SELECT \n        pe.PAT_ID,\n        COUNT(DISTINCT pe.PAT_ENC_CSN_ID) as Total_Encounters,\n        COUNT(DISTINCT CASE WHEN pe.APPT_STATUS_C_NAME = 'Completed' \n                           THEN pe.PAT_ENC_CSN_ID END) as Completed_Visits,\n        COUNT(DISTINCT CASE WHEN hsp.PAT_ENC_CSN_ID IS NOT NULL \n                           THEN pe.PAT_ENC_CSN_ID END) as Hospital_Encounters,\n        COUNT(DISTINCT CASE WHEN eds.PAT_ENC_CSN_ID IS NOT NULL \n                           THEN pe.PAT_ENC_CSN_ID END) as ED_Visits,\n        COUNT(DISTINCT pe.DEPARTMENT_ID) as Departments_Visited,\n        COUNT(DISTINCT DATE(pe.CONTACT_DATE)) as Days_With_Encounters\n    FROM PAT_ENC pe\n    LEFT JOIN PAT_ENC_HSP hsp ON pe.PAT_ENC_CSN_ID = hsp.PAT_ENC_CSN_ID\n    LEFT JOIN (SELECT DISTINCT PAT_ENC_CSN_ID FROM ED_PAT_STATUS) eds \n        ON pe.PAT_ENC_CSN_ID = eds.PAT_ENC_CSN_ID\n    WHERE pe.PAT_ID = 'Z7004242'\n    GROUP BY pe.PAT_ID\n)\nSELECT \n    Total_Encounters,\n    Completed_Visits,\n    Hospital_Encounters,\n    ED_Visits,\n    ROUND(CAST(ED_Visits AS FLOAT) / Total_Encounters * 100, 1) as ED_Visit_Percentage,\n    Departments_Visited,\n    Days_With_Encounters\nFROM EncounterStats;",
+    "description": "Analyze patient's encounter patterns over time",
+    "chapterId": "10-05-navigating-patient-encounters-across-care-settings",
+    "index": 8
+  },
+  {
+    "id": "10-06-decoding-insurance-coverage-and-benefits-0",
+    "originalQuery": "SELECT \n    pac.PAT_ID,\n    pac.ACCOUNT_ID,\n    pac.ACCOUNT_TYPE_C_NAME as Account_Type,\n    pac.FIN_CLASS_NAME as Financial_Class,\n    ac.COVERAGE_ID,\n    c.PAYOR_ID_PAYOR_NAME as Insurance_Company,\n    c.PLAN_ID_BENEFIT_PLAN_NAME as Plan_Name,\n    c.GROUP_NAME as Employer\nFROM PAT_ACCT_CVG pac\nJOIN ACCT_COVERAGE ac ON pac.ACCOUNT_ID = ac.ACCOUNT_ID\nJOIN COVERAGE c ON ac.COVERAGE_ID = c.COVERAGE_ID\nWHERE pac.PAT_ID = 'Z7004242'\nORDER BY pac.LINE;",
+    "description": "Show how patients link to insurance coverage through accounts",
+    "chapterId": "10-06-decoding-insurance-coverage-and-benefits",
+    "index": 0
+  },
+  {
+    "id": "10-06-decoding-insurance-coverage-and-benefits-1",
+    "originalQuery": "SELECT \n    c.COVERAGE_ID,\n    c.PAYOR_ID_PAYOR_NAME as Payer,\n    c.PLAN_ID_BENEFIT_PLAN_NAME as Plan,\n    c.GROUP_NUM as Group_Number,\n    c.GROUP_NAME as Employer,\n    c.CVG_EFF_DT as Effective_Date,\n    c.CVG_TERM_DT as Termination_Date,\n    cm.MEM_NUMBER as Member_ID,\n    cm.MEM_REL_TO_SUB_C_NAME as Member_Relationship,\n    cm.MEM_COVERED_YN as Is_Covered,\n    cm.MEM_EFF_FROM_DATE as Member_Start_Date\nFROM COVERAGE c\nJOIN COVERAGE_MEMBER_LIST cm ON c.COVERAGE_ID = cm.COVERAGE_ID\nWHERE cm.PAT_ID = 'Z7004242';",
+    "description": "Examine comprehensive coverage information including member details",
+    "chapterId": "10-06-decoding-insurance-coverage-and-benefits",
+    "index": 1
+  },
+  {
+    "id": "10-06-decoding-insurance-coverage-and-benefits-2",
+    "originalQuery": "WITH BenefitDetails AS (\n    SELECT \n        'Overall Coverage' as Benefit_Level,\n        cb.DEDUCTIBLE_AMOUNT,\n        cb.DEDUCTIBLE_MET_AMT as Deductible_Met,\n        cb.DEDUCT_REMAIN_AMT as Deductible_Remaining,\n        cb.OUT_OF_POCKET_MAX as OOP_Maximum,\n        cb.OUT_OF_PCKT_REMAIN as OOP_Remaining,\n        NULL as Service_Type,\n        cb.COINS_PERCENT as Coinsurance_Percent\n    FROM COVERAGE_BENEFITS cb\n    WHERE cb.CVG_ID = 5934765.0\n      AND cb.DEDUCTIBLE_AMOUNT IS NOT NULL\n    \n    UNION ALL\n    \n    SELECT \n        'Service-Specific' as Benefit_Level,\n        sb.DEDUCTIBLE_AMOUNT,\n        sb.DEDUCTIBLE_MET_AMT,\n        sb.DEDUCT_REMAIN_AMT,\n        sb.OUT_OF_POCKET_MAX,\n        sb.OUT_OF_PCKT_REMAIN,\n        sb.CVG_SVC_TYPE_ID_SERVICE_TYPE_NAME as Service_Type,\n        sb.COINS_PERCENT\n    FROM SERVICE_BENEFITS sb\n    JOIN COVERAGE_BENEFITS cb ON sb.RECORD_ID = cb.RECORD_ID\n    WHERE cb.CVG_ID = 5934765.0\n      AND sb.CVG_SVC_TYPE_ID_SERVICE_TYPE_NAME IS NOT NULL\n)\nSELECT * FROM BenefitDetails\nWHERE Service_Type IS NULL OR Service_Type IN ('PRIMARY', 'SPEC', 'ED', 'HOSP IP')\nORDER BY Benefit_Level, Service_Type;",
+    "description": "View the multi-tier benefit structure with deductibles and coinsurance",
+    "chapterId": "10-06-decoding-insurance-coverage-and-benefits",
+    "index": 2
+  },
+  {
+    "id": "10-06-decoding-insurance-coverage-and-benefits-3",
+    "originalQuery": "SELECT \n    ROW_NUMBER() OVER (ORDER BY cb.DEDUCTIBLE_MET_AMT DESC) as Record_Num,\n    cb.DEDUCTIBLE_AMOUNT as Annual_Deductible,\n    cb.DEDUCTIBLE_MET_AMT as Amount_Applied,\n    cb.DEDUCT_REMAIN_AMT as Amount_Remaining,\n    ROUND((cb.DEDUCTIBLE_MET_AMT / cb.DEDUCTIBLE_AMOUNT) * 100, 1) as Percent_Met,\n    '$' || CAST(cb.DEDUCTIBLE_MET_AMT AS TEXT) || ' of $' || \n        CAST(cb.DEDUCTIBLE_AMOUNT AS TEXT) as Progress\nFROM COVERAGE_BENEFITS cb\nWHERE cb.CVG_ID = 5934765.0\n  AND cb.DEDUCTIBLE_AMOUNT IS NOT NULL\n  AND cb.DEDUCTIBLE_AMOUNT > 0\nORDER BY cb.DEDUCTIBLE_MET_AMT DESC;",
+    "description": "Analyze deductible accumulation across multiple benefit records",
+    "chapterId": "10-06-decoding-insurance-coverage-and-benefits",
+    "index": 3
+  },
+  {
+    "id": "10-06-decoding-insurance-coverage-and-benefits-4",
+    "originalQuery": "SELECT \n    sb.CVG_SVC_TYPE_ID_SERVICE_TYPE_NAME as Service_Type,\n    sb.COPAY_AMOUNT as Copay,\n    sb.COINS_PERCENT as Coinsurance_Pct,\n    sb.IN_NETWORK_YN as Network_Status,\n    sb.MAX_VISITS as Visit_Limit,\n    sb.REMAINING_VISITS as Visits_Remaining,\n    CASE \n        WHEN sb.COPAY_AMOUNT > 0 THEN '$' || CAST(sb.COPAY_AMOUNT AS TEXT) || ' copay'\n        WHEN sb.COINS_PERCENT > 0 THEN CAST(sb.COINS_PERCENT AS TEXT) || '% after deductible'\n        ELSE 'Covered'\n    END as Patient_Responsibility\nFROM SERVICE_BENEFITS sb\nJOIN COVERAGE_BENEFITS cb ON sb.RECORD_ID = cb.RECORD_ID\nWHERE cb.CVG_ID = 5934765.0\n  AND sb.CVG_SVC_TYPE_ID_SERVICE_TYPE_NAME IS NOT NULL\nORDER BY \n    CASE sb.CVG_SVC_TYPE_ID_SERVICE_TYPE_NAME\n        WHEN 'PRIMARY' THEN 1\n        WHEN 'SPEC' THEN 2\n        WHEN 'ED' THEN 3\n        WHEN 'HOSP IP' THEN 4\n        WHEN 'HOSP OP' THEN 5\n        ELSE 6\n    END,\n    sb.COINS_PERCENT;",
+    "description": "Display comprehensive service benefits showing network variations",
+    "chapterId": "10-06-decoding-insurance-coverage-and-benefits",
+    "index": 4
+  },
+  {
+    "id": "10-06-decoding-insurance-coverage-and-benefits-5",
+    "originalQuery": "WITH DeductibleStatus AS (\n    SELECT \n        MAX(DEDUCTIBLE_AMOUNT) as Annual_Deductible,\n        MAX(DEDUCTIBLE_MET_AMT) as Deductible_Met,\n        MAX(DEDUCT_REMAIN_AMT) as Deductible_Remaining\n    FROM COVERAGE_BENEFITS\n    WHERE CVG_ID = 5934765.0\n      AND DEDUCTIBLE_AMOUNT IS NOT NULL\n),\nServiceScenarios AS (\n    SELECT \n        'Office Visit - Primary Care' as Service,\n        500 as Billed_Amount,\n        'PRIMARY' as Service_Type\n    UNION ALL\n    SELECT 'MRI Scan', 2000, 'HOSP OP'\n    UNION ALL\n    SELECT 'Emergency Room Visit', 1500, 'ED'\n    UNION ALL\n    SELECT 'Specialist Consultation', 350, 'SPEC'\n)\nSELECT \n    ss.Service,\n    '$' || ss.Billed_Amount as Billed_Amount,\n    sb.COINS_PERCENT || '%' as Coinsurance_Rate,\n    '$' || ds.Deductible_Met || ' of $' || ds.Annual_Deductible as Deductible_Status,\n    CASE \n        WHEN ds.Deductible_Remaining > 0 AND ss.Billed_Amount <= ds.Deductible_Remaining \n            THEN '$' || ss.Billed_Amount || ' (applies to deductible)'\n        WHEN ds.Deductible_Remaining > 0 \n            THEN '$' || ds.Deductible_Remaining || ' (deductible) + $' || \n                 ROUND((ss.Billed_Amount - ds.Deductible_Remaining) * sb.COINS_PERCENT / 100.0, 2) || ' (coinsurance)'\n        WHEN sb.COPAY_AMOUNT > 0 \n            THEN '$' || sb.COPAY_AMOUNT || ' (copay)'\n        ELSE '$' || ROUND(ss.Billed_Amount * sb.COINS_PERCENT / 100.0, 2) || ' (coinsurance)'\n    END as Patient_Owes\nFROM ServiceScenarios ss\nCROSS JOIN DeductibleStatus ds\nLEFT JOIN SERVICE_BENEFITS sb ON sb.CVG_SVC_TYPE_ID_SERVICE_TYPE_NAME = ss.Service_Type\nLEFT JOIN COVERAGE_BENEFITS cb ON sb.RECORD_ID = cb.RECORD_ID\nWHERE cb.CVG_ID = 5934765.0\n  AND sb.COINS_PERCENT = 10\nLIMIT 4;",
+    "description": "Model patient responsibility calculation for different scenarios",
+    "chapterId": "10-06-decoding-insurance-coverage-and-benefits",
+    "index": 5
+  },
+  {
+    "id": "10-06-decoding-insurance-coverage-and-benefits-6",
+    "originalQuery": "SELECT \n    c.COVERAGE_ID,\n    c.VERIFY_USER_ID_NAME as Last_Verified_By,\n    cm.MEM_VERIF_STAT_C_NAME as Member_Verification_Status,\n    cm.LAST_VERIF_DATE as Last_Verification_Date,\n    cm.MEM_COVERED_YN as Currently_Covered,\n    cm.MEM_EFF_FROM_DATE as Coverage_Start,\n    cm.MEM_EFF_TO_DATE as Coverage_End,\n    CASE \n        WHEN cm.MEM_EFF_TO_DATE IS NULL THEN 'Active - No End Date'\n        WHEN DATE(cm.MEM_EFF_TO_DATE) >= DATE('now') THEN 'Active until ' || cm.MEM_EFF_TO_DATE\n        ELSE 'Terminated on ' || cm.MEM_EFF_TO_DATE\n    END as Coverage_Status\nFROM COVERAGE c\nJOIN COVERAGE_MEMBER_LIST cm ON c.COVERAGE_ID = cm.COVERAGE_ID\nWHERE cm.PAT_ID = 'Z7004242';",
+    "description": "Check coverage verification and eligibility status",
+    "chapterId": "10-06-decoding-insurance-coverage-and-benefits",
+    "index": 6
+  },
+  {
+    "id": "10-06-demystifying-inpatient-data-id-when-outpatients-go-inpatient-0",
+    "originalQuery": "SELECT \n    COUNT(*) as total_encounters,\n    SUM(CASE WHEN INPATIENT_DATA_ID IS NOT NULL \n             AND LENGTH(INPATIENT_DATA_ID) > 0 \n        THEN 1 ELSE 0 END) as has_inpatient_id,\n    ROUND(SUM(CASE WHEN INPATIENT_DATA_ID IS NOT NULL \n                   AND LENGTH(INPATIENT_DATA_ID) > 0 \n              THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as percentage\nFROM PAT_ENC\nWHERE PAT_ID = 'Z7004242';",
+    "description": "Check what fraction of encounters have INPATIENT_DATA_ID",
+    "chapterId": "10-06-demystifying-inpatient-data-id-when-outpatients-go-inpatient",
+    "index": 0
+  },
+  {
+    "id": "10-06-demystifying-inpatient-data-id-when-outpatients-go-inpatient-1",
+    "originalQuery": "SELECT \n    CASE \n        WHEN pe.INPATIENT_DATA_ID IS NOT NULL THEN 'Has INPATIENT_DATA_ID'\n        ELSE 'No INPATIENT_DATA_ID'\n    END as Category,\n    COUNT(*) as Encounter_Count,\n    SUM(CASE WHEN hsp.PAT_ENC_CSN_ID IS NOT NULL THEN 1 ELSE 0 END) as Has_Hospital_Record,\n    ROUND(SUM(CASE WHEN hsp.PAT_ENC_CSN_ID IS NOT NULL THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as Hospital_Percentage\nFROM PAT_ENC pe\nLEFT JOIN PAT_ENC_HSP hsp ON pe.PAT_ENC_CSN_ID = hsp.PAT_ENC_CSN_ID\nWHERE pe.PAT_ID = 'Z7004242'\nGROUP BY CASE WHEN pe.INPATIENT_DATA_ID IS NOT NULL THEN 'Has INPATIENT_DATA_ID' ELSE 'No INPATIENT_DATA_ID' END;",
+    "description": "Compare INPATIENT_DATA_ID presence with actual hospital records",
+    "chapterId": "10-06-demystifying-inpatient-data-id-when-outpatients-go-inpatient",
+    "index": 1
+  },
+  {
+    "id": "10-06-demystifying-inpatient-data-id-when-outpatients-go-inpatient-2",
+    "originalQuery": "SELECT \n    COALESCE(d.DEPARTMENT_NAME, '[No Department]') as Department,\n    COUNT(*) as Encounters_with_Inpatient_ID,\n    ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER(), 1) as Percentage\nFROM PAT_ENC pe\nLEFT JOIN CLARITY_DEP d ON pe.DEPARTMENT_ID = d.DEPARTMENT_ID\nWHERE pe.INPATIENT_DATA_ID IS NOT NULL \n  AND LENGTH(pe.INPATIENT_DATA_ID) > 0\n  AND pe.PAT_ID = 'Z7004242'\nGROUP BY d.DEPARTMENT_NAME\nORDER BY COUNT(*) DESC;",
+    "description": "List departments using INPATIENT_DATA_ID",
+    "chapterId": "10-06-demystifying-inpatient-data-id-when-outpatients-go-inpatient",
+    "index": 2
+  },
+  {
+    "id": "10-06-demystifying-inpatient-data-id-when-outpatients-go-inpatient-3",
+    "originalQuery": "SELECT \n    d.DEPARTMENT_NAME,\n    eds.ED_PAT_STATUS_C_NAME as Workflow_Status,\n    eds.PAT_STATUS_TIME,\n    pe.APPT_STATUS_C_NAME as Appointment_Status\nFROM ED_PAT_STATUS eds\nJOIN PAT_ENC pe ON eds.PAT_ENC_CSN_ID = pe.PAT_ENC_CSN_ID\nLEFT JOIN CLARITY_DEP d ON pe.DEPARTMENT_ID = d.DEPARTMENT_ID\nWHERE pe.PAT_ID = 'Z7004242'\n  AND d.DEPARTMENT_NAME LIKE '%INTERNAL MEDICINE%'\nORDER BY eds.PAT_STATUS_TIME DESC\nLIMIT 10;",
+    "description": "Show ED workflow tracking in non-ED departments",
+    "chapterId": "10-06-demystifying-inpatient-data-id-when-outpatients-go-inpatient",
+    "index": 3
+  },
+  {
+    "id": "10-06-demystifying-inpatient-data-id-when-outpatients-go-inpatient-4",
+    "originalQuery": "WITH id_usage AS (\n    SELECT DISTINCT INPATIENT_DATA_ID \n    FROM PAT_ENC \n    WHERE INPATIENT_DATA_ID IS NOT NULL\n      AND PAT_ID = 'Z7004242'\n)\nSELECT \n    'IP_DATA_STORE' as Table_Name,\n    COUNT(DISTINCT ids.INPATIENT_DATA_ID) as IDs_Found,\n    'Master inpatient data store' as Purpose\nFROM IP_DATA_STORE ids\nWHERE ids.INPATIENT_DATA_ID IN (SELECT INPATIENT_DATA_ID FROM id_usage)\nUNION ALL\nSELECT \n    'ED_PAT_STATUS',\n    COUNT(DISTINCT eds.INPATIENT_DATA_ID),\n    'Workflow status tracking'\nFROM ED_PAT_STATUS eds\nWHERE eds.INPATIENT_DATA_ID IN (SELECT INPATIENT_DATA_ID FROM id_usage)\nUNION ALL\nSELECT \n    'IP_FLOWSHEET_ROWS',\n    COUNT(DISTINCT ifr.INPATIENT_DATA_ID),\n    'Clinical documentation'\nFROM IP_FLOWSHEET_ROWS ifr\nWHERE ifr.INPATIENT_DATA_ID IN (SELECT INPATIENT_DATA_ID FROM id_usage)\nUNION ALL\nSELECT \n    'PAT_ENC_HSP',\n    COUNT(DISTINCT hsp.INPATIENT_DATA_ID),\n    'True hospital admissions'\nFROM PAT_ENC_HSP hsp\nWHERE hsp.INPATIENT_DATA_ID IN (SELECT INPATIENT_DATA_ID FROM id_usage)\nORDER BY IDs_Found DESC;",
+    "description": "Show which tables use INPATIENT_DATA_ID for tracking",
+    "chapterId": "10-06-demystifying-inpatient-data-id-when-outpatients-go-inpatient",
+    "index": 4
+  },
+  {
+    "id": "10-06-demystifying-inpatient-data-id-when-outpatients-go-inpatient-5",
+    "originalQuery": "SELECT \n    pe.PAT_ENC_CSN_ID,\n    pe.CONTACT_DATE,\n    d.DEPARTMENT_NAME,\n    ids.INPATIENT_DATA_ID,\n    ids.EPT_CSN as Linked_CSN,\n    ids.RECORD_STATUS_C_NAME\nFROM PAT_ENC pe\nJOIN IP_DATA_STORE ids ON pe.INPATIENT_DATA_ID = ids.INPATIENT_DATA_ID\nLEFT JOIN CLARITY_DEP d ON pe.DEPARTMENT_ID = d.DEPARTMENT_ID\nWHERE pe.PAT_ID = 'Z7004242'\n  AND d.DEPARTMENT_NAME LIKE '%LABORATORY%'\nLIMIT 5;",
+    "description": "Examine IP_DATA_STORE connections",
+    "chapterId": "10-06-demystifying-inpatient-data-id-when-outpatients-go-inpatient",
+    "index": 5
+  },
+  {
+    "id": "10-06-demystifying-inpatient-data-id-when-outpatients-go-inpatient-6",
+    "originalQuery": "SELECT \n    pe.PAT_ENC_CSN_ID,\n    pe.CONTACT_DATE,\n    d.DEPARTMENT_NAME,\n    hsp.ADT_PAT_CLASS_C_NAME as Patient_Class,\n    hsp.HOSP_ADMSN_TIME as Admission_Time,\n    hsp.HOSP_DISCH_TIME as Discharge_Time,\n    CASE \n        WHEN pe.INPATIENT_DATA_ID IS NOT NULL THEN 'Yes'\n        ELSE 'No'\n    END as Has_Inpatient_Data_ID\nFROM PAT_ENC pe\nJOIN PAT_ENC_HSP hsp ON pe.PAT_ENC_CSN_ID = hsp.PAT_ENC_CSN_ID\nLEFT JOIN CLARITY_DEP d ON pe.DEPARTMENT_ID = d.DEPARTMENT_ID\nWHERE pe.PAT_ID = 'Z7004242'\nORDER BY pe.CONTACT_DATE DESC;",
+    "description": "Correctly identify true hospital admissions",
+    "chapterId": "10-06-demystifying-inpatient-data-id-when-outpatients-go-inpatient",
+    "index": 6
+  },
+  {
+    "id": "10-06-demystifying-inpatient-data-id-when-outpatients-go-inpatient-7",
+    "originalQuery": "SELECT \n    'Features enabled by INPATIENT_DATA_ID:' as Description\nUNION ALL\nSELECT '• Workflow tracking: ' || COUNT(DISTINCT PAT_ENC_CSN_ID) || ' encounters'\nFROM ED_PAT_STATUS \nWHERE INPATIENT_DATA_ID IN (\n    SELECT INPATIENT_DATA_ID FROM PAT_ENC \n    WHERE PAT_ID = 'Z7004242' AND INPATIENT_DATA_ID IS NOT NULL\n)\nUNION ALL\nSELECT '• Flowsheet documentation: ' || COUNT(DISTINCT INPATIENT_DATA_ID) || ' encounters'\nFROM IP_FLOWSHEET_ROWS\nWHERE INPATIENT_DATA_ID IN (\n    SELECT INPATIENT_DATA_ID FROM PAT_ENC \n    WHERE PAT_ID = 'Z7004242' AND INPATIENT_DATA_ID IS NOT NULL\n)\nUNION ALL\nSELECT '• Date range tracking: ' || COUNT(DISTINCT INPATIENT_DATA_ID) || ' encounters'\nFROM IP_FLOW_DATERNG\nWHERE INPATIENT_DATA_ID IN (\n    SELECT INPATIENT_DATA_ID FROM PAT_ENC \n    WHERE PAT_ID = 'Z7004242' AND INPATIENT_DATA_ID IS NOT NULL\n);",
+    "description": "Analyze what features INPATIENT_DATA_ID enables",
+    "chapterId": "10-06-demystifying-inpatient-data-id-when-outpatients-go-inpatient",
+    "index": 7
+  },
+  {
+    "id": "10-07-capturing-clinical-measurements-through-flowsheets-0",
+    "originalQuery": "SELECT \n    flt.TEMPLATE_ID,\n    flt.DISPLAY_NAME as Template_Name,\n    COUNT(DISTINCT fm.FSD_ID) as Times_Used,\n    COUNT(fm.LINE) as Total_Measurements\nFROM IP_FLT_DATA flt\nLEFT JOIN IP_FLWSHT_MEAS fm ON flt.TEMPLATE_ID = fm.FLT_ID\nGROUP BY flt.TEMPLATE_ID, flt.DISPLAY_NAME\nORDER BY Total_Measurements DESC;",
+    "description": "View available flowsheet templates and their usage",
+    "chapterId": "10-07-capturing-clinical-measurements-through-flowsheets",
+    "index": 0
+  },
+  {
+    "id": "10-07-capturing-clinical-measurements-through-flowsheets-1",
+    "originalQuery": "SELECT \n    fm.RECORDED_TIME,\n    fm.LINE,\n    fr.FLO_MEAS_ID_DISP_NAME as Question,\n    fm.MEAS_COMMENT as Response,\n    fm.TAKEN_USER_ID_NAME as Administered_By\nFROM IP_FLWSHT_REC fsr\nJOIN IP_FLWSHT_MEAS fm ON fsr.FSD_ID = fm.FSD_ID\nLEFT JOIN IP_FLOWSHEET_ROWS fr ON fsr.INPATIENT_DATA_ID = fr.INPATIENT_DATA_ID \n    AND fm.LINE = fr.LINE\nWHERE fsr.PAT_ID = 'Z7004242'\n  AND fm.FLT_ID = '281'  -- Adult Wellness Screenings\n  AND fr.FLO_MEAS_ID_DISP_NAME LIKE '%PHQ-2%'\nORDER BY fm.RECORDED_TIME DESC, fm.LINE;",
+    "description": "Follow PHQ-2 screening questions and responses",
+    "chapterId": "10-07-capturing-clinical-measurements-through-flowsheets",
+    "index": 1
+  },
+  {
+    "id": "10-07-capturing-clinical-measurements-through-flowsheets-2",
+    "originalQuery": "SELECT \n    flt.DISPLAY_NAME as Template,\n    COUNT(*) as Measurements,\n    AVG(CASE \n        WHEN fm.ENTRY_TIME IS NOT NULL AND fm.RECORDED_TIME IS NOT NULL\n        THEN ROUND((JULIANDAY(fm.ENTRY_TIME) - JULIANDAY(fm.RECORDED_TIME)) * 24 * 60, 1)\n        ELSE NULL \n    END) as Avg_Documentation_Delay_Minutes,\n    COUNT(CASE WHEN fm.ENTRY_TIME = fm.RECORDED_TIME THEN 1 END) as Real_Time_Entries\nFROM IP_FLWSHT_MEAS fm\nJOIN IP_FLT_DATA flt ON fm.FLT_ID = flt.TEMPLATE_ID\nJOIN IP_FLWSHT_REC fr ON fm.FSD_ID = fr.FSD_ID\nWHERE fr.PAT_ID = 'Z7004242'\n  AND fm.ENTRY_TIME IS NOT NULL\nGROUP BY flt.DISPLAY_NAME\nORDER BY Measurements DESC;",
+    "description": "Analyze documentation timeliness across templates",
+    "chapterId": "10-07-capturing-clinical-measurements-through-flowsheets",
+    "index": 2
+  },
+  {
+    "id": "10-07-capturing-clinical-measurements-through-flowsheets-3",
+    "originalQuery": "WITH TemplateUsage AS (\n    SELECT \n        DATE(fm.RECORDED_TIME) as Measurement_Date,\n        flt.DISPLAY_NAME as Template,\n        COUNT(*) as Daily_Measurements,\n        COUNT(DISTINCT fm.TAKEN_USER_ID) as Staff_Count\n    FROM IP_FLWSHT_MEAS fm\n    JOIN IP_FLT_DATA flt ON fm.FLT_ID = flt.TEMPLATE_ID\n    JOIN IP_FLWSHT_REC fr ON fm.FSD_ID = fr.FSD_ID\n    WHERE fr.PAT_ID = 'Z7004242'\n      AND fm.RECORDED_TIME IS NOT NULL\n    GROUP BY DATE(fm.RECORDED_TIME), flt.DISPLAY_NAME\n)\nSELECT \n    Measurement_Date,\n    GROUP_CONCAT(Template || ' (' || Daily_Measurements || ')', ', ') as Templates_Used,\n    SUM(Daily_Measurements) as Total_Daily_Measurements\nFROM TemplateUsage\nGROUP BY Measurement_Date\nORDER BY Measurement_Date DESC\nLIMIT 10;",
+    "description": "Track flowsheet template usage patterns over time",
+    "chapterId": "10-07-capturing-clinical-measurements-through-flowsheets",
+    "index": 3
+  },
+  {
+    "id": "10-07-capturing-clinical-measurements-through-flowsheets-4",
+    "originalQuery": "SELECT \n    fr.FLO_MEAS_ID_DISP_NAME as Measurement_Type,\n    COUNT(DISTINCT fr.INPATIENT_DATA_ID) as Flowsheets_Using_This,\n    COUNT(DISTINCT fsr.FSD_ID) as Records_With_This_Type\nFROM IP_FLOWSHEET_ROWS fr\nJOIN IP_FLWSHT_REC fsr ON fr.INPATIENT_DATA_ID = fsr.INPATIENT_DATA_ID\nWHERE fsr.PAT_ID = 'Z7004242'\nGROUP BY fr.FLO_MEAS_ID_DISP_NAME\nHAVING COUNT(DISTINCT fsr.FSD_ID) > 0\nORDER BY Records_With_This_Type DESC\nLIMIT 20;\n</example_query>\n\nCommon measurement types include:\n- **Vital Signs**: BP, pulse, temperature, respirations\n- **Screening Questions**: Depression, substance use, safety\n- **Calculated Values**: BMI, scores, risk assessments\n- **Patient-Reported**: Symptoms, travel, exposures\n\n### Tracking Clinical Decision Support\n\nSome measurements trigger automated calculations:\n\n<example-query description=\"Find calculated values and formulas in flowsheets\">\nSELECT \n    fm.RECORDED_TIME,\n    fm.FLT_ID_DISPLAY_NAME as Template,\n    fr.FLO_MEAS_ID_DISP_NAME as Calculated_Field,\n    fm.MEAS_COMMENT as Value\nFROM IP_FLWSHT_MEAS fm\nJOIN IP_FLWSHT_REC fsr ON fm.FSD_ID = fsr.FSD_ID\nLEFT JOIN IP_FLOWSHEET_ROWS fr ON fsr.INPATIENT_DATA_ID = fr.INPATIENT_DATA_ID \n    AND fm.OCCURANCE = fr.LINE\nWHERE fsr.PAT_ID = 'Z7004242'\n  AND fm.FLT_ID = '43'  -- Custom Formula Data\n  AND fr.FLO_MEAS_ID_DISP_NAME IS NOT NULL\nORDER BY fm.RECORDED_TIME DESC\nLIMIT 10;",
+    "description": "Explore the variety of clinical measurements captured",
+    "chapterId": "10-07-capturing-clinical-measurements-through-flowsheets",
+    "index": 4
+  },
+  {
+    "id": "10-07-capturing-clinical-measurements-through-flowsheets-5",
+    "originalQuery": "SELECT \n    fm.FSD_ID,\n    fm.RECORDED_TIME,\n    fm.FLT_ID_DISPLAY_NAME as Template,\n    CASE \n        WHEN fm.EDITED_LINE IS NOT NULL THEN 'Edited'\n        ELSE 'Original'\n    END as Entry_Status,\n    fm.ENTRY_USER_ID_NAME as Documented_By,\n    fm.ISACCEPTED_YN as Accepted\nFROM IP_FLWSHT_MEAS fm\nJOIN IP_FLWSHT_REC fr ON fm.FSD_ID = fr.FSD_ID\nWHERE fr.PAT_ID = 'Z7004242'\n  AND (fm.EDITED_LINE IS NOT NULL OR fm.ISACCEPTED_YN = 'N')\nORDER BY fm.RECORDED_TIME DESC\nLIMIT 10;",
+    "description": "Check for edited measurements showing audit trail",
+    "chapterId": "10-07-capturing-clinical-measurements-through-flowsheets",
+    "index": 5
+  },
+  {
+    "id": "10-07-capturing-clinical-measurements-through-flowsheets-6",
+    "originalQuery": "WITH FlowsheetTimeline AS (\n    SELECT \n        DATE(fm.RECORDED_TIME) as Activity_Date,\n        flt.DISPLAY_NAME as Template_Used,\n        COUNT(DISTINCT fm.FSD_ID) as Unique_Records,\n        COUNT(*) as Total_Entries,\n        GROUP_CONCAT(DISTINCT fm.TAKEN_USER_ID_NAME) as Staff_Involved\n    FROM IP_FLWSHT_MEAS fm\n    JOIN IP_FLT_DATA flt ON fm.FLT_ID = flt.TEMPLATE_ID\n    JOIN IP_FLWSHT_REC fr ON fm.FSD_ID = fr.FSD_ID\n    WHERE fr.PAT_ID = 'Z7004242'\n      AND fm.RECORDED_TIME IS NOT NULL\n    GROUP BY DATE(fm.RECORDED_TIME), flt.DISPLAY_NAME\n)\nSELECT \n    Activity_Date,\n    COUNT(DISTINCT Template_Used) as Different_Templates,\n    SUM(Total_Entries) as Total_Measurements,\n    GROUP_CONCAT(Template_Used || ' (' || Total_Entries || ' entries)', '; ') as Details\nFROM FlowsheetTimeline\nGROUP BY Activity_Date\nORDER BY Activity_Date DESC\nLIMIT 15;",
+    "description": "Create a timeline of all flowsheet documentation",
+    "chapterId": "10-07-capturing-clinical-measurements-through-flowsheets",
+    "index": 6
+  },
+  {
+    "id": "10-08-orchestrating-clinical-care-through-orders-0",
+    "originalQuery": "SELECT \n    'Medications' as Order_Category,\n    COUNT(*) as Total_Orders,\n    COUNT(DISTINCT ORDERING_DATE) as Order_Days,\n    MIN(SUBSTR(ORDERING_DATE, 1, 10)) as First_Order,\n    MAX(SUBSTR(ORDERING_DATE, 1, 10)) as Last_Order\nFROM ORDER_MED\nWHERE PAT_ID = 'Z7004242'\n\nUNION ALL\n\nSELECT \n    'Procedures' as Order_Category,\n    COUNT(*) as Total_Orders,\n    COUNT(DISTINCT ORDERING_DATE) as Order_Days,\n    MIN(SUBSTR(ORDERING_DATE, 1, 10)) as First_Order,\n    MAX(SUBSTR(ORDERING_DATE, 1, 10)) as Last_Order\nFROM ORDER_PROC\nWHERE PAT_ID = 'Z7004242'\nORDER BY Total_Orders DESC;",
+    "description": "Compare medication and procedure order volumes for our patient",
+    "chapterId": "10-08-orchestrating-clinical-care-through-orders",
+    "index": 0
+  },
+  {
+    "id": "10-08-orchestrating-clinical-care-through-orders-1",
+    "originalQuery": "SELECT \n    ORDER_MED_ID,\n    SUBSTR(START_DATE, 1, 10) as Start_Date,\n    SUBSTR(END_DATE, 1, 10) as End_Date,\n    QUANTITY,\n    REFILLS,\n    ORDER_STATUS_C_NAME as Status,\n    RSN_FOR_DISCON_C_NAME as Discontinuation_Reason,\n    CASE \n        WHEN CHNG_ORDER_MED_ID IS NOT NULL THEN 'Reorder of ' || CHNG_ORDER_MED_ID\n        ELSE 'Original Order'\n    END as Order_Type\nFROM ORDER_MED\nWHERE PAT_ID = 'Z7004242' \n  AND DESCRIPTION LIKE '%NORTRIPTYLINE%'\nORDER BY START_DATE;",
+    "description": "Track the complete history of nortriptyline orders showing refills and changes",
+    "chapterId": "10-08-orchestrating-clinical-care-through-orders",
+    "index": 1
+  },
+  {
+    "id": "10-08-orchestrating-clinical-care-through-orders-2",
+    "originalQuery": "WITH LabOrders AS (\n    SELECT \n        op.ORDER_PROC_ID,\n        op.ORDERING_DATE,\n        op.DESCRIPTION as Test_Name,\n        op.ORDER_STATUS_C_NAME as Order_Status,\n        op.LAB_STATUS_C_NAME as Lab_Status,\n        COUNT(orr.LINE) as Result_Components\n    FROM ORDER_PROC op\n    LEFT JOIN ORDER_RESULTS orr ON op.ORDER_PROC_ID = orr.ORDER_PROC_ID\n    WHERE op.PAT_ID = 'Z7004242'\n      AND op.ORDER_TYPE_C_NAME = 'Lab'\n    GROUP BY op.ORDER_PROC_ID, op.ORDERING_DATE, op.DESCRIPTION, \n             op.ORDER_STATUS_C_NAME, op.LAB_STATUS_C_NAME\n)\nSELECT \n    SUBSTR(ORDERING_DATE, 1, 10) as Order_Date,\n    Test_Name,\n    Order_Status,\n    Lab_Status,\n    Result_Components,\n    CASE \n        WHEN Lab_Status = 'Final result' THEN 'Complete with ' || Result_Components || ' results'\n        WHEN Order_Status = 'Completed' AND Result_Components = 0 THEN 'Completed, no discrete results'\n        ELSE 'Pending or canceled'\n    END as Interpretation\nFROM LabOrders\nORDER BY ORDERING_DATE DESC\nLIMIT 10;",
+    "description": "Trace lab orders from placement through final results",
+    "chapterId": "10-08-orchestrating-clinical-care-through-orders",
+    "index": 2
+  },
+  {
+    "id": "10-08-orchestrating-clinical-care-through-orders-3",
+    "originalQuery": "SELECT \n    op.DESCRIPTION as Test,\n    orr.COMPONENT_ID_NAME as Component,\n    orr.ORD_VALUE as Value,\n    orr.REFERENCE_UNIT as Unit,\n    orr.REFERENCE_LOW || '-' || orr.REFERENCE_HIGH as Normal_Range,\n    CASE \n        WHEN orr.RESULT_FLAG_C_NAME = 'High' THEN '⬆️ HIGH'\n        WHEN orr.RESULT_FLAG_C_NAME = 'Low' THEN '⬇️ LOW'\n        ELSE '✓ Normal'\n    END as Status\nFROM ORDER_PROC op\nJOIN ORDER_RESULTS orr ON op.ORDER_PROC_ID = orr.ORDER_PROC_ID\nWHERE op.PAT_ID = 'Z7004242'\n  AND op.ORDER_TYPE_C_NAME = 'Lab'\n  AND op.ORDERING_DATE LIKE '9/28/2023%'\nORDER BY op.ORDERING_DATE DESC, op.ORDER_PROC_ID, orr.LINE\nLIMIT 15;",
+    "description": "Show detailed lab results with reference ranges and abnormal flags",
+    "chapterId": "10-08-orchestrating-clinical-care-through-orders",
+    "index": 3
+  },
+  {
+    "id": "10-08-orchestrating-clinical-care-through-orders-4",
+    "originalQuery": "WITH MedHistory AS (\n    SELECT \n        SUBSTR(DESCRIPTION, 1, 30) as Medication,\n        SUBSTR(START_DATE, 1, 10) as Start_Date,\n        SUBSTR(END_DATE, 1, 10) as End_Date,\n        CAST(REPLACE(QUANTITY, ' capsule', '') AS INTEGER) as Quantity,\n        CASE \n            WHEN END_DATE IS NOT NULL \n            THEN 90  -- Assuming 90 day supply for simplicity\n            ELSE 90\n        END as Days_Supply,\n        RSN_FOR_DISCON_C_NAME as Discontinuation_Reason\n    FROM ORDER_MED\n    WHERE PAT_ID = 'Z7004242'\n      AND QUANTITY LIKE '%capsule%'\n)\nSELECT \n    Medication,\n    Start_Date,\n    End_Date,\n    Quantity || ' units' as Quantity,\n    Days_Supply || ' days' as Duration,\n    ROUND(Quantity / Days_Supply * 30, 1) || ' units/month' as Monthly_Usage,\n    COALESCE(Discontinuation_Reason, 'Active') as Status\nFROM MedHistory\nORDER BY Start_Date DESC;",
+    "description": "Analyze medication refill patterns to assess adherence",
+    "chapterId": "10-08-orchestrating-clinical-care-through-orders",
+    "index": 4
+  },
+  {
+    "id": "10-08-orchestrating-clinical-care-through-orders-5",
+    "originalQuery": "SELECT \n    SUBSTR(ORDERING_DATE, 1, 10) as Referral_Date,\n    DESCRIPTION as Specialty,\n    ORDER_STATUS_C_NAME as Status,\n    CASE \n        WHEN REFERRING_PROV_ID IS NOT NULL AND REFERRING_PROV_ID != '' THEN 'Provider: ' || REFERRING_PROV_ID\n        ELSE 'No referring provider listed'\n    END as Referred_By,\n    CASE \n        WHEN REFD_TO_LOC_ID IS NOT NULL THEN 'Location specified'\n        ELSE 'No specific location'\n    END as Destination\nFROM ORDER_PROC\nWHERE PAT_ID = 'Z7004242'\n  AND ORDER_TYPE_C_NAME = 'Outpatient Referral'\nORDER BY ORDERING_DATE DESC;",
+    "description": "Map referral patterns showing specialty consultations",
+    "chapterId": "10-08-orchestrating-clinical-care-through-orders",
+    "index": 5
+  },
+  {
+    "id": "10-08-orchestrating-clinical-care-through-orders-6",
+    "originalQuery": "WITH OrderGroups AS (\n    SELECT \n        PAT_ENC_CSN_ID,\n        SUBSTR(ORDERING_DATE, 1, 10) as Order_Date,\n        'Medication' as Order_Type,\n        DESCRIPTION,\n        ORDER_MED_ID as Order_ID\n    FROM ORDER_MED\n    WHERE PAT_ID = 'Z7004242'\n    \n    UNION ALL\n    \n    SELECT \n        PAT_ENC_CSN_ID,\n        SUBSTR(ORDERING_DATE, 1, 10) as Order_Date,\n        'Procedure: ' || ORDER_TYPE_C_NAME as Order_Type,\n        DESCRIPTION,\n        ORDER_PROC_ID as Order_ID\n    FROM ORDER_PROC\n    WHERE PAT_ID = 'Z7004242'\n)\nSELECT \n    Order_Date,\n    COUNT(*) as Orders_Placed,\n    GROUP_CONCAT(Order_Type || ': ' || SUBSTR(DESCRIPTION, 1, 30), '; ') as Order_Summary\nFROM OrderGroups\nWHERE PAT_ENC_CSN_ID IS NOT NULL\nGROUP BY PAT_ENC_CSN_ID, Order_Date\nHAVING COUNT(*) > 1\nORDER BY Order_Date DESC;",
+    "description": "Find orders placed together on the same encounter",
+    "chapterId": "10-08-orchestrating-clinical-care-through-orders",
+    "index": 6
+  },
+  {
+    "id": "10-08-orchestrating-clinical-care-through-orders-7",
+    "originalQuery": "SELECT \n    os.ORDER_ID,\n    SUBSTR(op.DESCRIPTION, 1, 30) as Test,\n    os.CONTACT_TYPE_C_NAME as Status_Update,\n    SUBSTR(os.INSTANT_OF_ENTRY, 1, 10) as Update_Date,\n    os.ORDER_CREATOR_ID_NAME as Updated_By\nFROM ORDER_STATUS os\nJOIN ORDER_PROC op ON os.ORDER_ID = op.ORDER_PROC_ID\nWHERE op.PAT_ID = 'Z7004242'\n  AND op.ORDER_TYPE_C_NAME = 'Lab'\n  AND op.ORDER_STATUS_C_NAME = 'Completed'\nORDER BY os.ORDER_ID, os.INSTANT_OF_ENTRY\nLIMIT 10;",
+    "description": "Examine order status progression for completed labs",
+    "chapterId": "10-08-orchestrating-clinical-care-through-orders",
+    "index": 7
+  },
+  {
+    "id": "10-08-orchestrating-clinical-care-through-orders-8",
+    "originalQuery": "WITH OrderPatterns AS (\n    SELECT \n        CASE \n            WHEN DESCRIPTION LIKE '%A1C%' THEN 'Diabetes Monitoring'\n            WHEN DESCRIPTION LIKE '%LIPID%' THEN 'Cardiovascular Monitoring'\n            WHEN DESCRIPTION LIKE '%HEPATITIS%' THEN 'Infection Screening'\n            WHEN DESCRIPTION LIKE '%DEPRESSION%' OR DESCRIPTION LIKE '%NORTRIPTYLINE%' THEN 'Mental Health'\n            WHEN DESCRIPTION LIKE '%LISINOPRIL%' THEN 'Hypertension Management'\n            ELSE 'Other'\n        END as Care_Category,\n        COUNT(*) as Order_Count,\n        MIN(SUBSTR(ORDERING_DATE, 1, 10)) as First_Order,\n        MAX(SUBSTR(ORDERING_DATE, 1, 10)) as Last_Order\n    FROM (\n        SELECT ORDERING_DATE, DESCRIPTION FROM ORDER_MED WHERE PAT_ID = 'Z7004242'\n        UNION ALL\n        SELECT ORDERING_DATE, DESCRIPTION FROM ORDER_PROC WHERE PAT_ID = 'Z7004242'\n    )\n    GROUP BY Care_Category\n)\nSELECT \n    Care_Category,\n    Order_Count,\n    First_Order,\n    Last_Order,\n    CASE \n        WHEN First_Order IS NOT NULL AND Last_Order IS NOT NULL \n        THEN 'Ongoing care'\n        ELSE 'Single episode'\n    END as Care_Duration\nFROM OrderPatterns\nWHERE Care_Category != 'Other'\nORDER BY Order_Count DESC;",
+    "description": "Identify chronic condition management through recurring orders",
+    "chapterId": "10-08-orchestrating-clinical-care-through-orders",
+    "index": 8
+  },
+  {
+    "id": "10-09-capturing-the-clinical-narrative-through-documentation-0",
+    "originalQuery": "SELECT \n    CASE \n        WHEN DELETE_INSTANT_DTTM IS NOT NULL THEN 'Deleted'\n        ELSE 'Active'\n    END as Note_Status,\n    COUNT(*) as Count,\n    COUNT(DISTINCT NOTE_TYPE_NOADD_C_NAME) as Note_Types,\n    COUNT(DISTINCT PAT_ENC_CSN_ID) as Unique_Encounters\nFROM HNO_INFO\nGROUP BY Note_Status;",
+    "description": "Examine the deletion status of all clinical notes in our dataset",
+    "chapterId": "10-09-capturing-the-clinical-narrative-through-documentation",
+    "index": 0
+  },
+  {
+    "id": "10-09-capturing-the-clinical-narrative-through-documentation-1",
+    "originalQuery": "SELECT \n    COALESCE(NOTE_TYPE_NOADD_C_NAME, 'Unspecified') as Note_Type,\n    COUNT(*) as Count,\n    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM HNO_INFO), 2) as Percentage,\n    MIN(SUBSTR(CREATE_INSTANT_DTTM, 1, 10)) as Earliest,\n    MAX(SUBSTR(CREATE_INSTANT_DTTM, 1, 10)) as Latest\nFROM HNO_INFO\nGROUP BY Note_Type\nORDER BY Count DESC;",
+    "description": "Analyze the types of clinical documentation in the system",
+    "chapterId": "10-09-capturing-the-clinical-narrative-through-documentation",
+    "index": 1
+  },
+  {
+    "id": "10-09-capturing-the-clinical-narrative-through-documentation-2",
+    "originalQuery": "WITH PatientDocs AS (\n    SELECT \n        'Clinical Note' as Doc_Type,\n        h.NOTE_ID as Doc_ID,\n        h.NOTE_TYPE_NOADD_C_NAME as Subtype,\n        h.CREATE_INSTANT_DTTM as Created,\n        h.ENTRY_USER_ID_NAME as Author,\n        'Deleted' as Status\n    FROM HNO_INFO h\n    JOIN PAT_ENC pe ON h.PAT_ENC_CSN_ID = pe.PAT_ENC_CSN_ID\n    WHERE pe.PAT_ID = 'Z7004242'\n    \n    UNION ALL\n    \n    SELECT \n        'External Document' as Doc_Type,\n        d.DOC_INFO_ID as Doc_ID,\n        d.DOC_INFO_TYPE_C_NAME as Subtype,\n        d.DOC_RECV_TIME as Created,\n        d.RECV_BY_USER_ID_NAME as Author,\n        d.DOC_STAT_C_NAME as Status\n    FROM DOC_INFORMATION d\n    JOIN PATIENT_DOCS pd ON d.DOC_INFO_ID = pd.DOC_INFO_ID\n    WHERE pd.PAT_ID = 'Z7004242'\n)\nSELECT \n    Doc_Type,\n    COALESCE(Subtype, 'Unspecified') as Document_Subtype,\n    SUBSTR(Created, 1, 10) as Date,\n    Author,\n    Status\nFROM PatientDocs\nWHERE Created IS NOT NULL\nORDER BY Created DESC\nLIMIT 15;",
+    "description": "Track all documentation types for a specific patient chronologically",
+    "chapterId": "10-09-capturing-the-clinical-narrative-through-documentation",
+    "index": 2
+  },
+  {
+    "id": "10-09-capturing-the-clinical-narrative-through-documentation-3",
+    "originalQuery": "SELECT \n    h.NOTE_ID,\n    h.NOTE_TYPE_NOADD_C_NAME as Type,\n    COUNT(hp.LINE) as Total_Lines,\n    GROUP_CONCAT(\n        CASE \n            WHEN hp.LINE <= 2 THEN SUBSTR(hp.NOTE_TEXT, 1, 100) || '...'\n            ELSE NULL\n        END, \n        ' | '\n    ) as Text_Preview\nFROM HNO_INFO h\nJOIN HNO_PLAIN_TEXT hp ON h.NOTE_ID = hp.NOTE_ID\nWHERE h.NOTE_ID = '1473625808'\nGROUP BY h.NOTE_ID, h.NOTE_TYPE_NOADD_C_NAME;",
+    "description": "Retrieve and reconstruct multi-line note text",
+    "chapterId": "10-09-capturing-the-clinical-narrative-through-documentation",
+    "index": 3
+  },
+  {
+    "id": "10-09-capturing-the-clinical-narrative-through-documentation-4",
+    "originalQuery": "SELECT \n    DOC_INFO_TYPE_C_NAME as Document_Type,\n    COUNT(*) as Count,\n    SUM(CASE WHEN IS_SCANNED_YN = 'Y' THEN 1 ELSE 0 END) as Scanned,\n    COUNT(DISTINCT SUBSTR(DOC_RECV_TIME, 1, 10)) as Unique_Days\nFROM DOC_INFORMATION\nWHERE DOC_INFO_TYPE_C_NAME IS NOT NULL\nGROUP BY DOC_INFO_TYPE_C_NAME\nORDER BY Count DESC;",
+    "description": "Analyze external document types and sources",
+    "chapterId": "10-09-capturing-the-clinical-narrative-through-documentation",
+    "index": 4
+  },
+  {
+    "id": "10-09-capturing-the-clinical-narrative-through-documentation-5",
+    "originalQuery": "WITH DocFlow AS (\n    SELECT \n        d.DOC_INFO_ID,\n        d.DOC_DESCR as Description,\n        d.DOC_RECV_TIME as Received,\n        CASE \n            WHEN pd.PAT_ID IS NOT NULL THEN 'Linked to Patient'\n            ELSE 'Unlinked'\n        END as Patient_Status,\n        CASE \n            WHEN ped.PAT_ENC_CSN_ID IS NOT NULL THEN 'Linked to Encounter'\n            ELSE 'No Encounter Link'\n        END as Encounter_Status\n    FROM DOC_INFORMATION d\n    LEFT JOIN PATIENT_DOCS pd ON d.DOC_INFO_ID = pd.DOC_INFO_ID\n    LEFT JOIN PAT_ENC_DOCS ped ON d.DOC_INFO_ID = ped.DOC_INFO_ID\n)\nSELECT \n    Patient_Status,\n    Encounter_Status,\n    COUNT(*) as Document_Count\nFROM DocFlow\nGROUP BY Patient_Status, Encounter_Status\nORDER BY Document_Count DESC;",
+    "description": "Trace document lifecycle from receipt to patient association",
+    "chapterId": "10-09-capturing-the-clinical-narrative-through-documentation",
+    "index": 5
+  },
+  {
+    "id": "10-09-capturing-the-clinical-narrative-through-documentation-6",
+    "originalQuery": "SELECT \n    h.UNSIGNED_YN as Unsigned_Flag,\n    COUNT(DISTINCT h.NOTE_ID) as Note_Count,\n    COUNT(DISTINCT ne.COSIGNUSER_ID) as Notes_With_Cosigner,\n    COUNT(DISTINCT h.ENTRY_USER_ID) as Unique_Authors\nFROM HNO_INFO h\nLEFT JOIN NOTE_ENC_INFO ne ON h.NOTE_ID = ne.NOTE_ID\nGROUP BY h.UNSIGNED_YN;",
+    "description": "Analyze note signature and co-signature patterns",
+    "chapterId": "10-09-capturing-the-clinical-narrative-through-documentation",
+    "index": 6
+  },
+  {
+    "id": "10-09-capturing-the-clinical-narrative-through-documentation-7",
+    "originalQuery": "WITH CrossDomainLinks AS (\n    SELECT \n        'Orders' as Link_Type,\n        COUNT(DISTINCT NOTE_ID) as Linked_Notes,\n        COUNT(*) as Total_Links\n    FROM HNO_ORDERS\n    \n    UNION ALL\n    \n    SELECT \n        'Accounts' as Link_Type,\n        COUNT(DISTINCT NOTE_ID) as Linked_Notes,\n        COUNT(*) as Total_Links\n    FROM NOTES_ACCT\n)\nSELECT \n    Link_Type,\n    Linked_Notes,\n    Total_Links,\n    ROUND(Total_Links * 1.0 / Linked_Notes, 1) as Avg_Links_Per_Note\nFROM CrossDomainLinks\nWHERE Linked_Notes > 0;",
+    "description": "Explore how notes link to other clinical domains",
+    "chapterId": "10-09-capturing-the-clinical-narrative-through-documentation",
+    "index": 7
+  },
+  {
+    "id": "10-09-capturing-the-clinical-narrative-through-documentation-8",
+    "originalQuery": "SELECT \n    SUBSTR(DOC_RECV_TIME, 1, 7) as Month,\n    COUNT(*) as ROI_Authorizations,\n    COUNT(DISTINCT pd.PAT_ID) as Unique_Patients,\n    GROUP_CONCAT(COALESCE(DOC_DESCR, 'No description'), '; ') as Descriptions\nFROM DOC_INFORMATION d\nJOIN PATIENT_DOCS pd ON d.DOC_INFO_ID = pd.DOC_INFO_ID\nWHERE DOC_INFO_TYPE_C_NAME = 'HIM ROI Authorization'\nGROUP BY Month\nORDER BY Month DESC;\n</example_query>\n\nROI documents show:\n- MyChart-initiated requests\n- Formal release authorizations\n- Audit trail of information sharing\n\n### Understanding Addendum Patterns\n\nMedical documentation requires immutability with corrections via addenda:\n\n<example-query description=\"Check for addendum relationships in notes\">\nSELECT \n    CASE \n        WHEN ADDENDUM_PARENT_CSN IS NOT NULL THEN 'Addendum'\n        ELSE 'Original Note'\n    END as Note_Category,\n    COUNT(*) as Count,\n    COUNT(DISTINCT NOTE_TYPE_NOADD_C_NAME) as Note_Types\nFROM HNO_INFO\nGROUP BY Note_Category;\n</example_query>\n\nWhile our sample doesn't show active addenda, the ADDENDUM_PARENT_CSN field enables linking amendments to original documentation.\n\n### Document Security and Sensitivity\n\nHealthcare documentation requires careful access control:\n\n<example-query description=\"Analyze security and sensitivity flags in documentation\">\nSELECT \n    ne.IS_SENSITIVE_YN as Sensitive_Flag,\n    COUNT(DISTINCT ne.NOTE_ID) as Note_Count,\n    COUNT(DISTINCT h.NOTE_TYPE_NOADD_C_NAME) as Note_Types,\n    GROUP_CONCAT(DISTINCT h.NOTE_TYPE_NOADD_C_NAME, ', ') as Types\nFROM NOTE_ENC_INFO ne\nJOIN HNO_INFO h ON ne.NOTE_ID = h.NOTE_ID\nGROUP BY ne.IS_SENSITIVE_YN;",
+    "description": "Track Release of Information authorization patterns",
+    "chapterId": "10-09-capturing-the-clinical-narrative-through-documentation",
+    "index": 8
+  },
+  {
+    "id": "10-10-closing-care-gaps-through-preventive-health-tracking-0",
+    "originalQuery": "SELECT \n    HM_PLAN_ID,\n    HM_PLAN_NAME as Topic,\n    CASE \n        WHEN HM_PLAN_NAME LIKE '%Vaccine%' THEN 'Immunization'\n        WHEN HM_PLAN_NAME LIKE '%Screening%' THEN 'Screening'\n        WHEN HM_PLAN_NAME LIKE '%Visit%' THEN 'Wellness Visit'\n        ELSE 'Other Prevention'\n    END as Category\nFROM HM_PLAN_INFO\nORDER BY Category, Topic;",
+    "description": "Explore all available health maintenance topics and categorize them",
+    "chapterId": "10-10-closing-care-gaps-through-preventive-health-tracking",
+    "index": 0
+  },
+  {
+    "id": "10-10-closing-care-gaps-through-preventive-health-tracking-1",
+    "originalQuery": "SELECT \n    HM_STATUS_C_NAME as Status,\n    COUNT(*) as Occurrences,\n    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM HM_HISTORICAL_STATUS WHERE HM_STATUS_C_NAME IS NOT NULL), 2) as Percentage,\n    CASE HM_STATUS_C_NAME\n        WHEN 'Overdue' THEN 'Action needed'\n        WHEN 'Due On' THEN 'Due now'\n        WHEN 'Due Soon' THEN 'Coming due'\n        WHEN 'Not Due' THEN 'Up to date'\n        WHEN 'Completed' THEN 'Done'\n        WHEN 'Hidden' THEN 'Clinical only'\n        WHEN 'Aged Out' THEN 'Too old'\n        ELSE 'Other'\n    END as Meaning\nFROM HM_HISTORICAL_STATUS\nWHERE HM_STATUS_C_NAME IS NOT NULL\nGROUP BY HM_STATUS_C_NAME\nORDER BY \n    CASE HM_STATUS_C_NAME\n        WHEN 'Overdue' THEN 1\n        WHEN 'Due On' THEN 2\n        WHEN 'Due Soon' THEN 3\n        WHEN 'Not Due' THEN 4\n        WHEN 'Completed' THEN 5\n        ELSE 6\n    END;",
+    "description": "Analyze the distribution of health maintenance statuses across all patients",
+    "chapterId": "10-10-closing-care-gaps-through-preventive-health-tracking",
+    "index": 1
+  },
+  {
+    "id": "10-10-closing-care-gaps-through-preventive-health-tracking-2",
+    "originalQuery": "SELECT \n    ps.ACTIVE_HM_PLAN_ID_HM_PLAN_NAME as Topic,\n    hs.HM_STATUS_C_NAME as Status,\n    SUBSTR(hs.NEXT_DUE_DATE, 1, 10) as Due_Date\nFROM PATIENT_HMT_STATUS ps\nLEFT JOIN HM_HISTORICAL_STATUS hs \n    ON ps.PAT_ID = hs.PAT_ID \n    AND ps.ACTIVE_HM_PLAN_ID = hs.HM_TOPIC_ID\nWHERE ps.PAT_ID = 'Z7004242'\n  AND hs.LINE = (SELECT MAX(LINE) FROM HM_HISTORICAL_STATUS \n                 WHERE PAT_ID = ps.PAT_ID \n                 AND HM_TOPIC_ID = ps.ACTIVE_HM_PLAN_ID)\nORDER BY Topic;",
+    "description": "View current health maintenance status for a specific patient",
+    "chapterId": "10-10-closing-care-gaps-through-preventive-health-tracking",
+    "index": 2
+  },
+  {
+    "id": "10-10-closing-care-gaps-through-preventive-health-tracking-3",
+    "originalQuery": "SELECT \n    HM_COMP_TYPE_C_NAME as Completion_Source,\n    COUNT(*) as Total_Completions,\n    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM HM_HISTORY), 2) as Percentage,\n    MIN(SUBSTR(HM_COMP_UTC_DTTM, 1, 10)) as Earliest,\n    MAX(SUBSTR(HM_COMP_UTC_DTTM, 1, 10)) as Latest\nFROM HM_HISTORY\nGROUP BY HM_COMP_TYPE_C_NAME\nORDER BY Total_Completions DESC;",
+    "description": "Analyze how health maintenance items get completed across the system",
+    "chapterId": "10-10-closing-care-gaps-through-preventive-health-tracking",
+    "index": 3
+  },
+  {
+    "id": "10-10-closing-care-gaps-through-preventive-health-tracking-4",
+    "originalQuery": "SELECT \n    DATE(HM_COMP_UTC_DTTM) as Completion_Date,\n    COUNT(*) as Immunizations_Given,\n    TIME(MIN(HM_COMP_UTC_DTTM)) as First_Time,\n    TIME(MAX(HM_COMP_UTC_DTTM)) as Last_Time,\n    CASE \n        WHEN COUNT(*) > 5 THEN 'Multiple vaccines batch'\n        WHEN COUNT(*) > 1 THEN CAST(COUNT(*) AS TEXT) || ' vaccines given'\n        ELSE 'Single vaccine'\n    END as Pattern\nFROM HM_HISTORY\nWHERE PAT_ID = 'Z7004242'\n  AND HM_COMP_TYPE_C_NAME = 'Immunization'\n  AND HM_COMP_UTC_DTTM IS NOT NULL\nGROUP BY DATE(HM_COMP_UTC_DTTM)\nORDER BY Completion_Date DESC\nLIMIT 10;",
+    "description": "View recent immunization completions with timing details",
+    "chapterId": "10-10-closing-care-gaps-through-preventive-health-tracking",
+    "index": 4
+  },
+  {
+    "id": "10-10-closing-care-gaps-through-preventive-health-tracking-5",
+    "originalQuery": "WITH OverdueStats AS (\n    SELECT \n        hs.HM_TOPIC_ID_NAME as Topic,\n        COUNT(DISTINCT hs.PAT_ID) as Overdue_Patients\n    FROM HM_HISTORICAL_STATUS hs\n    WHERE hs.HM_STATUS_C_NAME = 'Overdue'\n      AND hs.HM_TOPIC_ID_NAME IS NOT NULL\n    GROUP BY hs.HM_TOPIC_ID_NAME\n),\nTotalStats AS (\n    SELECT \n        HM_TOPIC_ID_NAME as Topic,\n        COUNT(DISTINCT PAT_ID) as Total_Patients\n    FROM HM_HISTORICAL_STATUS\n    WHERE HM_TOPIC_ID_NAME IS NOT NULL\n    GROUP BY HM_TOPIC_ID_NAME\n)\nSELECT \n    os.Topic,\n    os.Overdue_Patients,\n    ts.Total_Patients,\n    ROUND(os.Overdue_Patients * 100.0 / ts.Total_Patients, 1) as Overdue_Rate\nFROM OverdueStats os\nJOIN TotalStats ts ON os.Topic = ts.Topic\nWHERE ts.Total_Patients >= 1\nORDER BY os.Overdue_Patients DESC\nLIMIT 10;",
+    "description": "Identify the most common overdue preventive care items",
+    "chapterId": "10-10-closing-care-gaps-through-preventive-health-tracking",
+    "index": 5
+  },
+  {
+    "id": "10-10-closing-care-gaps-through-preventive-health-tracking-6",
+    "originalQuery": "SELECT \n    fi.HM_FORECAST_TOPIC_ID_NAME as Topic,\n    fi.EARLIEST_VALID_DATE as Forecast_Date,\n    ps.HMT_LAST_UPDATE_DT as Last_Updated,\n    CASE \n        WHEN fi.EARLIEST_VALID_DATE IS NULL THEN 'No forecast'\n        WHEN DATE(fi.EARLIEST_VALID_DATE) <= DATE('now') THEN 'Due now'\n        WHEN DATE(fi.EARLIEST_VALID_DATE) <= DATE('now', '+30 days') THEN 'Due within 30 days'\n        WHEN DATE(fi.EARLIEST_VALID_DATE) <= DATE('now', '+90 days') THEN 'Due within 90 days'\n        ELSE 'Due later'\n    END as Urgency\nFROM HM_FORECAST_INFO fi\nJOIN PATIENT_HMT_STATUS ps ON fi.PAT_ID = ps.PAT_ID\nWHERE fi.PAT_ID = 'Z7004242'\n  AND fi.EARLIEST_VALID_DATE IS NOT NULL\nORDER BY fi.EARLIEST_VALID_DATE;",
+    "description": "Examine forecast calculations for upcoming preventive care",
+    "chapterId": "10-10-closing-care-gaps-through-preventive-health-tracking",
+    "index": 6
+  },
+  {
+    "id": "10-10-closing-care-gaps-through-preventive-health-tracking-7",
+    "originalQuery": "SELECT \n    HM_STATUS_C_NAME as Status,\n    COUNT(DISTINCT CASE \n        WHEN HM_TOPIC_ID_NAME LIKE '%HPV%' THEN PAT_ID \n    END) as HPV_Patients,\n    COUNT(DISTINCT CASE \n        WHEN HM_TOPIC_ID_NAME LIKE '%Zoster%' THEN PAT_ID \n    END) as Shingles_Patients,\n    COUNT(DISTINCT CASE \n        WHEN HM_TOPIC_ID_NAME LIKE '%RSV%' THEN PAT_ID \n    END) as RSV_Patients\nFROM HM_HISTORICAL_STATUS\nWHERE HM_STATUS_C_NAME IN ('Aged Out', 'Not Due', 'Due On', 'Overdue')\nGROUP BY HM_STATUS_C_NAME\nORDER BY \n    CASE HM_STATUS_C_NAME\n        WHEN 'Overdue' THEN 1\n        WHEN 'Due On' THEN 2\n        WHEN 'Not Due' THEN 3\n        WHEN 'Aged Out' THEN 4\n    END;",
+    "description": "Analyze age-related patterns in health maintenance",
+    "chapterId": "10-10-closing-care-gaps-through-preventive-health-tracking",
+    "index": 7
+  },
+  {
+    "id": "10-10-closing-care-gaps-through-preventive-health-tracking-8",
+    "originalQuery": "SELECT \n    DATE(HM_COMP_UTC_DTTM) as Completion_Date,\n    COUNT(*) as Lab_Completions,\n    COUNT(DISTINCT PAT_ID) as Unique_Patients\nFROM HM_HISTORY\nWHERE HM_COMP_TYPE_C_NAME = 'Result Component'\n  AND HM_COMP_UTC_DTTM IS NOT NULL\nGROUP BY DATE(HM_COMP_UTC_DTTM)\nORDER BY Completion_Date DESC\nLIMIT 10;",
+    "description": "Track how lab results satisfy screening requirements",
+    "chapterId": "10-10-closing-care-gaps-through-preventive-health-tracking",
+    "index": 8
+  },
+  {
+    "id": "10-10-closing-care-gaps-through-preventive-health-tracking-9",
+    "originalQuery": "WITH PatientPriority AS (\n    SELECT \n        hs.PAT_ID,\n        COUNT(DISTINCT hs.HM_TOPIC_ID) as Overdue_Items,\n        GROUP_CONCAT(DISTINCT \n            CASE \n                WHEN hs.HM_TOPIC_ID_NAME LIKE '%COVID%' THEN 'COVID'\n                WHEN hs.HM_TOPIC_ID_NAME LIKE '%Influenza%' THEN 'Flu'\n                ELSE SUBSTR(hs.HM_TOPIC_ID_NAME, 1, 15)\n            END, ', '\n        ) as Overdue_Services\n    FROM HM_HISTORICAL_STATUS hs\n    WHERE hs.HM_STATUS_C_NAME = 'Overdue'\n    GROUP BY hs.PAT_ID\n)\nSELECT \n    PAT_ID,\n    Overdue_Items,\n    Overdue_Services,\n    CASE \n        WHEN Overdue_Items >= 5 THEN '🔴 High Priority'\n        WHEN Overdue_Items >= 3 THEN '🟠 Medium Priority'\n        ELSE '🟡 Low Priority'\n    END as Outreach_Priority\nFROM PatientPriority\nORDER BY Overdue_Items DESC\nLIMIT 20;",
+    "description": "Create prioritized outreach list for overdue patients",
+    "chapterId": "10-10-closing-care-gaps-through-preventive-health-tracking",
+    "index": 9
   }
 ]

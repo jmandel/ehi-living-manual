@@ -274,7 +274,7 @@ WITH PatientPriority AS (
     SELECT 
         hs.PAT_ID,
         COUNT(DISTINCT hs.HM_TOPIC_ID) as Overdue_Items,
-        GROUP_CONCAT(DISTINCT 
+        GROUP_CONCAT(
             CASE 
                 WHEN hs.HM_TOPIC_ID_NAME LIKE '%COVID%' THEN 'COVID'
                 WHEN hs.HM_TOPIC_ID_NAME LIKE '%Influenza%' THEN 'Flu'
