@@ -806,52 +806,17 @@
   },
   {
     "id": "02-05-medications-allergies-and-immunizations-7",
-    "originalQuery": "-- Find patients with active penicillin allergies who have been prescribed penicillin\nSELECT \n    om.PAT_ID,\n    om.DESCRIPTION as Medication_Ordered,\n    a.ALLERGEN_ID_ALLERGEN_NAME as Allergy\nFROM ORDER_MED om\nJOIN PAT_ALLERGIES pa ON om.PAT_ID = pa.PAT_ID\nJOIN ALLERGY a ON pa.ALLERGY_RECORD_ID = a.ALLERGY_ID\nWHERE a.ALRGY_STATUS_C_NAME = 'Active'\n  AND UPPER(a.ALLERGEN_ID_ALLERGEN_NAME) LIKE '%PENICILLIN%'\n  AND UPPER(om.DESCRIPTION) LIKE '%PENICILLIN%';",
+    "originalQuery": "-- NOTE: This query is for demonstration purposes and may not return results in the sample dataset.\n-- Find patients with active penicillin allergies who have been prescribed penicillin\nSELECT \n    om.PAT_ID,\n    om.DESCRIPTION as Medication_Ordered,\n    a.ALLERGEN_ID_ALLERGEN_NAME as Allergy\nFROM ORDER_MED om\nJOIN PAT_ALLERGIES pa ON om.PAT_ID = pa.PAT_ID\nJOIN ALLERGY a ON pa.ALLERGY_RECORD_ID = a.ALLERGY_ID\nWHERE a.ALRGY_STATUS_C_NAME = 'Active'\n  AND UPPER(a.ALLERGEN_ID_ALLERGEN_NAME) LIKE '%PENICILLIN%'\n  AND UPPER(om.DESCRIPTION) LIKE '%PENICILLIN%';",
     "description": "Check for potential medication-allergy conflicts",
     "chapterId": "02-05-medications-allergies-and-immunizations",
     "index": 7
   },
   {
     "id": "03-01-clinical-documentation-and-narrative-0",
-    "originalQuery": "SELECT DISTINCT\n    ni.NOTE_TYPE_C_NAME as Note_Type,\n    COUNT(*) as Note_Count\nFROM HNO_NOTE_TEXT nt\nJOIN HNO_INFO ni ON nt.NOTE_ID = ni.NOTE_ID\nGROUP BY ni.NOTE_TYPE_C_NAME\nORDER BY Note_Count DESC;",
-    "description": "View the different types of clinical notes available",
+    "originalQuery": "SELECT \n    d.DOCUMENT_ID,\n    d.DOC_TYPE_C_NAME as Document_Type,\n    SUBSTR(d.DOC_RECV_TIME, 1, 10) as Received_Date,\n    d.DOC_SOURCE_C_NAME as Source,\n    d.DOC_STAT_C_NAME as Status\nFROM DOC_INFORMATION d\nORDER BY d.DOC_RECV_TIME DESC\nLIMIT 10;",
+    "description": "Find external documents",
     "chapterId": "03-01-clinical-documentation-and-narrative",
     "index": 0
-  },
-  {
-    "id": "03-01-clinical-documentation-and-narrative-1",
-    "originalQuery": "SELECT \n    ni.NOTE_TYPE_C_NAME as Note_Type,\n    SUBSTR(ni.SPEC_NOTE_TIME_DTTM, 1, 10) as Date,\n    ni.AUTHOR_PROV_ID_PROV_NAME as Author,\n    nt.PLAIN_TEXT as Note_Text\nFROM HNO_INFO ni\nJOIN HNO_NOTE_TEXT nt ON ni.NOTE_ID = nt.NOTE_ID\nWHERE ni.PAT_ID = 'Z7004242'\n  AND ni.DELETE_INSTANT_DTTM IS NULL\n  AND LENGTH(nt.PLAIN_TEXT) > 100\nORDER BY ni.SPEC_NOTE_TIME_DTTM DESC\nLIMIT 1;",
-    "description": "Read the content of a recent clinical note",
-    "chapterId": "03-01-clinical-documentation-and-narrative",
-    "index": 1
-  },
-  {
-    "id": "03-01-clinical-documentation-and-narrative-2",
-    "originalQuery": "SELECT \n    d.DOCUMENT_ID,\n    d.DOC_TYPE_C_NAME as Document_Type,\n    SUBSTR(d.DOC_RECV_TIME, 1, 10) as Received_Date,\n    d.DOC_SOURCE_C_NAME as Source\nFROM DOC_INFORMATION d\nJOIN PAT_DOC pd ON d.DOCUMENT_ID = pd.DOCUMENT_ID\nWHERE pd.PAT_ID = 'Z7004242'\nORDER BY d.DOC_RECV_TIME DESC\nLIMIT 10;",
-    "description": "Find external (scanned) documents",
-    "chapterId": "03-01-clinical-documentation-and-narrative",
-    "index": 2
-  },
-  {
-    "id": "03-01-clinical-documentation-and-narrative-3",
-    "originalQuery": "SELECT \n    fm.TEMPLATE_ID_FLO_MEAS_NAME as Measurement,\n    ip.MEAS_VALUE as Value,\n    fm.UNITS,\n    SUBSTR(ip.RECORDED_TIME, 1, 16) as Recorded_Time\nFROM IP_FLWSHT_MEAS ip\nJOIN FLOWSHEET_MEAS fm ON ip.TEMPLATE_ID = fm.TEMPLATE_ID\nWHERE ip.PAT_ID = 'Z7004242'\n  AND fm.TEMPLATE_ID_FLO_MEAS_NAME IN ('Blood Pressure', 'Pulse', 'Temperature', 'Weight', 'Height', 'Pain Screen')\nORDER BY ip.RECORDED_TIME DESC\nLIMIT 20;",
-    "description": "View a patient's recent vital signs from flowsheets",
-    "chapterId": "03-01-clinical-documentation-and-narrative",
-    "index": 3
-  },
-  {
-    "id": "03-01-clinical-documentation-and-narrative-4",
-    "originalQuery": "SELECT DISTINCT\n    fm.TEMPLATE_ID_FLO_MEAS_NAME as Measurement,\n    fm.DISP_NAME as Display_Name,\n    COUNT(*) as Times_Recorded\nFROM IP_FLWSHT_MEAS ip\nJOIN FLOWSHEET_MEAS fm ON ip.TEMPLATE_ID = fm.TEMPLATE_ID\nWHERE ip.PAT_ID = 'Z7004242'\nGROUP BY fm.TEMPLATE_ID_FLO_MEAS_NAME, fm.DISP_NAME\nORDER BY Times_Recorded DESC;",
-    "description": "List all flowsheet measurements recorded for a patient",
-    "chapterId": "03-01-clinical-documentation-and-narrative",
-    "index": 4
-  },
-  {
-    "id": "03-01-clinical-documentation-and-narrative-5",
-    "originalQuery": "SELECT \n    fm.TEMPLATE_ID_FLO_MEAS_NAME as Measurement,\n    ip.MEAS_VALUE as Value,\n    SUBSTR(ip.RECORDED_TIME, 1, 16) as When_Recorded,\n    ip.ENTRY_USER_ID_NAME as Who_Recorded,\n    pe.DEPARTMENT_ID_DEPARTMENT_NAME as Where_Recorded\nFROM IP_FLWSHT_MEAS ip\nJOIN FLOWSHEET_MEAS fm ON ip.TEMPLATE_ID = fm.TEMPLATE_ID\nLEFT JOIN PAT_ENC pe ON ip.PAT_ENC_CSN_ID = pe.PAT_ENC_CSN_ID\nWHERE ip.PAT_ID = 'Z7004242'\nORDER BY ip.RECORDED_TIME DESC\nLIMIT 10;",
-    "description": "View measurement context, including who recorded it and where",
-    "chapterId": "03-01-clinical-documentation-and-narrative",
-    "index": 5
   },
   {
     "id": "03-02-preventive-care-and-population-health-0",
