@@ -97,9 +97,10 @@ export async function generateSidebar() {
         const letterMatch = file.match(/^[A-Z]-\d{2}/);
         if (letterMatch) {
           const slug = file.replace(/\.mdx?$/, '');
+          // Astro converts URLs to lowercase, so we need to use lowercase in the link
           resourceItems.push({
             label: formatChapterTitle(file),
-            link: `/${slug}/`
+            link: `/${slug.toLowerCase()}/`
           });
         }
       }

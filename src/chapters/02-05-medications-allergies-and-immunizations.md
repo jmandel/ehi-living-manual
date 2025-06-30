@@ -1,4 +1,3 @@
----
 # The Patient Safety Triad: Medications, Allergies, and Immunizations
 
 *Purpose: To master Epic's approach to three safety-critical datasets that work together to prevent adverse events: what medications a patient is on, what they are allergic to, and what protections they have from immunizations.*

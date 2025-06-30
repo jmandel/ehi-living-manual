@@ -1,4 +1,3 @@
----
 # Orders and Results: The Engine of Clinical Care
 
 *Purpose: To trace the complete data trail of all non-medication clinical orders—from provider request through fulfillment and results—covering labs, imaging, procedures, and referrals.*

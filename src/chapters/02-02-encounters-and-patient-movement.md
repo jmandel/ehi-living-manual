@@ -1,4 +1,3 @@
----
 # Encounters and Patient Movement
 
 *Purpose: To dissect the encounter—the central organizing event in healthcare—and understand how Epic tracks every patient interaction and movement through the system, from outpatient clinics to hospital stays.*

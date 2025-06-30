@@ -1,4 +1,3 @@
----
 # Patient Identity and Demographics
 
 *Purpose: To master Epic's comprehensive model for capturing who patients are—from unique identifiers to demographics, addresses, and provider relationships.*

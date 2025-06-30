@@ -1,4 +1,3 @@
----
 # Diagnoses and Problems: Two Sides of the Same Coin
 
 *Purpose: To explain the critical distinction between episodic diagnoses (what was treated during a visit) and longitudinal problems (a patient's ongoing health issues), and to teach you how to query both correctly.*

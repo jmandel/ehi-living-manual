@@ -1,4 +1,3 @@
----
 # Capturing the Clinical Story: Notes and Flowsheets
 
 *Purpose: To learn how Epic captures the complete patient story by combining unstructured clinical narratives (notes) with structured, discrete data (flowsheets).*

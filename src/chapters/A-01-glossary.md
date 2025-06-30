@@ -1,4 +1,3 @@
----
 # Appendix A: Epic EHI Terminology Glossary
 
 *A comprehensive guide to terms, abbreviations, and concepts that appear throughout Epic's Electronic Health Information export.*
