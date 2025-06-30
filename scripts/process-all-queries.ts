@@ -1,6 +1,6 @@
 import { readdir, readFile } from "fs/promises";
 import { join } from "path";
-import { writeFileSync } from "fs";
+import { writeFileSync, mkdirSync } from "fs";
 
 interface Query {
   id: string;
@@ -64,8 +64,12 @@ async function processAllChapters() {
   
   console.log(`\nTotal queries found: ${allQueries.length}`);
   
+  // Ensure the data directory exists
+  const dataDir = join(import.meta.dir, "../src/data");
+  mkdirSync(dataDir, { recursive: true });
+  
   // Save all queries (replacing the old queries.json)
-  const outputPath = join(import.meta.dir, "../src/data/queries.json");
+  const outputPath = join(dataDir, "queries.json");
   writeFileSync(outputPath, JSON.stringify(allQueries, null, 2));
   console.log(`Queries saved to: ${outputPath}`);
   
