@@ -1,5 +1,6 @@
 import { readdir, readFile } from 'fs/promises';
 import { join } from 'path';
+import { getStaticAppsMenuItems } from './generate-static-apps-menu.ts';
 
 interface SidebarItem {
   label: string;
@@ -114,6 +115,19 @@ export async function generateSidebar() {
         label: 'Other',
         items: otherItems
       });
+    }
+    
+    // Add static apps if any exist
+    try {
+      const staticApps = await getStaticAppsMenuItems();
+      if (staticApps.length > 0) {
+        sidebar.push({
+          label: 'Interactive Tools',
+          items: staticApps
+        });
+      }
+    } catch (error) {
+      console.error('Error loading static apps:', error);
     }
     
     return sidebar;
