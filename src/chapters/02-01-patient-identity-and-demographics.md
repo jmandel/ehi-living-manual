@@ -175,17 +175,14 @@ ORDER BY pa.LINE;
 Knowing who to contact in an emergency is critical. Epic manages this through the `PAT_RELATIONSHIPS` table.
 
 <example-query description="View emergency contacts">
--- NOTE: The sample patient may not have emergency contacts listed.
--- This query is structurally correct for a production environment.
 SELECT 
-    prl.NAME as Contact_Name,
+    pr.PAT_REL_NAME as Contact_Name,
     pr.PAT_REL_RELATION_C_NAME as Relationship,
     pr.PAT_REL_HOME_PHONE as Home_Phone,
-    pr.PAT_REL_MOBILE_PHNE as Mobile_Phone
+    pr.PAT_REL_MOBILE_PHNE as Mobile_Phone,
+    CASE WHEN pr.PAT_REL_NOTIFY_YN = 'Y' THEN 'Yes' ELSE 'No' END as Emergency_Contact
 FROM PAT_RELATIONSHIPS pr
-JOIN PAT_RELATIONSHIP_LIST prl ON pr.PAT_REL_RLA_ID = prl.PAT_RELATIONSHIP_ID
 WHERE pr.PAT_ID = 'Z7004242'
-  AND pr.PAT_REL_NOTIFY_YN = 'Y'
 ORDER BY pr.LINE;
 </example-query>
 
@@ -289,41 +286,6 @@ WHERE p2.PAT_ID = 'Z7004242';
 </example-query>
 
 Empty values suggest real patients; test patients would have specific record types.
-
-### Building a Complete Patient View
-
-To construct a comprehensive patient profile, you must join multiple tables:
-
-<example-query description="Create a complete patient demographic summary">
-WITH patient_summary AS (
-    SELECT 
-        p.PAT_ID,
-        p.PAT_MRN_ID,
-        p.PAT_NAME,
-        p.BIRTH_DATE,
-        -- Calculate age
-        CAST((julianday('now') - julianday(SUBSTR(p.BIRTH_DATE, 7, 4) || '-' || 
-             PRINTF('%02d', CAST(SUBSTR(p.BIRTH_DATE, 1, INSTR(p.BIRTH_DATE, '/') - 1) AS INT)) || '-' ||
-             PRINTF('%02d', CAST(SUBSTR(p.BIRTH_DATE, INSTR(p.BIRTH_DATE, '/') + 1, 2) AS INT)))) / 365.25 AS INT) as age,
-        p.SEX_C_NAME,
-        p.ETHNIC_GROUP_C_NAME,
-        p.LANGUAGE_C_NAME,
-        p.CUR_PCP_PROV_ID
-    FROM PATIENT p
-)
-SELECT 
-    ps.*,
-    -- Add race (concatenated if multiple)
-    GROUP_CONCAT(pr.PATIENT_RACE_C_NAME) as races,
-    -- Add address
-    pa.ADDRESS as street_address,
-    p.CITY || ', ' || p.STATE_C_NAME || ' ' || p.ZIP as city_state_zip
-FROM patient_summary ps
-JOIN PATIENT p ON ps.PAT_ID = p.PAT_ID
-LEFT JOIN PATIENT_RACE pr ON ps.PAT_ID = pr.PAT_ID
-LEFT JOIN PAT_ADDRESS pa ON ps.PAT_ID = pa.PAT_ID AND pa.LINE = 1
-GROUP BY ps.PAT_ID;
-</example-query>
 
 ---
 

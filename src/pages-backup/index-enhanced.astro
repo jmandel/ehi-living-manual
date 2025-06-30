@@ -51,13 +51,12 @@ chaptersByPart.forEach(chapters => {
 
 function getPartTitle(part: string): string {
   const titles: Record<string, string> = {
-    '00': 'Getting Started',
-    '01': 'Core Architecture',
-    '02': 'Fundamental Patterns',
-    '03': 'Clinical Data Model',
-    '04': 'Financial Data Model',
-    '05': 'Technical Reference',
-    '06': 'Additional Topics'
+    '00': 'Intro',
+    '01': 'Common Patterns',
+    '02': 'Clinical',
+    '03': 'Communication',
+    '04': 'Financial',
+    '05': 'Advanced',
   };
   return titles[part] || `Part ${part}`;
 }

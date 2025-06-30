@@ -70,7 +70,7 @@ SELECT
     DESCRIPTION as Study,
     SUBSTR(ORDERING_DATE, 1, 10) as Order_Date,
     ORDER_STATUS_C_NAME as Status,
-    PRIORITY_C_NAME as Priority
+    ORDER_PRIORITY_C_NAME as Priority
 FROM ORDER_PROC
 WHERE PAT_ID = 'Z7004242'
   AND ORDER_TYPE_C_NAME = 'Imaging'
@@ -87,10 +87,10 @@ SELECT
     DESCRIPTION as Referral_To,
     SUBSTR(ORDERING_DATE, 1, 10) as Referred_Date,
     ORDER_STATUS_C_NAME as Status,
-    REFERRING_PROV_ID_PROV_NAME as Referred_By
+    REFERRING_PROV_ID_REFERRING_PROV_NAM as Referred_By
 FROM ORDER_PROC
 WHERE PAT_ID = 'Z7004242'
-  AND ORDER_TYPE_C_NAME = 'Referral'
+  AND ORDER_TYPE_C_NAME = 'Outpatient Referral'
 ORDER BY ORDERING_DATE DESC;
 </example-query>
 
@@ -109,27 +109,9 @@ GROUP BY ORDER_STATUS_C_NAME
 ORDER BY orders DESC;
 </example-query>
 
-### Linking Orders to Clinical Context
+### Linking Orders to Encounters
 
-Orders are always linked to the encounter where they were placed, providing critical context.
-
-<example-query description="Connect orders to their originating encounter and diagnosis">
-SELECT 
-    o.ORDER_PROC_ID,
-    o.DESCRIPTION as test_ordered,
-    p.CONTACT_DATE,
-    d.DEPARTMENT_NAME,
-    s.PROV_NAME as VISIT_PROV_ID_PROV_NAME,
-    edg.DX_NAME as primary_diagnosis
-FROM ORDER_PROC o
-JOIN PAT_ENC p ON o.PAT_ENC_CSN_ID = p.PAT_ENC_CSN_ID
-LEFT JOIN CLARITY_DEP d ON p.DEPARTMENT_ID = d.DEPARTMENT_ID
-LEFT JOIN CLARITY_SER s ON p.VISIT_PROV_ID = s.PROV_ID
-LEFT JOIN PAT_ENC_DX dx ON p.PAT_ENC_CSN_ID = dx.PAT_ENC_CSN_ID AND dx.PRIMARY_DX_YN = 'Y'
-LEFT JOIN CLARITY_EDG edg ON dx.DX_ID = edg.DX_ID
-WHERE o.ORDER_STATUS_C_NAME = 'Completed'
-LIMIT 5;
-</example-query>
+Orders are always linked to the encounter where they were placed, providing critical context. An order record is linked to its encounter via the `PAT_ENC_CSN_ID` column.
 
 ---
 
@@ -140,6 +122,6 @@ LIMIT 5;
 - **Lab Results**: Lab results are stored in **`ORDER_RESULTS`**, with one row per component, linked back to `ORDER_PROC`.
 - **Abnormality Flags**: Epic uses a two-tier system: `RESULT_FLAG_C_NAME` at the component level and `ABNORMAL_YN` as an order-level summary.
 - **Result Values**: Results are stored as text (`ORD_VALUE`) for flexibility and as numbers (`ORD_NUM_VALUE`) for computation.
-- **Context is Key**: Orders are always linked to an encounter (`PAT_ENC_CSN_ID`) and can be linked to diagnoses.
+- **Context is Key**: Orders are always linked to an encounter (`PAT_ENC_CSN_ID`).
 
 ---

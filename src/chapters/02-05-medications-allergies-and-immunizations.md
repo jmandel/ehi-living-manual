@@ -87,14 +87,14 @@ Immunization records track a patient's vaccination history, including the vaccin
 
 <example-query description="View a patient's immunization history">
 SELECT 
-    imm.IMMUNIZATION_ID_NAME as Vaccine,
-    SUBSTR(pi.IMMUNE_DATE, 1, 10) as Date_Given,
-    pi.DOSE_NUMBER,
-    pi.IMMNZTN_STATUS_C_NAME as Status -- Given vs. Historical
+    i.IMMUNZATN_ID_NAME as Vaccine,
+    SUBSTR(i.IMMUNE_DATE, 1, 10) as Date_Given,
+    i.DOSE,
+    i.ROUTE_C_NAME as Route
 FROM PAT_IMMUNIZATIONS pi
-JOIN CLARITY_IMMUNZATN imm ON pi.IMMUNIZATION_ID = imm.IMMUNIZATION_ID
+JOIN IMMUNE i ON pi.IMMUNE_ID = i.IMMUNE_ID
 WHERE pi.PAT_ID = 'Z7004242'
-ORDER BY pi.IMMUNE_DATE DESC;
+ORDER BY i.IMMUNE_DATE DESC;
 </example-query>
 
 Epic distinguishes between vaccines administered at the facility (`Given`) and those reported by the patient or another provider (`Historical`).
@@ -114,27 +114,6 @@ LIMIT 5;
 
 Lot number tracking is crucial for safety recalls.
 
-### Tying It All Together: Cross-Domain Safety Checks
-
-The true power of this data comes from combining these domains to create clinical decision support.
-
-<example-query description="Check for potential medication-allergy conflicts">
--- NOTE: This query is for demonstration purposes and may not return results in the sample dataset.
--- Find patients with active penicillin allergies who have been prescribed penicillin
-SELECT 
-    om.PAT_ID,
-    om.DESCRIPTION as Medication_Ordered,
-    a.ALLERGEN_ID_ALLERGEN_NAME as Allergy
-FROM ORDER_MED om
-JOIN PAT_ALLERGIES pa ON om.PAT_ID = pa.PAT_ID
-JOIN ALLERGY a ON pa.ALLERGY_RECORD_ID = a.ALLERGY_ID
-WHERE a.ALRGY_STATUS_C_NAME = 'Active'
-  AND UPPER(a.ALLERGEN_ID_ALLERGEN_NAME) LIKE '%PENICILLIN%'
-  AND UPPER(om.DESCRIPTION) LIKE '%PENICILLIN%';
-</example-query>
-
-This type of query is the basis for the automated alerts that protect patients at the point of care.
-
 ---
 
 ### Key Takeaways
@@ -143,7 +122,6 @@ This type of query is the basis for the automated alerts that protect patients a
 - **Medication Lifecycle**: `ORDER_MED` tracks prescriptions, but this EHI export lacks Medication Administration Records (MAR) to confirm if they were taken.
 - **Allergy Details**: The allergy model captures not just the allergen but also specific reactions and severity, providing crucial detail for clinical decisions.
 - **Immunization Source**: The `IMMNZTN_STATUS_C_NAME` field is vital for distinguishing between vaccines given on-site and historical records.
-- **Cross-Domain Analysis**: Combining these datasets is essential for building safety checks, such as preventing the prescription of a medication to which a patient is allergic.
 - **Critical Missing Data**: Key safety features like MAR, drug-drug interaction checks, and standardized CVX vaccine codes are not present in this EHI export.
 
 ---

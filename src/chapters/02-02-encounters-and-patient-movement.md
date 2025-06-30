@@ -11,12 +11,12 @@ Every diagnosis, order, and clinical note connects to an encounter. It's the fun
 SELECT 
     pe.PAT_ENC_CSN_ID as CSN,
     SUBSTR(pe.CONTACT_DATE, 1, 10) as Visit_Date,
-    dep.DEPARTMENT_NAME as Department,
-    ser.PROV_NAME as Provider,
+    cd.DEPARTMENT_NAME as Department,
+    cs.PROV_NAME as Provider,
     pe.APPT_STATUS_C_NAME as Status
 FROM PAT_ENC pe
-LEFT JOIN CLARITY_DEP dep ON pe.DEPARTMENT_ID = dep.DEPARTMENT_ID
-LEFT JOIN CLARITY_SER ser ON pe.VISIT_PROV_ID = ser.PROV_ID
+LEFT JOIN CLARITY_DEP cd ON pe.DEPARTMENT_ID = cd.DEPARTMENT_ID
+LEFT JOIN CLARITY_SER cs ON pe.VISIT_PROV_ID = cs.PROV_ID
 WHERE pe.PAT_ID = 'Z7004242'
 ORDER BY pe.CONTACT_DATE DESC
 LIMIT 10;
@@ -60,18 +60,18 @@ The decimal portion (0.00, 0.01, 0.02...) provides unique sequencing for same-da
 
 ### Encounter Types and Settings
 
-Encounters occur in various settings. Since a single `ENC_TYPE_C_NAME` is not available in this EHI export, we can infer the care setting by analyzing the department where the encounter occurred.
+Encounters occur in various settings, which can often be identified by the department name or specific encounter type fields.
 
-<example-query description="Analyze encounter distribution by department">
+<example-query description="Analyze encounter types across different departments">
 SELECT 
-    d.DEPARTMENT_NAME as Department,
+    cd.DEPARTMENT_NAME as Department,
     COUNT(*) as Count,
     MIN(SUBSTR(pe.CONTACT_DATE, 1, 10)) as First_Visit,
     MAX(SUBSTR(pe.CONTACT_DATE, 1, 10)) as Last_Visit
 FROM PAT_ENC pe
-LEFT JOIN CLARITY_DEP d ON pe.DEPARTMENT_ID = d.DEPARTMENT_ID
+LEFT JOIN CLARITY_DEP cd ON pe.DEPARTMENT_ID = cd.DEPARTMENT_ID
 WHERE pe.PAT_ID = 'Z7004242'
-GROUP BY d.DEPARTMENT_NAME
+GROUP BY cd.DEPARTMENT_NAME
 ORDER BY Count DESC;
 </example-query>
 
@@ -81,20 +81,21 @@ For inpatient stays, `PAT_ENC` and the related `PAT_ENC_HSP` table track admissi
 
 <example-query description="View hospital admissions and length of stay">
 SELECT 
-    PAT_ENC_CSN_ID as CSN,
-    SUBSTR(HOSP_ADMSN_TIME, 1, 10) as Admission_Date,
-    SUBSTR(HOSP_DISCHRG_TIME, 1, 10) as Discharge_Date,
-    HOSP_ADMSN_TYPE_C_NAME as Admission_Type,
-    DISCH_DISP_C_NAME as Discharge_Disposition,
+    pe.PAT_ENC_CSN_ID as CSN,
+    SUBSTR(pe.HOSP_ADMSN_TIME, 1, 10) as Admission_Date,
+    SUBSTR(pe.HOSP_DISCHRG_TIME, 1, 10) as Discharge_Date,
+    pe.HOSP_ADMSN_TYPE_C_NAME as Admission_Type,
+    hsp.DISCH_DISP_C_NAME as Discharge_Disposition,
     CASE 
-        WHEN HOSP_ADMSN_TIME IS NOT NULL AND HOSP_DISCHRG_TIME IS NOT NULL
-        THEN ROUND(julianday(HOSP_DISCHRG_TIME) - julianday(HOSP_ADMSN_TIME), 2)
+        WHEN pe.HOSP_ADMSN_TIME IS NOT NULL AND pe.HOSP_DISCHRG_TIME IS NOT NULL
+        THEN ROUND(julianday(pe.HOSP_DISCHRG_TIME) - julianday(pe.HOSP_ADMSN_TIME), 2)
         ELSE NULL
     END as los_days
-FROM PAT_ENC
-WHERE PAT_ID = 'Z7004242'
-  AND HOSP_ADMSN_TIME IS NOT NULL
-ORDER BY HOSP_ADMSN_TIME DESC;
+FROM PAT_ENC pe
+LEFT JOIN PAT_ENC_HSP hsp ON pe.PAT_ENC_CSN_ID = hsp.PAT_ENC_CSN_ID
+WHERE pe.PAT_ID = 'Z7004242'
+  AND pe.HOSP_ADMSN_TIME IS NOT NULL
+ORDER BY pe.HOSP_ADMSN_TIME DESC;
 </example-query>
 
 ### The ADT Event Trail: Tracking Patient Movement
@@ -136,13 +137,12 @@ Epic tracks multiple provider relationships for each encounter.
 <example-query description="Understand the different provider roles">
 SELECT 
     pe.PAT_ENC_CSN_ID,
-    ser_visit.PROV_NAME as Visit_Provider,
-    ser_pcp.PROV_NAME as PCP_on_Visit,
-    ser_ref.PROV_NAME as Referring_Provider
+    vp.PROV_NAME as Visit_Provider,
+    pcp.PROV_NAME as PCP_on_Visit,
+    pe.REFERRAL_SOURCE_ID_REFERRING_PROV_NAM as Referring_Provider
 FROM PAT_ENC pe
-LEFT JOIN CLARITY_SER ser_visit ON pe.VISIT_PROV_ID = ser_visit.PROV_ID
-LEFT JOIN CLARITY_SER ser_pcp ON pe.PCP_PROV_ID = ser_pcp.PROV_ID
-LEFT JOIN CLARITY_SER ser_ref ON pe.REFERRING_PROV_ID = ser_ref.PROV_ID
+LEFT JOIN CLARITY_SER vp ON pe.VISIT_PROV_ID = vp.PROV_ID
+LEFT JOIN CLARITY_SER pcp ON pe.PCP_PROV_ID = pcp.PROV_ID
 WHERE pe.PAT_ID = 'Z7004242' AND pe.APPT_STATUS_C_NAME = 'Completed'
 LIMIT 5;
 </example-query>
@@ -162,16 +162,16 @@ WITH encounter_timeline AS (
         pe.CONTACT_DATE,
         pe.PAT_ENC_DATE_REAL,
         pe.APPT_STATUS_C_NAME,
-        d.DEPARTMENT_NAME,
-        p.PROV_NAME as VISIT_PROV_ID_PROV_NAME,
+        cd.DEPARTMENT_NAME,
+        cs.PROV_NAME as Visit_Provider,
         -- Calculate days since last encounter
         ROUND(pe.PAT_ENC_DATE_REAL - LAG(pe.PAT_ENC_DATE_REAL) OVER (
             PARTITION BY pe.PAT_ID 
             ORDER BY pe.PAT_ENC_DATE_REAL
         ), 0) as days_since_last_visit
     FROM PAT_ENC pe
-    LEFT JOIN CLARITY_DEP d ON pe.DEPARTMENT_ID = d.DEPARTMENT_ID
-    LEFT JOIN CLARITY_SER p ON pe.VISIT_PROV_ID = p.PROV_ID
+    LEFT JOIN CLARITY_DEP cd ON pe.DEPARTMENT_ID = cd.DEPARTMENT_ID
+    LEFT JOIN CLARITY_SER cs ON pe.VISIT_PROV_ID = cs.PROV_ID
     WHERE pe.PAT_ID = 'Z7004242'
 )
 SELECT * FROM encounter_timeline
@@ -188,6 +188,6 @@ LIMIT 10;
 - Encounters span all care settings, from outpatient appointments to inpatient hospital stays and ED visits.
 - **CLARITY_ADT** provides a granular audit trail of patient movement during an admission.
 - Multiple provider roles (Visit, PCP, Referring) are tracked for each encounter.
-- This extract lacks a single, clear `ENC_TYPE_C_NAME`, so department names must often be used to infer the care setting.
+- Encounter types can be inferred from department names and admission type fields since this extract lacks a dedicated encounter type column.
 
 ---
