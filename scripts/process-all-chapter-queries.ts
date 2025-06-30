@@ -1,5 +1,5 @@
 import { Database } from "bun:sqlite";
-import { readFileSync, writeFileSync } from "fs";
+import { readFileSync, writeFileSync, existsSync } from "fs";
 import { join } from "path";
 
 interface Query {
@@ -18,6 +18,10 @@ interface ProcessedQuery extends Query {
 
 // Read all extracted queries
 const queriesPath = join(import.meta.dir, "../src/data/queries.json");
+if (!existsSync(queriesPath)) {
+  console.error(`Error: ${queriesPath} not found. Run process-all-queries.ts first.`);
+  process.exit(1);
+}
 const queries: Query[] = JSON.parse(readFileSync(queriesPath, "utf-8"));
 
 // Connect to the database (use public directory, not dist)

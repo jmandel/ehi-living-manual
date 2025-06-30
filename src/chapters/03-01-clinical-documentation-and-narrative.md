@@ -59,7 +59,7 @@ Flowsheets are used to capture discrete clinical data in a structured, template-
 
 > **Note:** This EHI export appears to be missing vital signs data. The flowsheet structure is present, but the actual measurement values are not populated. This is a limitation of this particular data extract.
 
-<!-- TODO: This query returns no results due to missing vital signs data in this EHI export -->
+TODO: This query returns no results due to missing vital signs data in this EHI export
 <example-query description="View a patient's recent vital signs from flowsheets">
 SELECT 
     fr.FLO_MEAS_ID_DISP_NAME as Measurement,
@@ -75,7 +75,7 @@ LIMIT 20;
 
 Flowsheets use a template system (`FLOWSHEET_MEAS`) to define what can be measured, while the actual values are stored in `IP_FLWSHT_MEAS`.
 
-<!-- TODO: This query returns no results due to missing flowsheet data in this EHI export -->
+TODO: This query returns no results due to missing flowsheet data in this EHI export
 <example-query description="List all flowsheet measurements recorded for a patient">
 SELECT DISTINCT
     fr.FLO_MEAS_ID_DISP_NAME as Measurement,
@@ -91,7 +91,7 @@ ORDER BY Times_Recorded DESC;
 
 Both notes and flowsheet data are linked to the encounter where they were recorded, providing essential context.
 
-<!-- TODO: This query returns no results due to missing flowsheet data in this EHI export -->
+TODO: This query returns no results due to missing flowsheet data in this EHI export
 <example-query description="View measurement context, including who recorded it and where">
 SELECT 
     fr.FLO_MEAS_ID_DISP_NAME as Measurement,

@@ -138,7 +138,9 @@ async function convertChapterToMdx(sourcePath: string, destPath: string) {
       // Store the original diagram content without any escaping
       const diagramContent = diagram.trim();
       return `<MermaidDiagram code={\`${diagramContent}\`} id="${mermaidId}" />`;
-    });
+    })
+    // Convert HTML comments to JSX comments
+    .replace(/<!--\s*(.*?)\s*-->/g, '{/* $1 */}');
   
   // Store components and template literals temporarily to protect them from escaping
   const placeholders: { placeholder: string; content: string }[] = [];
