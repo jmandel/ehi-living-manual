@@ -170,6 +170,25 @@ LEFT JOIN PAT_ADDRESS pa ON p.PAT_ID = pa.PAT_ID
 ORDER BY pa.LINE;
 </example-query>
 
+### Emergency Contacts and Relationships
+
+Knowing who to contact in an emergency is critical. Epic manages this through the `PAT_RELATIONSHIPS` table.
+
+<example-query description="View emergency contacts">
+-- NOTE: The sample patient may not have emergency contacts listed.
+-- This query is structurally correct for a production environment.
+SELECT 
+    prl.NAME as Contact_Name,
+    pr.PAT_REL_RELATION_C_NAME as Relationship,
+    pr.PAT_REL_HOME_PHONE as Home_Phone,
+    pr.PAT_REL_MOBILE_PHNE as Mobile_Phone
+FROM PAT_RELATIONSHIPS pr
+JOIN PAT_RELATIONSHIP_LIST prl ON pr.PAT_REL_RLA_ID = prl.PAT_RELATIONSHIP_ID
+WHERE pr.PAT_ID = 'Z7004242'
+  AND pr.PAT_REL_NOTIFY_YN = 'Y'
+ORDER BY pr.LINE;
+</example-query>
+
 ### Language Preferences
 
 Epic tracks multiple language preferences for different contexts:
@@ -315,6 +334,7 @@ GROUP BY ps.PAT_ID;
 - Names are stored both formatted (PAT_NAME) and componentized (first, middle, last)
 - Race allows multiple selections (separate table); ethnicity is single selection (in PATIENT)
 - Addresses use a hybrid model: city/state/zip in PATIENT, street lines in PAT_ADDRESS
+- Emergency contacts are managed in the `PAT_RELATIONSHIPS` table.
 - Language preferences are granular: spoken care, written materials, and provider preferences
 - Critical gaps include gender identity, patient merge history, and comprehensive test patient flags
 

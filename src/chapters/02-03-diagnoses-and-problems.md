@@ -1,17 +1,18 @@
 ---
-# Diagnoses and Problems
+# Diagnoses and Problems: Two Sides of the Same Coin
 
-*Purpose: To explain the critical distinction between episodic diagnoses and longitudinal problems, teaching you to query both types of conditions correctly.*
+*Purpose: To explain the critical distinction between episodic diagnoses (what was treated during a visit) and longitudinal problems (a patient's ongoing health issues), and to teach you how to query both correctly.*
 
 ### Two Views of Patient Conditions
 
-Epic separates patient conditions into two fundamentally different concepts:
-- **Encounter Diagnoses**: Conditions addressed during a specific visit
-- **Problem List**: Ongoing health issues tracked longitudinally
+Epic separates patient conditions into two fundamentally different but related concepts:
 
-Understanding this distinction is crucial for accurate clinical reporting and quality measures.
+1.  **Encounter Diagnoses**: Conditions addressed during a specific visit. These are temporary and visit-specific.
+2.  **Problem List**: A curated list of ongoing health issues, like diabetes or hypertension, that are tracked longitudinally across all encounters.
 
-<example-query description="Compare the two diagnosis storage models">
+Understanding this distinction is crucial for accurate clinical analysis, quality reporting, and population health management.
+
+<example-query description="Compare the record counts of the two diagnosis storage models">
 -- Encounter diagnoses: Multiple per visit
 SELECT 'Encounter Diagnoses' as type, COUNT(*) as total_records
 FROM PAT_ENC_DX
@@ -23,11 +24,11 @@ SELECT 'Problem List', COUNT(*)
 FROM PROBLEM_LIST;
 </example-query>
 
-### Encounter Diagnoses: The PAT_ENC_DX Table
+### Encounter Diagnoses: The `PAT_ENC_DX` Table
 
-Every encounter can have multiple diagnoses, organized using the familiar `(ID, LINE)` pattern:
+Every encounter can have multiple diagnoses, organized using the familiar `(ID, LINE)` pattern. These represent the clinician's assessment for that specific visit.
 
-<example-query description="Examine the encounter diagnosis structure">
+<example-query description="Examine the diagnosis structure for a single encounter">
 SELECT 
     e.PAT_ENC_CSN_ID,
     e.LINE,
@@ -41,14 +42,14 @@ WHERE e.PAT_ENC_CSN_ID = 720803470
 ORDER BY e.LINE;
 </example-query>
 
-The LINE number indicates entry order, NOT clinical priority. This is a critical distinction.
+**Crucially, the `LINE` number indicates entry order, NOT clinical priority.**
 
 ### The Primary Diagnosis Flag
 
-Epic uses an explicit flag to identify the primary diagnosis:
+To identify the main reason for the visit, Epic uses an explicit flag, `PRIMARY_DX_YN`.
 
-<example-query description="Prove that LINE does not equal priority">
--- Find cases where primary diagnosis is NOT LINE 1
+<example-query description="Prove that LINE number does not indicate priority">
+-- Find cases where the primary diagnosis is NOT at LINE 1
 SELECT 
     PAT_ENC_CSN_ID,
     LINE,
@@ -64,157 +65,73 @@ WHERE PRIMARY_DX_YN = 'Y' AND LINE > 1
 LIMIT 5;
 </example-query>
 
-Always use `PRIMARY_DX_YN = 'Y'` to identify the primary diagnosis, never assume `LINE = 1`.
+Always use `PRIMARY_DX_YN = 'Y'` to identify the primary diagnosis; never assume `LINE = 1`.
 
-### The Diagnosis Master: CLARITY_EDG
+### The Problem List: A Longitudinal View
 
-The **CLARITY_EDG** table contains the master list of all diagnoses:
+The **`PROBLEM_LIST`** table tracks a patient's ongoing health conditions over time. This list is actively managed by the care team.
 
-<example-query description="Explore the diagnosis master table">
+<example-query description="View a patient's active problem list">
+SELECT 
+    pl.PROBLEM_LIST_ID,
+    pl.DESCRIPTION,
+    pl.PROBLEM_STATUS_C_NAME,
+    pl.DATE_OF_ENTRY,
+    pl.RESOLVED_DATE,
+    pl.CHRONIC_YN
+FROM PROBLEM_LIST pl
+WHERE pl.PAT_ID = 'Z7004242' AND pl.PROBLEM_STATUS_C_NAME = 'Active'
+ORDER BY pl.DATE_OF_ENTRY;
+</example-query>
+
+Problems have three key statuses:
+- **Active**: A current health issue.
+- **Resolved**: The issue is no longer a concern.
+- **Deleted**: The problem was entered in error.
+
+### Linking Encounter Diagnoses to the Problem List
+
+An encounter diagnosis can be linked to an existing problem or used to create a new one. The `DX_LINK_PROB_ID` field in `PAT_ENC_DX` creates this connection.
+
+<example-query description="Find when ongoing problems were addressed in specific encounters">
+SELECT 
+    SUBSTR(pe.CONTACT_DATE, 1, 10) as Visit_Date,
+    pl.DESCRIPTION as Problem_Addressed
+FROM PAT_ENC pe
+JOIN PAT_ENC_DX ped ON pe.PAT_ENC_CSN_ID = ped.PAT_ENC_CSN_ID
+JOIN PROBLEM_LIST pl ON ped.DX_LINK_PROB_ID = pl.PROBLEM_LIST_ID
+WHERE pe.PAT_ID = 'Z7004242'
+  AND ped.DX_LINK_PROB_ID IS NOT NULL
+ORDER BY pe.CONTACT_DATE DESC;
+</example-query>
+
+### The Diagnosis Master: `CLARITY_EDG`
+
+Both systems link to the **`CLARITY_EDG`** table, which contains the master list of all diagnosis codes and their descriptions.
+
+<example-query description="Look up common diagnoses in the master table">
 SELECT 
     DX_ID,
-    DX_NAME,
-    -- Patient-friendly description when available
-    -- DX_NAME not always present
-    DX_NAME as patient_friendly_text
+    DX_NAME
 FROM CLARITY_EDG
-WHERE DX_NAME LIKE '%reflux%'
+WHERE DX_NAME LIKE '%reflux%' OR DX_NAME LIKE '%diabetes%'
 ORDER BY DX_ID;
 </example-query>
 
-Note that this extract contains only Epic's internal diagnosis identifiers and names—not ICD codes.
+Note that this EHI extract contains Epic's internal diagnosis identifiers (`DX_ID`), not standardized ICD codes.
 
-### The Missing Link: ICD Codes
+### Analyzing a Patient's Complete Diagnostic History
 
-In this EHI extract, there's no direct mapping from DX_ID to ICD codes:
+By combining these tables, you can create a comprehensive view of a patient's health conditions.
 
-<example-query description="Search for ICD code columns in diagnosis tables">
--- Check if diagnosis tables have ICD code columns
-SELECT 
-    COUNT(*) as icd_columns,
-    'Note: ICD codes appear in CLM_DX table for claims, not in clinical diagnosis tables' as explanation
-FROM _metadata
-WHERE (LOWER(column_name) LIKE '%icd%' 
-       OR LOWER(column_name) LIKE '%dx_code%')
-  AND table_name IN ('CLARITY_EDG', 'PAT_ENC_DX', 'PROBLEM_LIST');
-</example-query>
-
-However, ICD codes do appear in the claims data:
-
-<example-query description="Find ICD codes in the claims table">
-SELECT 
-    CLM_DX as icd_code,
-    CLM_DX_QUAL as code_type,
-    COUNT(*) as occurrences
-FROM CLM_DX
-WHERE CLM_DX IS NOT NULL
-GROUP BY CLM_DX, CLM_DX_QUAL
-ORDER BY occurrences DESC
-LIMIT 5;
-</example-query>
-
-The separation of clinical diagnoses (CLARITY_EDG) from billing codes (CLM_DX) is deliberate—it allows clinical documentation flexibility while maintaining billing precision.
-
-### The Problem List: Longitudinal View
-
-The **PROBLEM_LIST** table tracks ongoing health conditions:
-
-<example-query description="Examine the problem list structure">
-SELECT 
-    p.PROBLEM_LIST_ID,
-    p.DESCRIPTION,
-    p.PROBLEM_STATUS_C_NAME,
-    p.DATE_OF_ENTRY,
-    p.RESOLVED_DATE,
-    p.CHRONIC_YN
-FROM PROBLEM_LIST p
-ORDER BY p.DATE_OF_ENTRY;
-</example-query>
-
-Problems have three possible statuses:
-- **Active**: Current health issue
-- **Resolved**: No longer relevant
-- **Deleted**: Entered in error
-
-### Problem List History
-
-Unlike encounter diagnoses, problems can change over time:
-
-<example-query description="Check for problem list history tracking">
--- Look for history table
-SELECT COUNT(*) as history_records
-FROM PROBLEM_LIST_HX;
-</example-query>
-
-The history table tracks all changes to problems, supporting audit requirements.
-
-### Linking Diagnoses to Problems
-
-When a diagnosis from an encounter becomes a chronic condition:
-
-<example-query description="Find chronic diagnoses that might be on problem list">
--- Check chronic diagnosis documentation
-SELECT 
-    DX_CHRONIC_YN,
-    COUNT(*) as count,
-    CASE 
-        WHEN DX_CHRONIC_YN = 'Y' THEN 'Marked as chronic'
-        WHEN DX_CHRONIC_YN = 'N' THEN 'Not chronic'
-        ELSE 'Not specified'
-    END as chronic_status
-FROM PAT_ENC_DX
-GROUP BY DX_CHRONIC_YN;
-</example-query>
-
-The `DX_CHRONIC_YN` flag suggests diagnoses that should be considered for the problem list.
-
-### Diagnosis Grouping by Encounter
-
-To understand the diagnostic complexity of encounters:
-
-<example-query description="Analyze diagnosis patterns across encounters">
-WITH dx_summary AS (
-    SELECT 
-        PAT_ENC_CSN_ID,
-        COUNT(*) as diagnosis_count,
-        SUM(CASE WHEN PRIMARY_DX_YN = 'Y' THEN 1 ELSE 0 END) as primary_count,
-        SUM(CASE WHEN DX_CHRONIC_YN = 'Y' THEN 1 ELSE 0 END) as chronic_count
-    FROM PAT_ENC_DX
-    GROUP BY PAT_ENC_CSN_ID
-)
-SELECT 
-    diagnosis_count,
-    COUNT(*) as encounters,
-    ROUND(100.0 * COUNT(*) / (SELECT COUNT(DISTINCT PAT_ENC_CSN_ID) FROM PAT_ENC_DX), 1) as percentage
-FROM dx_summary
-GROUP BY diagnosis_count
-ORDER BY diagnosis_count;
-</example-query>
-
-### Common Diagnosis Queries
-
-**Find all encounters for a specific condition:**
-<example-query description="Find all GERD encounters">
-SELECT 
-    e.PAT_ENC_CSN_ID,
-    p.CONTACT_DATE,
-    e.PRIMARY_DX_YN,
-    d.DX_NAME
-FROM PAT_ENC_DX e
-JOIN CLARITY_EDG d ON e.DX_ID = d.DX_ID
-JOIN PAT_ENC p ON e.PAT_ENC_CSN_ID = p.PAT_ENC_CSN_ID
-WHERE d.DX_NAME LIKE '%reflux%'
-ORDER BY p.CONTACT_DATE DESC;
-</example-query>
-
-**Build a patient's diagnostic history:**
-<example-query description="Create a timeline of diagnoses">
+<example-query description="Create a timeline of all diagnoses for a patient">
 SELECT 
     p.CONTACT_DATE,
     e.LINE,
     e.PRIMARY_DX_YN,
     d.DX_NAME,
-    e.DX_CHRONIC_YN
+    e.DX_CHRONIC_YN,
+    CASE WHEN e.DX_LINK_PROB_ID IS NOT NULL THEN 'Yes' ELSE 'No' END as Linked_to_Problem_List
 FROM PAT_ENC_DX e
 JOIN CLARITY_EDG d ON e.DX_ID = d.DX_ID
 JOIN PAT_ENC p ON e.PAT_ENC_CSN_ID = p.PAT_ENC_CSN_ID
@@ -222,76 +139,15 @@ WHERE p.PAT_ID = 'Z7004242'
 ORDER BY p.PAT_ENC_DATE_REAL, e.LINE;
 </example-query>
 
-### Quality Measure Considerations
-
-Many quality measures require identifying patients with specific conditions. The approach differs based on the measure:
-
-<example-query description="Find diabetic patients (would check both sources)">
--- In practice, you'd check both encounter diagnoses and problem list
--- This example shows the encounter diagnosis approach
-SELECT DISTINCT
-    p.PAT_ID,
-    d.DX_NAME,
-    MAX(p.CONTACT_DATE) as most_recent_visit
-FROM PAT_ENC_DX e
-JOIN CLARITY_EDG d ON e.DX_ID = d.DX_ID
-JOIN PAT_ENC p ON e.PAT_ENC_CSN_ID = p.PAT_ENC_CSN_ID
-WHERE d.DX_NAME LIKE '%diabetes%'
-GROUP BY p.PAT_ID, d.DX_NAME;
-</example-query>
-
-### Data Quality Checks
-
-Verify diagnosis data integrity:
-
-<example-query description="Check for data quality issues">
--- Encounters with multiple primary diagnoses (should be none)
-WITH primary_count AS (
-    SELECT 
-        PAT_ENC_CSN_ID,
-        SUM(CASE WHEN PRIMARY_DX_YN = 'Y' THEN 1 ELSE 0 END) as primary_dx_count
-    FROM PAT_ENC_DX
-    GROUP BY PAT_ENC_CSN_ID
-)
-SELECT 
-    primary_dx_count,
-    COUNT(*) as encounters
-FROM primary_count
-GROUP BY primary_dx_count
-ORDER BY primary_dx_count;
-</example-query>
-
-### Working Without Direct ICD Mapping
-
-Since this extract lacks DX_ID to ICD mapping, alternative approaches include:
-
-<example-query description="Use diagnosis names for approximate matching">
--- Find potential hypertension cases by name
-SELECT DISTINCT
-    DX_ID,
-    DX_NAME
-FROM CLARITY_EDG
-WHERE UPPER(DX_NAME) LIKE '%HYPERTENSION%'
-   OR UPPER(DX_NAME) LIKE '%HIGH BLOOD PRESSURE%'
-ORDER BY DX_NAME;
-</example-query>
-
-For precise ICD-based reporting, you would need to:
-1. Request the full CLARITY_EDG table with REF_BILL_CODE
-2. Use CLM_DX for claims-based analysis
-3. Implement name-based matching with clinical validation
-
 ---
 
 ### Key Takeaways
 
-- **PAT_ENC_DX** stores encounter-specific diagnoses using the (CSN_ID, LINE) pattern
-- **PROBLEM_LIST** maintains longitudinal health conditions with status tracking
-- **PRIMARY_DX_YN = 'Y'** identifies the primary diagnosis—never rely on LINE = 1
-- **CLARITY_EDG** provides diagnosis names but lacks ICD codes in this extract
-- **CLM_DX** contains actual ICD codes but only for billed claims
-- Chronic conditions appear in both systems—encounter diagnoses with DX_CHRONIC_YN and the problem list
-- Quality measures often require querying both encounter diagnoses and problem lists
-- The separation of clinical documentation from billing codes is intentional
+- **Two Systems**: Epic uses two systems to track conditions: `PAT_ENC_DX` for visit-specific diagnoses and `PROBLEM_LIST` for ongoing issues.
+- **Primary Diagnosis**: Use `PRIMARY_DX_YN = 'Y'` to find the main diagnosis for a visit; do not rely on `LINE = 1`.
+- **Longitudinal View**: The `PROBLEM_LIST` provides a patient's long-term health summary.
+- **Linking**: The `DX_LINK_PROB_ID` field connects a visit diagnosis to an ongoing problem.
+- **Master List**: `CLARITY_EDG` is the dictionary for all diagnosis codes (`DX_ID`).
+- **No ICD Codes**: This EHI export uses internal `DX_ID`s, not standardized ICD codes, for clinical diagnoses. ICD codes are found separately in billing data.
 
 ---

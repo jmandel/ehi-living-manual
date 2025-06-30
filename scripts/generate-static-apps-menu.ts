@@ -2,11 +2,12 @@ import { readdir, readFile } from 'fs/promises';
 import { join, basename } from 'path';
 import { existsSync } from 'fs';
 
-interface StaticApp {
+export interface StaticApp {
   id: string;
   title: string;
   description?: string;
   path: string;
+  icon?: string;
 }
 
 interface AppManifest {
@@ -14,6 +15,7 @@ interface AppManifest {
   description?: string;
   icon?: string;
   order?: number;
+  entrypoint?: string; // Custom HTML file name, defaults to index.html
 }
 
 /**
@@ -36,33 +38,38 @@ export async function scanStaticApps(): Promise<StaticApp[]> {
     for (const entry of entries) {
       if (entry.isDirectory()) {
         const appPath = join(appsDir, entry.name);
-        const indexPath = join(appPath, 'index.html');
+        let entrypoint = 'index.html';
+        let manifest: AppManifest | null = null;
         
-        // Check if index.html exists
-        if (existsSync(indexPath)) {
+        // Check for manifest.json first
+        const manifestPath = join(appPath, 'manifest.json');
+        if (existsSync(manifestPath)) {
+          try {
+            const manifestContent = await readFile(manifestPath, 'utf-8');
+            manifest = JSON.parse(manifestContent);
+            if (manifest.entrypoint) {
+              entrypoint = manifest.entrypoint;
+            }
+          } catch (e) {
+            console.warn(`Failed to parse manifest.json for ${entry.name}:`, e);
+          }
+        }
+        
+        // Check if entrypoint exists
+        const entrypointPath = join(appPath, entrypoint);
+        if (existsSync(entrypointPath)) {
+          // Use clean URL for index.html, include filename for custom entrypoints
+          const path = entrypoint === 'index.html' 
+            ? `/apps/${entry.name}/`
+            : `/apps/${entry.name}/${entrypoint}`;
+            
           let appInfo: StaticApp = {
             id: entry.name,
-            title: entry.name.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-            path: `/apps/${entry.name}/`
+            title: manifest?.title || entry.name.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+            path,
+            description: manifest?.description,
+            icon: manifest?.icon
           };
-          
-          // Check for manifest.json
-          const manifestPath = join(appPath, 'manifest.json');
-          if (existsSync(manifestPath)) {
-            try {
-              const manifestContent = await readFile(manifestPath, 'utf-8');
-              const manifest: AppManifest = JSON.parse(manifestContent);
-              
-              if (manifest.title) {
-                appInfo.title = manifest.title;
-              }
-              if (manifest.description) {
-                appInfo.description = manifest.description;
-              }
-            } catch (e) {
-              console.warn(`Failed to parse manifest.json for ${entry.name}:`, e);
-            }
-          }
           
           apps.push(appInfo);
         }
@@ -83,12 +90,15 @@ export async function scanStaticApps(): Promise<StaticApp[]> {
 export async function getStaticAppsMenuItems() {
   const apps = await scanStaticApps();
   
+  // Return menu items with direct links to HTML files
+  // These need to be marked as external to bypass Starlight's routing
   return apps.map(app => ({
     label: app.title,
-    link: app.path,
+    // Starlight recognizes http:// or https:// as external links
+    // So we'll use a full URL with the base path
+    link: app.path, // e.g., /apps/billing-explorer/index.html
     attrs: {
-      target: '_self', // Open in same window
-      class: 'static-app-link'
+      'data-external': 'true' // Custom attribute to mark as external
     }
   }));
 }

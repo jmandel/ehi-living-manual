@@ -1,11 +1,11 @@
 ---
-# Medications, Allergies, and Immunizations
+# The Patient Safety Triad: Medications, Allergies, and Immunizations
 
-*Purpose: To master Epic's approach to three safety-critical datasets—medications, allergies, and immunizations—that together prevent adverse events and ensure patient safety.*
+*Purpose: To master Epic's approach to three safety-critical datasets that work together to prevent adverse events: what medications a patient is on, what they are allergic to, and what protections they have from immunizations.*
 
-### The Safety Triad
+### The Foundation of Patient Safety
 
-These three clinical domains share a common purpose: preventing harm. Medications must be checked against allergies. Immunizations prevent disease. Together, they form the foundation of preventive care and clinical decision support.
+These three clinical domains form the foundation of preventive care and clinical decision support. Medications must be checked against allergies to prevent adverse reactions, and immunizations are tracked to prevent disease. Together, they create a safety net for every patient.
 
 <example-query description="Overview of safety-critical data volumes">
 SELECT 
@@ -17,335 +17,133 @@ SELECT 'Immunizations', COUNT(*) FROM PAT_IMMUNIZATIONS
 ORDER BY records DESC;
 </example-query>
 
-### Medication Orders: Beyond the Prescription
+### 1. Medications: The Prescription Trail
 
-We explored ORDER_MED in the previous chapter, but medications have unique lifecycle considerations:
+Medication management starts with an order in `ORDER_MED` and follows a complex lifecycle from prescription to pharmacy and potentially to discontinuation.
 
-<example-query description="Analyze medication lifecycle with discontinuation">
+<example-query description="View current medication orders with status">
 SELECT 
-    om.ORDER_MED_ID,
-    cm.GENERIC_NAME,
-    om.ORDERING_DATE,
-    om.ORDER_END_TIME,
-    om.DISCON_TIME,
-    -- Calculate if discontinued early
-    CASE 
-        WHEN om.DISCON_TIME IS NOT NULL 
-         AND om.DISCON_TIME < om.ORDER_END_TIME
-        THEN 'Discontinued Early'
-        WHEN om.DISCON_TIME IS NOT NULL
-        THEN 'Completed as Ordered'
-        ELSE 'Active/Unknown'
-    END as medication_status
+    ORDER_MED_ID,
+    DESCRIPTION as Medication,
+    ORDER_STATUS_C_NAME as Status,
+    SUBSTR(ORDERING_DATE, 1, 10) as Order_Date,
+    QUANTITY,
+    REFILLS
+FROM ORDER_MED
+WHERE PAT_ID = 'Z7004242'
+  AND ORDER_STATUS_C_NAME IN ('Sent', 'Active')
+ORDER BY ORDERING_DATE DESC
+LIMIT 10;
+</example-query>
+
+The patient's instructions, or "sig," are stored in a separate table.
+
+<example-query description="Get patient sig instructions for a medication">
+SELECT 
+    om.DESCRIPTION as Medication,
+    oms.SIG_TEXT as Instructions
 FROM ORDER_MED om
-JOIN CLARITY_MEDICATION cm ON om.MEDICATION_ID = cm.MEDICATION_ID
-ORDER BY om.ORDERING_DATE;
+JOIN ORDER_MED_SIG oms ON om.ORDER_MED_ID = oms.ORDER_ID
+WHERE om.PAT_ID = 'Z7004242'
+ORDER BY om.ORDERING_DATE DESC
+LIMIT 5;
 </example-query>
 
-Key lifecycle fields:
-- **ORDER_END_TIME**: Planned end date
-- **DISCON_TIME**: Actual discontinuation
-- Early discontinuation may indicate adverse effects or ineffectiveness
+**The Missing MAR:** A critical point is the absence of Medication Administration Records (MAR) in this EHI export. We can see what was *ordered*, but we cannot verify what was *administered*.
 
-### The Missing MAR
+### 2. Allergies: The Safety Net
 
-As noted previously, this extract lacks Medication Administration Records:
+Epic's allergy model is robust, tracking not just allergens but also specific reactions and their severity.
 
-<example-query description="Search for administration data">
--- Check for any MAR-related tables
-SELECT name 
-FROM sqlite_master 
-WHERE type = 'table' 
-  AND (name LIKE '%MAR%' OR name LIKE '%ADMIN%')
-  AND name LIKE '%MED%';
-</example-query>
-
-Without MAR data, we cannot verify:
-- If medications were actually given
-- Doses administered vs. prescribed
-- Administration times and compliance
-
-### Allergies: The Safety Net
-
-Epic's allergy model uses multiple related tables:
-
-<example-query description="Explore the allergy data model">
--- Patient-to-allergy linking
+<example-query description="View a patient's active allergies and their severity">
 SELECT 
-    pa.PAT_ID,
-    pa.LINE,
-    pa.ALLERGY_RECORD_ID,
     a.ALLERGEN_ID_ALLERGEN_NAME,
-    a.SEVERITY_C_NAME,
-    a.ALRGY_STATUS_C_NAME
+    a.REACTION as Reaction,
+    a.SEVERITY_C_NAME as Severity,
+    SUBSTR(a.DATE_NOTED, 1, 10) as Date_Noted
 FROM PAT_ALLERGIES pa
-JOIN ALLERGY a ON a.ALLERGY_ID = pa.ALLERGY_RECORD_ID
+JOIN ALLERGY a ON pa.ALLERGY_RECORD_ID = a.ALLERGY_ID
 WHERE pa.PAT_ID = 'Z7004242'
-ORDER BY pa.LINE;
+  AND a.ALRGY_STATUS_C_NAME = 'Active'
+ORDER BY a.SEVERITY_C_NAME, a.ALLERGEN_ID_ALLERGEN_NAME;
 </example-query>
 
-The two-table structure:
-- **PAT_ALLERGIES**: Links patients to allergies using (PAT_ID, LINE)
-- **ALLERGY**: Contains allergy details and severity
+For each allergy, multiple specific reactions can be documented.
 
-### Allergy Reactions
-
-Allergies can have multiple documented reactions:
-
-<example-query description="View allergy reactions detail">
+<example-query description="See detailed reactions for a specific allergy">
 SELECT 
-    a.ALLERGEN_ID_ALLERGEN_NAME as allergen,
-    a.SEVERITY_C_NAME as severity,
-    ar.LINE,
-    ar.REACTION_C_NAME
-FROM ALLERGY a
+    a.ALLERGEN_ID_ALLERGEN_NAME,
+    ar.REACTION_C_NAME as Specific_Reaction
+FROM PAT_ALLERGIES pa
+JOIN ALLERGY a ON pa.ALLERGY_RECORD_ID = a.ALLERGY_ID
 JOIN ALLERGY_REACTIONS ar ON a.ALLERGY_ID = ar.ALLERGY_ID
-WHERE a.ALLERGY_ID IN (
-    SELECT ALLERGY_RECORD_ID 
-    FROM PAT_ALLERGIES 
-    WHERE PAT_ID = 'Z7004242'
-)
-ORDER BY a.ALLERGY_ID, ar.LINE;
+WHERE pa.PAT_ID = 'Z7004242' AND UPPER(a.ALLERGEN_ID_ALLERGEN_NAME) LIKE '%PENICILLIN%'
+ORDER BY a.ALLERGEN_ID_ALLERGEN_NAME, ar.LINE;
 </example-query>
 
-Multiple reactions per allergy support comprehensive documentation of patient responses.
+### 3. Immunizations: Proactive Protection
 
-### Allergy Status and Updates
+Immunization records track a patient's vaccination history, including the vaccine, date, dose, and source.
 
-Allergies aren't static—they can be confirmed, refuted, or deleted:
-
-<example-query description="Analyze allergy statuses">
+<example-query description="View a patient's immunization history">
 SELECT 
-    ALRGY_STATUS_C_NAME,
-    COUNT(*) as count,
-    GROUP_CONCAT(ALLERGEN_ID_ALLERGEN_NAME, ', ') as examples
-FROM ALLERGY
-GROUP BY ALRGY_STATUS_C_NAME;
-</example-query>
-
-### Finding "No Known Allergies"
-
-Distinguishing between "no data" and "no allergies" is critical:
-
-<example-query description="Search for NKA documentation">
--- Look for No Known Allergies entries and show actual allergens
-SELECT 
-    ALLERGEN_ID_ALLERGEN_NAME,
-    ALRGY_STATUS_C_NAME,
-    COUNT(*) as patient_count,
-    CASE 
-        WHEN UPPER(ALLERGEN_ID_ALLERGEN_NAME) LIKE '%NO%KNOWN%' 
-          OR UPPER(ALLERGEN_ID_ALLERGEN_NAME) LIKE '%NKA%' 
-        THEN 'NKA Entry'
-        ELSE 'Specific Allergen'
-    END as entry_type
-FROM ALLERGY
-GROUP BY ALLERGEN_ID_ALLERGEN_NAME, ALRGY_STATUS_C_NAME
-ORDER BY patient_count DESC;
-</example-query>
-
-Without explicit NKA entries, absence of allergy records is ambiguous.
-
-### Immunization History
-
-The immunization model follows Epic's familiar patterns:
-
-<example-query description="Explore immunization records">
-SELECT 
-    pi.PAT_ID,
-    pi.LINE,
-    i.IMMUNZATN_ID_NAME,
-    i.IMMUNE_DATE,
-    i.DOSE,
-    i.ROUTE_C_NAME,
-    i.IMMNZTN_STATUS_C_NAME
+    imm.IMMUNIZATION_ID_NAME as Vaccine,
+    SUBSTR(pi.IMMUNE_DATE, 1, 10) as Date_Given,
+    pi.DOSE_NUMBER,
+    pi.IMMNZTN_STATUS_C_NAME as Status -- Given vs. Historical
 FROM PAT_IMMUNIZATIONS pi
-JOIN IMMUNE i ON pi.IMMUNE_ID = i.IMMUNE_ID
+JOIN CLARITY_IMMUNZATN imm ON pi.IMMUNIZATION_ID = imm.IMMUNIZATION_ID
 WHERE pi.PAT_ID = 'Z7004242'
-ORDER BY i.IMMUNE_DATE DESC;
+ORDER BY pi.IMMUNE_DATE DESC;
 </example-query>
 
-Key immunization fields:
-- **IMMUNZATN_ID_NAME**: Vaccine name
-- **DOSE**: Dose number in series
-- **ROUTE_C_NAME**: Administration route
-- **IMMNZTN_STATUS_C_NAME**: Given vs. historical
+Epic distinguishes between vaccines administered at the facility (`Given`) and those reported by the patient or another provider (`Historical`).
 
-### Immunization Status Types
-
-Not all immunizations were given at your facility:
-
-<example-query description="Analyze immunization sources">
-SELECT 
-    i.IMMNZTN_STATUS_C_NAME,
-    COUNT(*) as count,
-    GROUP_CONCAT(DISTINCT i.IMMUNZATN_ID_NAME) as vaccines
-FROM IMMUNE i
-GROUP BY i.IMMNZTN_STATUS_C_NAME;
-</example-query>
-
-Status types typically include:
-- **Given**: Administered at this facility
-- **Historical**: Patient-reported or transferred records
-- **Refused**: Documented refusal
-
-### Vaccine Details
-
-Immunization tracking includes lot numbers for safety:
-
-<example-query description="View complete vaccine administration details">
+<example-query description="View complete vaccine administration details including lot number">
 SELECT 
     IMMUNZATN_ID_NAME as vaccine,
     IMMUNE_DATE,
     MFG_C_NAME as manufacturer,
     LOT as lot_number,
-    EXP_DATE as expiration,
-    DOSE,
-    ROUTE_C_NAME as route,
-    SITE_C_NAME as site
+    EXP_DATE as expiration
 FROM IMMUNE
 WHERE LOT IS NOT NULL
 ORDER BY IMMUNE_DATE DESC
 LIMIT 5;
 </example-query>
 
-Lot tracking enables rapid response to vaccine recalls or adverse event patterns.
+Lot number tracking is crucial for safety recalls.
 
-### Cross-Domain Safety Checks
+### Tying It All Together: Cross-Domain Safety Checks
 
-The real power comes from combining these domains:
+The true power of this data comes from combining these domains to create clinical decision support.
 
 <example-query description="Check for potential medication-allergy conflicts">
--- Find patients with medication orders who have allergies
--- (In production, you'd check for specific drug-allergy interactions)
-WITH patient_allergies AS (
-    SELECT DISTINCT 
-        pa.PAT_ID,
-        COUNT(DISTINCT a.ALLERGEN_ID) as allergy_count
-    FROM PAT_ALLERGIES pa
-    JOIN ALLERGY a ON pa.ALLERGY_RECORD_ID = a.ALLERGY_ID
-    WHERE a.ALRGY_STATUS_C_NAME = 'Active'
-    GROUP BY pa.PAT_ID
-),
-patient_meds AS (
-    SELECT DISTINCT
-        om.PAT_ID,
-        COUNT(DISTINCT om.MEDICATION_ID) as med_count
-    FROM ORDER_MED om
-    WHERE om.ORDER_STATUS_C_NAME = 'Sent'
-    GROUP BY om.PAT_ID
-)
+-- NOTE: This query is for demonstration purposes and may not return results in the sample dataset.
+-- Find patients with active penicillin allergies who have been prescribed penicillin
 SELECT 
-    pm.PAT_ID,
-    pm.med_count as active_medications,
-    COALESCE(pa.allergy_count, 0) as active_allergies
-FROM patient_meds pm
-LEFT JOIN patient_allergies pa ON pm.PAT_ID = pa.PAT_ID;
-</example-query>
-
-### Immunization Completeness
-
-Track vaccine series completion:
-
-<example-query description="Analyze vaccine series completion">
-WITH vaccine_doses AS (
-    SELECT 
-        IMMUNZATN_ID_NAME,
-        MAX(CAST(DOSE AS INTEGER)) as max_dose,
-        COUNT(*) as total_records
-    FROM IMMUNE
-    WHERE CAST(DOSE AS TEXT) GLOB '[0-9]*'  -- Only numeric doses
-    GROUP BY IMMUNZATN_ID_NAME
-)
-SELECT 
-    IMMUNZATN_ID_NAME as vaccine,
-    max_dose as highest_dose_given,
-    total_records,
-    CASE 
-        WHEN max_dose >= 2 THEN 'Multi-dose series'
-        ELSE 'Single dose'
-    END as series_type
-FROM vaccine_doses
-ORDER BY max_dose DESC;
-</example-query>
-
-### Temporal Analysis
-
-Track medication and allergy timelines:
-
-<example-query description="Create a patient safety timeline">
--- Combine medications and allergy updates in chronological order
-SELECT 
-    'Medication Started' as event_type,
-    ORDERING_DATE as event_date,
-    GENERIC_NAME as description
+    om.PAT_ID,
+    om.DESCRIPTION as Medication_Ordered,
+    a.ALLERGEN_ID_ALLERGEN_NAME as Allergy
 FROM ORDER_MED om
-JOIN CLARITY_MEDICATION cm ON om.MEDICATION_ID = cm.MEDICATION_ID
-WHERE om.PAT_ID = 'Z7004242'
-
-UNION ALL
-
-SELECT 
-    'Allergy Noted' as event_type,
-    a.DATE_NOTED as event_date,
-    a.ALLERGEN_ID_ALLERGEN_NAME as description
-FROM ALLERGY a
-JOIN PAT_ALLERGIES pa ON a.ALLERGY_ID = pa.ALLERGY_RECORD_ID
-WHERE pa.PAT_ID = 'Z7004242'
-
-ORDER BY event_date DESC;
+JOIN PAT_ALLERGIES pa ON om.PAT_ID = pa.PAT_ID
+JOIN ALLERGY a ON pa.ALLERGY_RECORD_ID = a.ALLERGY_ID
+WHERE a.ALRGY_STATUS_C_NAME = 'Active'
+  AND UPPER(a.ALLERGEN_ID_ALLERGEN_NAME) LIKE '%PENICILLIN%'
+  AND UPPER(om.DESCRIPTION) LIKE '%PENICILLIN%';
 </example-query>
 
-### Missing Safety Features
-
-This extract lacks several safety-critical elements:
-
-1. **Drug-Allergy Interaction Checking**: No cross-reference tables
-2. **Medication Administration**: No MAR for verification
-3. **Adverse Event Reporting**: No reaction documentation beyond allergies
-4. **Vaccine Information Statements**: No VIS tracking
-5. **CVX Codes**: No standard vaccine codes for interoperability
-
-### Best Practices for Safety Queries
-
-Always consider the completeness of safety data:
-
-<example-query description="Create a comprehensive patient safety summary">
-WITH safety_summary AS (
-    SELECT 
-        p.PAT_ID,
-        p.PAT_NAME,
-        -- Count active medications
-        (SELECT COUNT(*) FROM ORDER_MED om 
-         WHERE om.PAT_ID = p.PAT_ID 
-           AND om.ORDER_STATUS_C_NAME = 'Sent'
-           AND om.DISCON_TIME IS NULL) as active_meds,
-        -- Count active allergies
-        (SELECT COUNT(DISTINCT pa.ALLERGY_RECORD_ID) 
-         FROM PAT_ALLERGIES pa
-         JOIN ALLERGY a ON pa.ALLERGY_RECORD_ID = a.ALLERGY_ID
-         WHERE pa.PAT_ID = p.PAT_ID
-           AND a.ALRGY_STATUS_C_NAME = 'Active') as active_allergies,
-        -- Count immunizations
-        (SELECT COUNT(*) FROM PAT_IMMUNIZATIONS pi
-         WHERE pi.PAT_ID = p.PAT_ID) as total_immunizations
-    FROM PATIENT p
-)
-SELECT * FROM safety_summary;
-</example-query>
+This type of query is the basis for the automated alerts that protect patients at the point of care.
 
 ---
 
 ### Key Takeaways
 
-- **ORDER_MED** tracks prescriptions but lacks administration data (no MAR table)
-- **Allergies** use a two-table model: PAT_ALLERGIES links patients to ALLERGY details
-- **ALLERGY_REACTIONS** allows multiple reactions per allergy using the LINE pattern
-- **Immunizations** also use two tables: PAT_IMMUNIZATIONS links to IMMUNE records
-- **IMMNZTN_STATUS_C_NAME** distinguishes given vs. historical immunizations
-- Lot tracking in IMMUNE enables vaccine safety monitoring
-- Cross-domain queries are essential for medication-allergy checking
-- Critical safety features missing: MAR, drug interactions, CVX codes
-- Always distinguish "no data" from "no allergies" (NKA)
+- **The Safety Triad**: Medications (`ORDER_MED`), Allergies (`PAT_ALLERGIES`, `ALLERGY`), and Immunizations (`PAT_IMMUNIZATIONS`, `IMMUNE`) work together to ensure patient safety.
+- **Medication Lifecycle**: `ORDER_MED` tracks prescriptions, but this EHI export lacks Medication Administration Records (MAR) to confirm if they were taken.
+- **Allergy Details**: The allergy model captures not just the allergen but also specific reactions and severity, providing crucial detail for clinical decisions.
+- **Immunization Source**: The `IMMNZTN_STATUS_C_NAME` field is vital for distinguishing between vaccines given on-site and historical records.
+- **Cross-Domain Analysis**: Combining these datasets is essential for building safety checks, such as preventing the prescription of a medication to which a patient is allergic.
+- **Critical Missing Data**: Key safety features like MAR, drug-drug interaction checks, and standardized CVX vaccine codes are not present in this EHI export.
 
 ---

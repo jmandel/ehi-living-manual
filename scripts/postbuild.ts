@@ -22,13 +22,13 @@ renameSync(distDir, tempDir);
 
 // Create new dist structure
 mkdirSync(finalDir, { recursive: true });
-mkdirSync(join(finalDir, 'ehi-missing-manual'), { recursive: true });
+mkdirSync(join(finalDir, 'ehi-living-manual'), { recursive: true });
 
 // Move temp contents into the subdirectory
-renameSync(tempDir, join(finalDir, 'ehi-missing-manual'));
+renameSync(tempDir, join(finalDir, 'ehi-living-manual'));
 
 // Rename final back to dist
 renameSync(finalDir, distDir);
 
-console.log('✅ Build output restructured to dist/ehi-missing-manual/');
+console.log('✅ Build output restructured to dist/ehi-living-manual/');
 console.log('🚀 You can now test with: bun x http-server dist');

@@ -1,0 +1,32 @@
+{
+  "name": "encounter-billing-explorer-v2",
+  "version": "2.1.0",
+  "description": "Epic EHI financial data extraction and analysis system with interactive patient dashboard",
+  "main": "financial-extractor.ts",
+  "scripts": {
+    "extract": "bun run financial-extractor.ts",
+    "dashboard": "bun run financial-dashboard-viewer.ts",
+    "serve": "bun run serve-dashboard.ts",
+    "analyze-har": "bun run analyze-hospital-accounts.ts",
+    "analyze-linkage": "bun run charge-encounter-analysis.ts",
+    "test": "bun test financial-extractor.test.ts",
+    "start": "bun run extract && bun run serve"
+  },
+  "keywords": [
+    "epic",
+    "ehi",
+    "healthcare",
+    "billing",
+    "financial",
+    "encounters",
+    "claims"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "bun": "latest"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}

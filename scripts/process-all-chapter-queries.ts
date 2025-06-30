@@ -43,6 +43,7 @@ Array.from(chapterCounts.entries())
 const processedQueries: ProcessedQuery[] = [];
 let successful = 0;
 let failed = 0;
+let zeroResults = 0;
 
 queries.forEach((query, index) => {
   if (index % 50 === 0) {
@@ -55,6 +56,12 @@ queries.forEach((query, index) => {
     
     // Get column names from first result if available
     const columns = results.length > 0 ? Object.keys(results[0]) : [];
+    
+    // Check for zero results
+    if (results.length === 0) {
+      console.warn(`⚠️  Zero results in ${query.chapterId} query #${query.index}: ${query.description || 'No description'}`);
+      zeroResults++;
+    }
     
     processedQueries.push({
       ...query,
@@ -105,12 +112,17 @@ console.log(`\n✅ Processing complete!`);
 console.log(`  Total: ${queries.length}`);
 console.log(`  Successful: ${successful}`);
 console.log(`  Failed: ${failed}`);
+console.log(`  Zero results: ${zeroResults}`);
 console.log(`\nProcessed queries saved to:`);
 console.log(`  All queries: ${allOutputPath}`);
 console.log(`  Per chapter: ${chapterDataDir}/`);
 
 if (failed > 0) {
-  console.log(`\n⚠️  ${failed} queries failed. Check the errors above.`);
+  console.log(`\n❌ ${failed} queries failed. Check the errors above.`);
+}
+
+if (zeroResults > 0) {
+  console.log(`\n⚠️  ${zeroResults} queries returned zero results. These may not be didactically useful.`);
 }
 
 db.close();

@@ -43,4 +43,8 @@ execSync('bun run scripts/process-all-chapter-queries.ts', { stdio: 'inherit' })
 console.log('📦 Bundling chapter markdown...');
 execSync('bun run scripts/bundle-chapter-markdown.ts', { stdio: 'inherit' });
 
+// Generate static apps data
+console.log('🎯 Generating static apps data...');
+execSync('bun run scripts/generate-apps-data.ts', { stdio: 'inherit' });
+
 console.log('✅ Pre-build tasks complete!');
