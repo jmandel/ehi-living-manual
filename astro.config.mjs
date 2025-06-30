@@ -14,8 +14,8 @@ export default defineConfig({
   base: '/ehi-living-manual',
   integrations: [
     starlight({
-      title: 'Epic EHI Manual',
-      description: 'The definitive guide to Epic\'s Electronic Health Information export format',
+      title: 'EHI Living Manual',
+      description: 'A living guide to working with Epic\'s Electronic Health Information export format',
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/jmandel/ehi-living-manual' },
       ],
