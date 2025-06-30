@@ -25,8 +25,8 @@ export function getBasePath(): string {
   // Look for common patterns in Astro/Starlight routing
   if (pathParts.length > 0) {
     // Check if first segment is our known deployment path
-    if (pathParts[0] === 'ehi-missing-manual') {
-      return '/ehi-missing-manual/';
+    if (pathParts[0] === 'ehi-living-manual') {
+      return '/ehi-living-manual/';
     }
     
     // For paths like /base/docs/page or /base/playground
