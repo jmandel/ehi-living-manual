@@ -14,11 +14,11 @@ interface SidebarGroup {
 
 const chapterGroups = {
   '00': 'Getting Started',
-  '01': 'Fundamental Patterns', 
-  '02': 'Clinical Data Model',
-  '03': 'Financial Data Model',
-  '04': 'Advanced Topics',
-  '05': 'Reference'
+  '01': 'Foundations', 
+  '02': 'Clinical',
+  '03': 'Communication',
+  '04': 'Financial',
+  '05': 'Advanced'
 };
 
 // Words that should remain uppercase
@@ -57,6 +57,7 @@ function formatChapterTitle(filename: string): string {
 export async function generateSidebar() {
   const docsDir = join(process.cwd(), 'src/content/docs');
   const sidebar: SidebarGroup[] = [];
+  const resourceItems: SidebarItem[] = [];
   
   try {
     const files = await readdir(docsDir);
@@ -74,10 +75,10 @@ export async function generateSidebar() {
         continue;
       }
       
-      // Match "00-01-title" patterns
-      const match = file.match(/^(\d{2})-\d{2}/);
-      if (match) {
-        const group = match[1];
+      // Match "00-01-title" patterns (numeric chapters)
+      const numericMatch = file.match(/^(\d{2})-\d{2}/);
+      if (numericMatch) {
+        const group = numericMatch[1];
         const slug = file.replace(/\.mdx?$/, '');
         
         if (!grouped.has(group)) {
@@ -91,6 +92,16 @@ export async function generateSidebar() {
           label: formatChapterTitle(file),
           link: `/${urlSlug}/`
         });
+      } else {
+        // Match "A-01-title" patterns (letter-prefixed chapters)
+        const letterMatch = file.match(/^[A-Z]-\d{2}/);
+        if (letterMatch) {
+          const slug = file.replace(/\.mdx?$/, '');
+          resourceItems.push({
+            label: formatChapterTitle(file),
+            link: `/${slug}/`
+          });
+        }
       }
     }
     
@@ -117,6 +128,8 @@ export async function generateSidebar() {
       });
     }
     
+    // Don't add Resources here - they'll be merged into the manual Resources section
+    
     // Add static apps if any exist
     try {
       const staticApps = await getStaticAppsMenuItems();
@@ -130,16 +143,16 @@ export async function generateSidebar() {
       console.error('Error loading static apps:', error);
     }
     
-    return sidebar;
+    return { sidebar, resourceItems };
   } catch (error) {
     console.error('Error generating sidebar:', error);
-    return [];
+    return { sidebar: [], resourceItems: [] };
   }
 }
 
 // If running directly, output the sidebar config
 if (import.meta.url === `file://${process.argv[1]}`) {
-  generateSidebar().then(sidebar => {
+  generateSidebar().then(({ sidebar }) => {
     console.log(JSON.stringify(sidebar, null, 2));
   });
 }

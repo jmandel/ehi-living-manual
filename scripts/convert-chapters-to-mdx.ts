@@ -10,8 +10,8 @@ interface ChapterInfo {
 }
 
 function parseChapterInfo(filename: string): ChapterInfo {
-  // Extract number and slug from filename like "00-01-read-me-first.md" or "00-intro.md"
-  const match = filename.match(/^(\d{2}(?:-\d{2}|-intro))-(.+)\.md$/);
+  // Extract number and slug from filename like "00-01-read-me-first.md" or "00-intro.md" or "A-01-glossary.md"
+  const match = filename.match(/^((?:\d{2}(?:-\d{2}|-intro)|[A-Z]-\d{2}))-(.+)\.md$/);
   if (!match) {
     // Try the intro pattern without additional slug
     const introMatch = filename.match(/^(\d{2}-intro)\.md$/);
@@ -207,8 +207,8 @@ async function main() {
   const docsDir = join(cwd(), 'src/content/docs');
   
   const files = await readdir(chaptersDir);
-  // Skip intro files entirely
-  const chapterFiles = files.filter(f => f.endsWith('.md') && /^\d{2}-\d{2}/.test(f));
+  // Process both numeric chapters and letter-prefixed resources
+  const chapterFiles = files.filter(f => f.endsWith('.md') && (/^\d{2}-\d{2}/.test(f) || /^[A-Z]-\d{2}/.test(f)));
   
   console.log(`Found ${chapterFiles.length} chapter files to convert`);
   

@@ -6,7 +6,7 @@ import wasm from 'vite-plugin-wasm';
 import { generateSidebar } from './scripts/generate-sidebar.ts';
 
 // Generate sidebar dynamically from markdown files
-const sidebar = await generateSidebar();
+const { sidebar, resourceItems } = await generateSidebar();
 
 // https://astro.build/config
 export default defineConfig({
@@ -28,6 +28,7 @@ export default defineConfig({
         {
           label: 'Resources',
           items: [
+            ...resourceItems,
             { label: 'EHI Playground', link: '/playground/' },
             { label: 'GitHub Repository', link: 'https://github.com/jmandel/ehi-living-manual' },
           ]
