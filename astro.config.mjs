@@ -11,13 +11,13 @@ const sidebar = await generateSidebar();
 // https://astro.build/config
 export default defineConfig({
   site: 'https://jmandel.github.io',
-  base: '/ehi-missing-manual',
+  base: '/ehi-living-manual',
   integrations: [
     starlight({
       title: 'Epic EHI Manual',
       description: 'The definitive guide to Epic\'s Electronic Health Information export format',
       social: [
-        { icon: 'github', label: 'GitHub', href: 'https://github.com/jmandel/ehi-missing-manual' },
+        { icon: 'github', label: 'GitHub', href: 'https://github.com/jmandel/ehi-living-manual' },
       ],
       sidebar: [
         {
@@ -29,7 +29,7 @@ export default defineConfig({
           label: 'Resources',
           items: [
             { label: 'EHI Playground', link: '/playground/' },
-            { label: 'GitHub Repository', link: 'https://github.com/jmandel/ehi-missing-manual' },
+            { label: 'GitHub Repository', link: 'https://github.com/jmandel/ehi-living-manual' },
           ]
         }
       ],

@@ -1,6 +1,6 @@
-# Epic EHI Missing Manual - Astro Site
+# Epic EHI Living Manual - Astro Site
 
-This is the Astro-based version of the Epic EHI Missing Manual, featuring interactive SQL widgets and Mermaid diagrams.
+This is the Astro-based version of the Epic EHI Living Manual, featuring interactive SQL widgets and Mermaid diagrams.
 
 ## Quick Start
 
@@ -59,7 +59,7 @@ bun run generate-db
 
 ## Deployment
 
-The site is configured to deploy to GitHub Pages at `/ehi-missing-manual/`. 
+The site is configured to deploy to GitHub Pages at `/ehi-living-manual/`. 
 
 Push to the `main` branch to trigger automatic deployment via GitHub Actions.
 

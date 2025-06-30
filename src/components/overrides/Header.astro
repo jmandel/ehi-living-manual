@@ -33,7 +33,7 @@ const shouldRenderSearch =
 			</svg>
 			<span class="button-text">Copy for LLM</span>
 		</button>
-		<a href="/ehi-missing-manual/playground/" class="playground-link">
+		<a href="/ehi-living-manual/playground/" class="playground-link">
 			<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 				<polyline points="4 17 10 11 4 5"></polyline>
 				<line x1="12" y1="19" x2="20" y2="19"></line>
@@ -164,7 +164,7 @@ const shouldRenderSearch =
 				.sort(([a], [b]) => a.localeCompare(b))
 				.map(([key, content]) => `\n\n## ${key}\n\n${content}`);
 			
-			return `# Epic EHI Missing Manual - All Chapters\n${chapters.join('\n')}`;
+			return `# Epic EHI Living Manual - All Chapters\n${chapters.join('\n')}`;
 		} catch (error) {
 			console.error('Error getting chapters:', error);
 			return '';
@@ -195,7 +195,7 @@ const shouldRenderSearch =
 			let content = '';
 			
 			// Check if we're on the index page
-			if (window.location.pathname === '/ehi-missing-manual/' || window.location.pathname === '/ehi-missing-manual/index.html') {
+			if (window.location.pathname === '/ehi-living-manual/' || window.location.pathname === '/ehi-living-manual/index.html') {
 				content = getAllChapterMarkdown();
 			} else {
 				content = getCurrentChapterMarkdown();
