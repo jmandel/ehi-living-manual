@@ -1,6 +1,6 @@
 # GitHub Pages Deployment
 
-This Astro site is configured to deploy to GitHub Pages at `https://jmandel.github.io/ehi-missing-manual/`.
+This Astro site is configured to deploy to GitHub Pages at `https://jmandel.github.io/ehi-living-manual/`.
 
 ## Setup Instructions
 
@@ -14,20 +14,20 @@ This Astro site is configured to deploy to GitHub Pages at `https://jmandel.gith
 
 ## Configuration
 
-- **Base path:** `/ehi-missing-manual` (configured in `astro.config.mjs`)
+- **Base path:** `/ehi-living-manual` (configured in `astro.config.mjs`)
 - **Site URL:** `https://jmandel.github.io`
 - **Build output:** `dist/` directory
 
 ## Important Notes
 
-- All asset paths should use the base path (e.g., `/ehi-missing-manual/assets/...`)
+- All asset paths should use the base path (e.g., `/ehi-living-manual/assets/...`)
 - The `.nojekyll` file in `public/` prevents GitHub Pages from processing with Jekyll
-- SQL.js and WASM files are served from `/ehi-missing-manual/sql-js/`
-- The Epic sample database is at `/ehi-missing-manual/assets/data/ehi.sqlite`
+- SQL.js and WASM files are served from `/ehi-living-manual/sql-js/`
+- The Epic sample database is at `/ehi-living-manual/assets/data/ehi.sqlite`
 
 ## Local Development
 
-When developing locally, the site runs at `http://localhost:4321/ehi-missing-manual/`
+When developing locally, the site runs at `http://localhost:4321/ehi-living-manual/`
 
 ```bash
 bun install
