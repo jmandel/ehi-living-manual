@@ -159,8 +159,8 @@ See Technical/Database Terms section.
 ### EpicCare
 Epic's ambulatory EHR module, though this branding rarely appears in database structures.
 
-### EPP (Epic Payer Platform)
-Epic's insurance/payer integration platform. The CLARITY_EPP table contains benefit plan information.
+### EPP (Epic Payer Plan)
+The CLARITY_EPP table contains benefit plan information.
 
 ### MyChart
 Epic's patient portal. Tables with MYC_ prefix contain patient portal data including messages, questionnaires, and appointments.
